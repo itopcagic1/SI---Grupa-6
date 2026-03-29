@@ -32,25 +32,25 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-10 | Izraditi Domain Model | Modeliranje ključnih entiteta sistema i njihovih međusobnih odnosa | Research | Visok | M | To-Do | Sprint 3 | - |
 | PB-11 | Izraditi Use Case Model | Dijagrami slučajeva upotrebe  za ključne funkcionalnosti sistema | Documentation | Visok | M | To-Do | Sprint 3 | - |
 | PB-12 | Izraditi Architecture Overview | Definisanje osnovnog arhitektonskog pravca sistema (tehnologije, slojevi, komunikacija) | Technical Task | Visok | L | To-Do | Sprint 3 | Arhitektura mora proizlaziti iz zahtjeva |
-| PB-13 | Definisati Test Strategy | Izrada strategije testiranja sistema (šta, kako i kada se testira) | Documentation | Visok | M | To-Do | Sprint 3 | - |
-| PB-14 | Definisati Definition of Done | Izrada dokumenta koji definiše kada se stavka smatra završenom | Documentation | Srednji | S | To-Do | Sprint 4 | - |
+| PB-13 | Definisati Test Strategy | Izrada strategije testiranja sistema (šta, kako i kada se testira) | Documentation | Srednji | M | To-Do | Sprint 3 | - |
+| PB-14 | Definisati Definition of Done | Izrada dokumenta koji definiše kada se stavka smatra završenom | Documentation | Nizak | S | To-Do | Sprint 4 | - |
 | PB-15 | Postaviti tehnički skeleton | Kreiranje osnovne strukture projekta (folderi, konfiguracija, osnovna arhitektura) | Technical Task | Visok | L | To-Do | Sprint 4 | - |
 | PB-16 | Setup razvojnog okruženja | Postavljanje razvojnog i produkcijskog servera te automatizacija objave (CI/CD) | Technical Task | Visok | M | To-Do | Sprint 4 | - |
 | PB-17 | Dizajn baze podataka | Definisanje ER dijagrama i relacija između entiteta sistema | Technical Task | Visok | L | To-Do | Sprint 4 | Mora biti urađeno prije početka implementacije|
-| PB-18 | API dokumentacija | Definisanje ruta i formata podataka | Technical Task | Visok | M | To-Do | Sprint 4 | Radi olakšanja implementacije.|
+| PB-18 | API dokumentacija | Definisanje ruta i formata podataka | Technical Task | Srednji | M | To-Do | Sprint 4 | Radi olakšanja implementacije|
 | PB-19 | Uspostaviti AI Usage Log i Decision Log| Kreirati Decision log dokument koji se koristi za evidentiranje važnih projektnih odluka, kao i AI Usage Log dokument u kojem se evidentira upotreba AI alata | Documentation | Visok | S | To-Do | Sprint 5 | - |
 | PB-20 | Implementirati registraciju korisnika | Korisnik može kreirati nalog unosom osnovnih podataka (ime, email, lozinka) | Feature | Visok | M | To-Do | Sprint 5 | - |
 | PB-21 | Implementirati prijavu i odjavu | Autentifikacija korisnika putem emaila i lozinke, te odjava sa sistema | Feature | Visok | S | To-Do | Sprint 5 | - |
-| PB-22 | Implementirati sistem permisija | Tehnička implementacija dozvola za svaku ulogu korisnika | Technical Task | Visok | L | To-Do | Sprint 5 | Osnova za sve ostale funkcionalnosti. |
+| PB-22 | Implementirati sistem permisija | Tehnička implementacija dozvola za svaku ulogu korisnika | Technical Task | Visok | L | To-Do | Sprint 5 | Osnova za sve ostale funkcionalnosti |
 | PB-23 | Sigurnosni protokoli | Zaštita ruta, enkripcija lozinki i zaštita privatnih podataka | Technical Task | Visok | M | To-Do | Sprint 6 | - |
-| PB-24 | Implementirati upravljanje ligama | Omogućiti kreiranje liga i timova u odnosu na prethodno definisane permisije | Feature | Visok | L | To-Do | Sprint 6 | - |
+| PB-24 | Implementirati upravljanje ligama | Omogućiti kreiranje liga i timova u odnosu na prethodno definisane permisije | Feature | Visok | M | To-Do | Sprint 6 | - |
 | PB-25 | Implementirati upravljanje timovima | Organizator dodaje, uređuje i briše timove unutar lige | Feature | Visok | M | To-Do | Sprint 6 | - |
 | PB-26 | Implementirati prijavu ekipa | Trener prijavljuje ekipu na ligu ili turnir | Feature | Srednji | M | To-Do | Sprint 6 | - |
 | PB- 27 | Implementirati kreiranje rasporeda | Omogućiti organizatoru da kreira raspored utakmica s datumom, vremenom i lokacijom | Feature | Visok | M | To-Do | Sprint 7 | - |
 | PB-28 | Implementirati pregled rasporeda | Svi korisnici mogu pregledati raspored s mogućnošću filtriranja | Feature | Visok | S | To-Do | Sprint 7 | - |
 | PB-29 | Implementirati unos rezultata | Odgovorni unosi rezultate odigranih utakmica | Feature | Visok | S | To-Do | Sprint 8 | - |
 | PB-30 | Implementirati automatsku tabelu | Nakon unosa rezultata sistem automatski ažurira tabelu i bodove | Feature | Visok | L | To-Do | Sprint 8 | - |
-| PB-31 | Implementirati upravljanje objektima | Vlasnici unose i ažuriraju dostupnost svojih terena i dvorana | Feature | Visok | M | To-Do | Sprint 9 | - |
+| PB-31 | Implementirati upravljanje objektima | Vlasnici unose i ažuriraju dostupnost svojih terena i dvorana | Feature | Srednji | M | To-Do | Sprint 9 | - |
 | PB-32 | Implementirati rezervaciju termina | Korisnik šalje zahtjev za rezervaciju, vlasnik odobrava ili odbija. | Feature | Srednji | M | To-Do | Sprint 9 | - |
 | PB-33 | Validacija podataka | Sprečavanje unosa netačnih podataka u svim formama sistema | Technical Task | Visok | M | To-Do | Sprint 9 | - |
 | PB-34 | Implementirati sistem obavještenja | Automatsko slanje obavještenja o promjenama rasporeda i rezultatima | Feature | Srednji | L | To-Do | Sprint 10 | Email ili in-app notifikacije |
