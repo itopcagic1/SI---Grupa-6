@@ -14,7 +14,6 @@
 
 | Ime i prezime | Broj indeksa | Kontakt | 
 |---|---|---|
-| Asistent predmeta | — | — | 
 | Irma Topčagić | 19504 | itopcagic1@etf.unsa.ba | 
 | Anes Mirvić | 18984 | amirvic1@etf.unsa.ba | 
 | Semir Jamaković | 19706 | sjamakovic1@etf.unsa.ba | 
@@ -40,7 +39,7 @@
 
 - Viber poruke: odgovor u roku od 12 sati tokom radnih dana
 - Komentari na ClickUp taskovima: odgovor u roku od 24 sata
-- Hitne situacije (blokada rada): odgovor u roku od 2 sata, uz obavezno označavanje člana u poruci.
+- Hitne situacije : odgovor u roku od 2 sata
 
 ### Način zakazivanja sastanaka
 
@@ -56,7 +55,6 @@
 ### Kada i kako tim radi zajedno
 
 - Tim se okuplja jednom sedmično na planiranom sprint sastanku putem **Google Meet**
-- Trajanje sastanka je između **45 i 60 minuta**
 - Individualni rad se prati kroz **ClickUp** — svaki član ažurira status svojih taskova redovno
 
 ### Kako se zadaci dogovaraju i prate
@@ -77,7 +75,7 @@
 
 1. Neslaganje se prvo iznosi otvoreno u timu tokom sastanka ili u ClickUp komentarima
 2. Pokušava se postići **konsenzus** diskusijom — svaki član iznosi svoj argument
-3. Ako se neslaganje tiče tehničkih odluka većeg opsega, konzultuje se **Product Owner (asistent)**
+3. Ako se neslaganje tiče tehničkih odluka većeg opsega, konsultuje se asistent
 4. Lični konflikti se rješavaju direktnim razgovorom između uključenih strana, van grupnih kanala
 
 ---
