@@ -41,7 +41,7 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-19 | Uspostaviti AI Usage Log i Decision Log| Kreirati Decision log dokument koji se koristi za evidentiranje važnih projektnih odluka, kao i AI Usage Log dokument u kojem se evidentira upotreba AI alata | Documentation | Visok | S | To-Do | Sprint 5 | - |
 | PB-20 | Implementirati registraciju korisnika | Korisnik može kreirati nalog unosom osnovnih podataka (ime, email, lozinka) | Feature | Visok | M | To-Do | Sprint 5 | - |
 | PB-21 | Implementirati prijavu i odjavu | Autentifikacija korisnika putem emaila i lozinke, te odjava sa sistema | Feature | Visok | S | To-Do | Sprint 5 | - |
-| PB-22 | Implementirati sistem permisija | Tehnička implementacija dozvola za svaku ulogu korisnika | Technical Task | Visok | L | To-Do | Sprint 5 | Osnova za sve ostale funkcionalnosti |
+| PB-22 | Implementirati sistem permisija | Tehnička implementacija dozvola za svaku ulogu korisnika | Technical Task | Visok | L | To-Do | Sprint 5 | - |
 | PB-23 | Sigurnosni protokoli | Zaštita ruta, enkripcija lozinki i zaštita privatnih podataka | Technical Task | Visok | M | To-Do | Sprint 6 | - |
 | PB-24 | Implementirati upravljanje ligama | Omogućiti kreiranje liga i timova u odnosu na prethodno definisane permisije | Feature | Visok | M | To-Do | Sprint 6 | - |
 | PB-25 | Implementirati upravljanje timovima | Organizator dodaje, uređuje i briše timove unutar lige | Feature | Visok | M | To-Do | Sprint 6 | - |
