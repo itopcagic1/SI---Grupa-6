@@ -13,14 +13,14 @@
 ## 2. Članovi tima
 
 | Ime i prezime | Broj indeksa | Kontakt | 
-|---|---|---|---|
+|---|---|---|
 | Asistent predmeta | — | — | 
 | Irma Topčagić | 19504 | itopcagic1@etf.unsa.ba | 
 | Anes Mirvić | 18984 | amirvic1@etf.unsa.ba | 
 | Semir Jamaković | 19706 | sjamakovic1@etf.unsa.ba | 
 | Mehdi Zaimović | 19564 | mzaimovic2@etf.unsa.ba | 
 | Maida Biber | 19580 | mbiber1@etf.unsa.ba | 
-| Zeir Mašić |19801 | zmasic1@etf.unsa.ba | 
+| Zeir Mašić | 19801 | zmasic1@etf.unsa.ba | 
 | Ilma Hindija | 19704 | ihindija1@etf.unsa.ba | 
 | Amna Kerla | 19355 | akerla1@etf.unsa.ba | 
 
