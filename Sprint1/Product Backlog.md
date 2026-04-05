@@ -43,10 +43,10 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-21 | Implementirati prijavu i odjavu | Autentifikacija korisnika putem emaila i lozinke, te odjava sa sistema | Feature | Visok | S | To-Do | Sprint 5 | - |
 | PB-22 | Implementirati sistem permisija | Tehnička implementacija dozvola za svaku ulogu korisnika | Technical Task | Visok | L | To-Do | Sprint 5 | - |
 | PB-23 | Sigurnosni protokoli | Zaštita ruta, enkripcija lozinki i zaštita privatnih podataka | Technical Task | Visok | M | To-Do | Sprint 6 | - |
-| PB-24 | Implementirati upravljanje ligama | Omogućiti kreiranje, uređivanje i brisanje liga u odnosu na prethodno definisane permisije | Feature | Visok | M | To-Do | Sprint 6 | - |
-| PB-25 | Implementirati upravljanje timovima | Organizator dodaje, uređuje i briše timove te ih povezuje sa ligama | Feature | Visok | M | To-Do | Sprint 6 | - |
-| PB-26 | Implementirati prijavu ekipa na ligu | Trener prijavljuje ekipu na ligu ili turnir | Feature | Srednji | M | To-Do | Sprint 6 | - |
-| PB-27 | Implementirati kreiranje rasporeda | Omogućiti organizatoru da kreira raspored utakmica s datumom, vremenom i lokacijom | Feature | Visok | M | To-Do | Sprint 7 | - |
+| PB-24 | Implementirati upravljanje ligama | Omogućiti kreiranje liga i timova u odnosu na prethodno definisane permisije | Feature | Visok | M | To-Do | Sprint 6 | - |
+| PB-25 | Implementirati upravljanje timovima | Organizator dodaje, uređuje i briše timove unutar lige | Feature | Visok | M | To-Do | Sprint 6 | - |
+| PB-26 | Implementirati prijavu ekipa | Trener prijavljuje ekipu na ligu ili turnir | Feature | Srednji | M | To-Do | Sprint 6 | - |
+| PB- 27 | Implementirati kreiranje rasporeda | Omogućiti organizatoru da kreira raspored utakmica s datumom, vremenom i lokacijom | Feature | Visok | M | To-Do | Sprint 7 | - |
 | PB-28 | Implementirati pregled rasporeda | Svi korisnici mogu pregledati raspored s mogućnošću filtriranja | Feature | Visok | S | To-Do | Sprint 7 | - |
 | PB-29 | Implementirati unos rezultata | Odgovorni unosi rezultate odigranih utakmica | Feature | Visok | S | To-Do | Sprint 8 | - |
 | PB-30 | Implementirati automatsku tabelu | Nakon unosa rezultata sistem automatski ažurira tabelu i bodove | Feature | Visok | L | To-Do | Sprint 8 | - |
@@ -55,10 +55,9 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-33 | Implementirati proces potvrde termina | Omogućiti vlasniku objekta da odobri ili odbije zahtjev za rezervaciju, uz automatsku promjenu statusa termina | Feature | Srednji | L | To-Do | Sprint 9 | - |
 | PB-34 | Validacija podataka | Sprečavanje unosa netačnih podataka u svim formama sistema | Technical Task | Visok | M | To-Do | Sprint 9 | - |
 | PB-35 | Implementirati sistem obavještenja | Automatsko slanje obavještenja o promjenama rasporeda i rezultatima | Feature | Srednji | L | To-Do | Sprint 10 | Email ili in-app notifikacije |
-| PB-36 | Implementirati AI model za predikciju rezultata i finalnog poretka | Na osnovu historijskih rezultata i trenutne forme timova sistem generiše predikciju ishoda narednih utakmica i projekciju konačnog poretka lige | Feature | Srednji | L | To-Do | Sprint 10 | Predikcija nema uticaj na stvarne rezultate i služi kao informativni prikaz |
-| PB-37| Responzivni UI dizajn | Optimizacija fronteda za mobilne uređaje i različite veličine ekrana | Technical Task | Nizak | L | To-Do | Sprint 10 | Web-first pristup |
-| PB-38| PDF izvoz tabela i rasporeda | Omogućiti korisnicima izvoz tabela, rasporeda i statistika u PDF format | Feature | Nizak | M | To-Do | Sprint 11 | Nije prioritetno za MVP |
-| PB-39 | Testiranje sistema | Pisanje i izvršavanje unit testova za ključne funkcionalnosti | Technical Task | Visok | L | To-Do | Sprint 11 | - |
+| PB-36| Responzivni UI dizajn | Optimizacija fronteda za mobilne uređaje i različite veličine ekrana | Technical Task | Nizak | L | To-Do | Sprint 10 | Web-first pristup |
+| PB-37| PDF izvoz tabela i rasporeda | Omogućiti korisnicima izvoz tabela, rasporeda i statistika u PDF format | Feature | Nizak | M | To-Do | Sprint 11 | Nije prioritetno za MVP |
+| PB-38 | Testiranje sistema | Pisanje i izvršavanje unit testova za ključne funkcionalnosti | Technical Task | Visok | L | To-Do | Sprint 11 | - |
 
 
 > **Napomena:** Ovaj dokument predstavlja primarni izvor zahtjeva. Počevši od Sprinta 5, tim će za svaki razvojni ciklus kreirati specifičan Sprint Backlog koji će sadržavati tehničke pod-zadatke (sub-tasks) i precizna zaduženja članova tima. Product Backlog će se redovno revidirati.
