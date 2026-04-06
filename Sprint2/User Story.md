@@ -257,14 +257,14 @@ Omogućava selekciju korisnika i upravljanje rasporedom.
 - Sistem mora evidentirati odbijanje
 - Korisnik treba dobiti obavještenje
 
-### 5. USER STORY – Navijač (pregled utakmica)
+### 5. USER STORY – Navijač (pregled sadržaja)
 
 **ID storyja:** US-05
 
-**Naziv storyja:** Pregled utakmica i rezultata
+**Naziv storyja:** Pregled rezultata utakmica i rasporeda
 
 **Opis:**
-Kao navijač, želim da pregledam utakmice i rezultate, kako bih bio informisan o dešavanjima.
+Kao posjetioc stranice želim da imam uvid u rezultate i tabele uz mogućnost filtriranja, dok kao registrovani korisnik želim dodatnu opciju praćenja omiljenog tima.
 
 **Poslovna vrijednost:**
 Povećava angažman i posjećenost platforme.
@@ -272,14 +272,14 @@ Povećava angažman i posjećenost platforme.
 **Prioritet:** Srednji
 
 **Pretpostavke:**
-- Nije potrebna registracija
+- Registracija je opcionalna
 
 **Acceptance Criteria:**
-- Kada korisnik otvori aplikaciju, tada vidi listu utakmica
+- Kada korisnik otvori aplikaciju, tada vidi tabelu utakmica, sa rezultatima i rasporedom
 - Sistem mora omogućiti filtriranje po ligi, timu i datumu
 - Sistem mora prikazati rezultate u realnom vremenu
 - Sistem ne smije zahtijevati login za pregled
-- Korisnik treba vidjeti detalje utakmice (timovi, rezultat, vrijeme)
+- Sistem treba omogućiti registraciju korisniku, ukoliko on to želi, kako bi mogao imati pristup dodatnim funkcionalnostima
 
 ### 5.1 USER STORY – Pregled bez registracije
 
@@ -288,12 +288,14 @@ Povećava angažman i posjećenost platforme.
 **Naziv storyja:** Pregled bez registracije
 
 **Opis:**
-Kao navijač, želim da pregledam utakmice bez prijave, kako bih brzo došao do informacija.
+Kao gost, želim da pregledam rezultate, bodove, pozicije timova kao i raspored utakmica bez prijave, kako bih brzo došao do informacija.
 
 **Acceptance Criteria:**
 - Kada korisnik otvori aplikaciju, tada može pregledati utakmice bez login-a
 - Sistem ne smije zahtijevati registraciju za pregled
-- Sistem mora prikazati osnovne informacije (timovi, rezultat, vrijeme)
+- Sistem mora prikazati osnovne informacije (timovi, rezultati, bodovi i pozicije timova)
+- Sistem mora prikazati vrijeme održavanja utakmica (raspored)
+- Sistem mora automatski ažurirati tabele
 
 ### 5.2 USER STORY – Filtriranje sadržaja
 
@@ -302,11 +304,11 @@ Kao navijač, želim da pregledam utakmice bez prijave, kako bih brzo došao do 
 **Naziv storyja:** Filtriranje sadržaja
 
 **Opis:**
-Kao navijač, želim da filtriram utakmice, kako bih lakše pronašao željene informacije.
+Kao gost, želim da filtriram utakmice, kako bih lakše pronašao željene informacije.
 
 **Acceptance Criteria:**
-- Kada korisnik odabere filter, tada se lista ažurira
 - Sistem mora omogućiti filtriranje po ligi, timu i datumu
+- Kada korisnik odabere filter, tada se lista ažurira
 - Sistem mora prikazati rezultate filtriranja u realnom vremenu
 
 ### 5.3 USER STORY – Registracija navijača
@@ -316,26 +318,12 @@ Kao navijač, želim da filtriram utakmice, kako bih lakše pronašao željene i
 **Naziv storyja:** Opcionalna registracija navijača
 
 **Opis:**
-Kao navijač, želim opciju registracije, kako bih mogao dobiti dodatne funkcionalnosti.
+Kao navijač, želim opciju registracije, kako bih pored svih navedenih funkcionalnosti koje su dostupne gostu mogao selektovati omiljeni tim, te primati notifikacije o njegovim rezultatima i rasporedu igranja utakmica
 
 **Acceptance Criteria:**
 - Sistem mora omogućiti registraciju navijača
-- Registrovani korisnik treba imati iste mogućnosti pregleda + dodatne opcije (npr. notifikacije)
+- Registrovani korisnik treba imati iste mogućnosti pregleda kao i gost + dodatne opcije biranja omiljenog tima i primanja notifikacija 
 - Sistem ne smije ograničiti osnovni pregled neregistrovanim korisnicima
-
-### 5.4 USER STORY – Pregled tabele
-
-**ID storyja:** US-05.4 
- 
-**Naziv storyja:** Pregled tabele i rezultata
-
-**Opis:**
-Kao navijač, želim vidjeti tabelu lige, kako bih pratio stanje timova.
-
-**Acceptance Criteria:**
-- Kada korisnik otvori ligu, tada vidi tabelu
-- Sistem mora prikazati bodove i pozicije timova
-- Sistem mora automatski ažurirati tabelu nakon unosa rezultata
 
 ### 6. USER STORY – Administrator (upravljanje korisnicima)
 
