@@ -833,3 +833,45 @@ Kao korisnik (Igrač/Trener), želim da se prijavim na listu čekanja za već za
 - Korisnik treba imati mogućnost da se ukloni sa liste čekanja ako mu termin više nije potreban
 
 ---
+
+## 18. USER STORY – Pregled AI predikcije
+
+**ID storyja:** US-18
+
+**Naziv storyja:** Pregled AI predikcije
+
+**Opis:**
+Kao registrovani korisnik, želim da imam pristup AI predikciji ishoda narednih utakmica i konačnog poretka lige, kako bih bolje planirao strategiju i pratio konkurenciju.
+
+**Poslovna vrijednost:**
+- Povećava angažman korisnika kroz analitičke funkcionalnosti
+- Diferencira aplikaciju od konkurencije korištenjem AI funkcionalnosti
+- Pruža dodatnu vrijednost i za trenere, igrače i navijače
+
+**Prioritet:** Srednji
+
+**Pretpostavke:**
+- Postoji AI model ili servis koji generiše predikcije
+- Dostupni su relevantni podaci (rezultati, statistike, forma timova)
+- Korisnici imaju osnovno razumijevanje šta znači AI predikcija
+- Sistem ima dovoljno performansi za obradu i prikaz podataka u realnom vremenu ili blizu realnog vremena
+
+**Otvorena pitanja:**
+- Koliko često se AI predikcije ažuriraju?
+- Da li će korisnici vidjeti detaljne statistike iza predikcije ili samo rezultat?
+- Kako prikazati nepouzdanost ili grešku predikcije (confidence score)?
+- Da li će korisnici moći upoređivati predikcije sa stvarnim rezultatima?
+
+
+**Veze:** US-10, US-10.1
+
+**Acceptance Criteria:**
+- Korisnik može vidjeti AI predikciju za naredne utakmice (pobjednik, rezultat ili vjerovatnoće)
+- Korisnik može vidjeti predikciju konačnog poretka lige
+- Predikcije su jasno označene kao AI generisane
+- Prikaz uključuje osnovno objašnjenje ili faktore (npr. forma tima, prethodni rezultati)
+- Sistem omogućava osvježavanje predikcija (npr. nakon novih utakmica ili podataka)
+- Pristup je ograničen samo na registrovane korisnike
+- UI prikaz je pregledan i razumljiv svim tipovima korisnika
+
+---
