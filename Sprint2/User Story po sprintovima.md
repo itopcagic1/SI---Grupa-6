@@ -1,6 +1,4 @@
-
 ### **SPRINT 5** (PB-20, PB-21, PB-22)
-
 
 ## 1. USER STORY – Registracija korisnika
 

@@ -37,6 +37,7 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-15 | Postaviti tehnički skeleton | Kreiranje osnovne strukture projekta (folderi, konfiguracija, osnovna arhitektura) | Technical Task | Visok | L | To-Do | Sprint 4 | - |
 | PB-16 | Setup razvojnog okruženja | Postavljanje razvojnog i produkcijskog servera te automatizacija objave (CI/CD) | Technical Task | Visok | M | To-Do | Sprint 4 | - |
 | PB-17 | Dizajn baze podataka | Definisanje ER dijagrama i relacija između entiteta sistema | Technical Task | Visok | L | To-Do | Sprint 4 | Mora biti urađeno prije početka implementacije|
+| PB-17.1 | Postavljanje i konfiguracija baze podataka | Kreiranje fizičke strukture baze podataka kroz migracije, uključujući tabele, relacije i inicijalne uloge | Technical Task | Visok | M | To-Do | Sprint 4 | - |
 | PB-18 | API dokumentacija | Definisanje ruta i formata podataka | Technical Task | Srednji | M | To-Do | Sprint 4 | Radi olakšanja implementacije|
 | PB-19 | Uspostaviti AI Usage Log i Decision Log| Kreirati Decision log dokument koji se koristi za evidentiranje važnih projektnih odluka, kao i AI Usage Log dokument u kojem se evidentira upotreba AI alata | Documentation | Visok | S | To-Do | Sprint 5 | - |
 | PB-20 | Implementirati registraciju korisnika | Korisnik može kreirati nalog unosom osnovnih podataka (ime, email, lozinka) | Feature | Visok | M | To-Do | Sprint 5 | - |
