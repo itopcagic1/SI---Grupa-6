@@ -19,6 +19,12 @@ Omogućava pristup sistemu i diferencijaciju korisnika po ulogama (igrač, trene
 - Korisnik ima validan email
 - Da li je potrebna verifikacija emaila?
 
+#### **US-1.1 – Odobravanje specijalnih uloga**
+**Opis:** Kao administrator, želim verifikovati vlasnike objekata i organizatore liga.
+**Acceptance Criteria:**
+* Admin vidi listu zahtjeva "Na čekanju".
+* Tek nakon odobrenja, korisnik dobija dozvolu za kreiranje objekata ili liga.
+
 **Veze:** Login (US-02)
 
 **Acceptance Criteria:**
@@ -28,6 +34,7 @@ Omogućava pristup sistemu i diferencijaciju korisnika po ulogama (igrač, trene
 - Kada korisnik unese nevalidan email, tada sistem prikazuje grešku
 - Kada korisnik unese neispravnu šifru, tada sistem prikazuje grešku
 - Korisnik treba dobiti potvrdu o uspješnoj registraciji
+
 
 ## 2. USER STORY – Login
 
@@ -104,24 +111,9 @@ Dodatna sigurnost sistema.
 - Nakon odjave, korisnik mora ponovo unijeti kredencijal
 
 
-### 4.1 USER STORY – Pregled korisnika
+### **SPRINT 6** (PB-23, PB-24, PB-25)
 
-**ID storyja:** US-04.1 
-
-**Naziv storyja:** Pregled svih korisnika
-
-**Opis:**
-Kao administrator, želim vidjeti sve korisnike, kako bih imao kontrolu nad sistemom.
-
-**Acceptance Criteria:**
-- Kada admin otvori modul korisnika, tada vidi listu svih naloga
-- Sistem mora prikazati osnovne podatke (email, uloga)
-- Sistem mora omogućiti pretragu korisnika
-
-
-### **SPRINT 6** (PB-23, PB-24, PB-25, PB-26)
-
-### 4. USER STORY – Administrator (upravljanje korisnicima)
+### 4. USER STORY – Upravljanje korisnicima (Administrator)
 
 **ID storyja:** US-04
 
@@ -142,6 +134,36 @@ Osigurava kontrolu i kvalitet platforme.
 - Sistem ne smije dozvoliti neautorizovan pristup admin funkcijama
 - Administrator treba imati pristup korisničkim podacima
 - Sistem mora zastiti privatne podatke korisnika/ enkripcija lozinke
+
+### 4.1 USER STORY – Pregled korisnika
+
+**ID storyja:** US-04.1 
+
+**Naziv storyja:** Pregled svih korisnika
+
+**Opis:**
+Kao administrator, želim vidjeti sve korisnike, kako bih imao kontrolu nad sistemom.
+
+**Acceptance Criteria:**
+- Kada admin otvori modul korisnika, tada vidi listu svih naloga
+- Sistem mora prikazati osnovne podatke (email, uloga)
+- Sistem mora omogućiti pretragu korisnika 
+
+### US-04.2 – Korisnički profil
+
+**Opis:**
+Kao registrovani korisnik, želim pregledati i urediti svoj profil, kako bih održavao tačne podatke o sebi.
+
+**Poslovna vrijednost:**
+Omogućava korisnicima kontrolu nad svojim podacima.
+
+**Prioritet:** Srednji
+
+**Acceptance Criteria:**
+- Kada korisnik otvori profil, tada vidi svoje podatke (ime, email, uloga, timovi)
+- Sistem mora omogućiti uređivanje imena i lozinke
+- Sistem ne smije dozvoliti unos nevalidnih podataka
+- Nakon izmjene, korisnik treba dobiti potvrdu o uspješnoj promjeni
 
 
 ### 5. USER STORY – Administrator (upravljanje sadržajem)
@@ -193,6 +215,10 @@ Kao administrator, želim upravljati ligama i podacima, kako bih održavao tačn
 - Promjene treba da budu odmah vidljive korisnicima
 - Sistem mora prikazati tabele postojećih liga
 
+---
+
+### **SPRINT 7** (PB-26, PB-27, PB-28)
+
 ## 6. USER STORY – Prijavljivanje tima na takmičenje
 
 **ID storyja:** US-06
@@ -223,13 +249,6 @@ Kao trener, želim da prijavim tim na takmičenje, kako bi tim mogao učestvovat
 - Sistem mora omogućiti unos svih potrebnih informacija o timu i takmičenju  
 - Korisnik treba dobiti potvrdu o uspješnoj prijavi  
 - Sistem mora omogućiti pregled svih prijavljenih takmičenja za tim
-
----
-
-
-
-### **SPRINT 7** (PB-27, PB-28)
-
 
 ## 7. USER STORY – Zakazivanje termina utakmice
 
@@ -324,7 +343,6 @@ Kao gost, želim da filtriram utakmice, kako bih lakše pronašao željene infor
 ### **SPRINT 8** (PB-29, PB-30)
 
  
-
 ## 9. USER STORY – Evidencija utakmice
 
 **ID storyja:** US-09
@@ -514,8 +532,6 @@ Povećava mogućnost popunjenosti objekta.
 - Novi termin treba biti prikazan kao slobodan
 
 
-i
-
 ### 12. USER STORY – Pregled zahtjeva
 
 **ID storyja:** US-12
@@ -663,7 +679,6 @@ Kao trener, želim da rezervišem termin za grupni trening, kako bi tim mogao tr
 ### **SPRINT 10** (PB-35,36,37)
 
 
-
 ## 15. USER STORY – Pregled stanja na tabeli termina (igrač)
 
 **ID storyja:** US-15
@@ -760,7 +775,7 @@ Kao korisnik (Igrač/Trener), želim da se prijavim na listu čekanja za već za
 
 ---
 
-### 18. USER STORY – Notifikacije za opcionalno registrovanje navijaca
+### 18. USER STORY – Notifikacije za opcionalno registrovanje navijača
 
 **ID storyja:** US-18 
  
@@ -816,20 +831,74 @@ Kao registrovani korisnik, želim da imam pristup AI predikciji ishoda narednih 
 
 ---
 
-### **SPRINT 11** (PB-41)
+### **SPRINT 11** (PB-39, PB-41)
 
-### 20. USER STORY – Administracija baze i sistema
+### 20. USER STORY – Administracija sistema
 
 **ID storyja:** US-20
  
-**Naziv storyja:** Administracija baze i sistema
+**Naziv storyja:** Administracija sistema
 
 **Opis:**
-Kao administrator, želim imati kontrolu nad podacima sistema, kako bih osigurao stabilnost, sigurnost i rijesio pronadjene greske
+Kao administrator, želim imati potpunu kontrolu nad podacima i stabilnošću sistema, kako bih osigurao ispravan rad platforme, riješio pronađene greške i održavao integritet podataka.
+Poslovna vrijednost.
+
+**Poslovna vrijednost:**
+- Osigurava stabilnost i pouzdanost sistema za sve korisnike
+- Omogućava brzo reagovanje na greške i neispravne podatke
+- Povećava povjerenje korisnika u tačnost i sigurnost platforme
+- Smanjuje rizik od zloupotrebe ili neispravnog korištenja sistema
+
+**Prioritet:** Srednji
+
+**Pretpostavke:**
+- Administrator je prijavljen u sistem
+- Administrator ima najviši nivo pristupa u sistemu
+
+**Otvorena pitanja:**
+- Da li administrator treba imati uvid u logove svih akcija korisnika?
+- Da li postoji mogućnost vraćanja obrisanih podataka (soft delete)?
+
+**Veze:** US-04, US-04.1
 
 **Acceptance Criteria:**
 - Sistem mora omogućiti pregled svih ključnih podataka (korisnici, lige, termini)
 - Sistem mora ograničiti pristup ovim funkcijama samo administratoru
 - Sistem ne smije dozvoliti neautorizovane izmjene podataka
 - Administrator treba imati mogućnost uklanjanja neispravnih ili lažnih podataka
+
+### 21. USER STORY – Generisanje PDF izvještaja
+
+**ID storyja:** US-21
+ 
+**Naziv storyja:** Izvoz podataka u PDF formatu
+
+**Opis:**
+Kao administrator ili organizator liga, želim da izvezem izvještaje o tabelama, rezultatima i statistikama u PDF formatu, kako bih mogao dijeliti zvanične podatke van sistema ili ih arhivirati.
+
+**Poslovna vrijednost:**
+- Olakšava offline arhiviranje sezona i takmičenja
+- Omogućava profesionalno dijeljenje rezultata i tabela sa sponzorima, medijima ili timovima
+- Povećava transparentnost rada organizatora kroz zvanične dokumente
+
+**Prioritet:** Nizak
+
+**Pretpostavke:**
+- Postoje generisani podaci u bazi (rezultati, tabele) koji se mogu izvesti
+
+**Otvorena pitanja:**
+- Da li obični korisnici (navijači/treneri) trebaju imati pravo na izvoz tabele ili samo administratori?
+
+**Veze:** US-10, US-20
+
+**Acceptance Criteria:**
+- Sistem mora omogućiti generisanje PDF dokumenta jednim klikom na opciju "Izvezi u PDF"
+- PDF dokument mora biti pregledan i sadržavati relevantne kolone (pozicija, ime tima, odigrane utakmice, bodovi)
+- Dokument mora sadržavati datum i vrijeme generisanja izvještaja
+- Sistem mora osigurati da se podaci u PDF-u podudaraju sa trenutnim stanjem na tabeli u aplikaciji
+
+
+
+
+
 
