@@ -61,3 +61,31 @@ Poseban fokus stavljen je na:
 - integritet podataka  
 - tačnost AI funkcionalnosti  
 - organizaciju tima  
+
+## 6. Risk Matrix
+
+Risk Matrix prikazuje raspodjelu rizika na osnovu njihove vjerovatnoće i uticaja.
+
+|                | **Nizak uticaj** | **Srednji uticaj** | **Visok uticaj** |
+|----------------|------------------|---------------------|------------------|
+| **Visoka vjerovatnoća** | - | R-08, R-12 | - |
+| **Srednja vjerovatnoća** | - | R-06, R-07, R-11, R-16, R-18 | R-01, R-02, R-03, R-04, R-05, R-10, R-17 |
+| **Niska vjerovatnoća** | R-09, R-13, R-15 | - | R-14 |
+
+
+### Objašnjenje
+
+- Rizici u gornjem desnom dijelu matrice predstavljaju najkritičnije rizike (visoka vjerovatnoća i visok uticaj)
+- Rizici u srednjem dijelu zahtijevaju praćenje i kontrolu
+- Rizici u donjem lijevom dijelu imaju najmanji prioritet
+
+
+
+
+Najkritičniji rizici u projektu su:
+- R-01 (Autentifikacija)
+- R-02 (Sigurnost)
+- R-03 (Tabela rezultata)
+- R-04 (Raspored utakmica)
+- R-05 (Rezervacije termina)
+- R-10 (Kašnjenje u razvoju)
