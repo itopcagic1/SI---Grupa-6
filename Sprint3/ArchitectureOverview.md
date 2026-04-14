@@ -123,3 +123,42 @@ Korisnik otvara sekciju predikcija → frontend šalje zahtjev backendu → back
 - **Strategija za seed podatke** — Kako inicijalno popuniti bazu dovoljnim količinama historijskih podataka za AI komponentu?
 
 
+## 8. Veza sa Risk Registerom
+
+Ograničenja i rizici navedeni u ovoj sekciji povezani su sa detaljno definisanim rizicima u Risk Register dokumentu.
+
+Arhitekturne odluke sistema direktno su povezane sa identifikovanim rizicima iz Risk Register dokumenta, kako bi se smanjila vjerovatnoća njihovog nastanka i njihov uticaj na sistem.
+
+U nastavku su prikazane ključne veze između arhitekture i identifikovanih rizika:
+
+- **R2 (Netačan prikaz podataka):**  
+  Backend sloj implementira validaciju i kontrolu podataka, dok se kroz jasno definisan API osigurava konzistentan prikaz između baze i frontend-a.
+
+- **R3 (Filtriranje i performanse):**  
+  Optimizacija upita i razdvajanje logike između frontend-a i backend-a smanjuju rizik pogrešnih rezultata i usporenja sistema.
+
+- **R6 (RBAC sigurnost):**  
+  Auth & RBAC komponenta osigurava da svaki API poziv prolazi kroz provjeru dozvola, čime se sprječava neovlašten pristup podacima.
+
+- **R7 (Autentifikacija i sesije):**  
+  Korištenje JWT tokena omogućava sigurno i skalabilno upravljanje korisničkim sesijama.
+
+- **R10 i R11 (Uvoz podataka):**  
+  Data Ingestion servis implementira parsiranje, validaciju i mapiranje podataka prije njihovog unosa u bazu.
+
+- **R12 i R13 (AI nepouzdanost):**  
+  AI modul je izdvojen kao zaseban servis, što omogućava njegovu nezavisnu evaluaciju, zamjenu i unapređenje bez uticaja na ostatak sistema.
+
+- **R14 (Notifikacije):**  
+  Notification Engine centralizuje generisanje i slanje upozorenja, čime se smanjuje rizik nepravilnog obavještavanja korisnika.
+
+- **R18 (Model baze podataka):**  
+  Relacijska baza sa jasno definisanim odnosima smanjuje rizik nekonzistentnosti i grešaka u povezivanju podataka.
+
+- **R21 (Dostupnost sistema):**  
+  Docker kontejnerizacija i planirani monitoring omogućavaju veću otpornost sistema i lakši oporavak u slučaju greške.
+
+- **R22 (Kašnjenje razvoja):**  
+  Modularna arhitektura omogućava paralelan rad više članova tima i smanjuje zavisnosti između komponenti.
+
+
