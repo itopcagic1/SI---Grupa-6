@@ -680,12 +680,19 @@ Direktno utiče na prihod i iskorištenost objekta.
 **Veze:** Rezervacije termina
 
 **Acceptance Criteria:**
-- Kada vlasnik doda novi termin, tada se on prikazuje kao slobodan
+- Vlasnik može unijeti radno vrijeme objekta (npr. 08:00–22:00)
+- Vlasnik može definisati trajanje termina (npr. 60 ili 90 minuta)
+- Vlasnik može unositi dostupne termine na nivou sedmice ili mjeseca
+- Kada vlasnik doda novi termin, tada se on automatski prikazuje u sistemu kao slobodan
 - Sistem mora omogućiti pregled kalendara termina
 - Sistem mora omogućiti ručno blokiranje termina
-- Kada vlasnik odobri zahtjev, tada se termin označava kao zauzet
+- Sistem automatski dodaje korisnika na listu nepouzdanih korisnika nakon definisanog broja prekršaja (npr. 3 nepojavljivanja ili kasna otkazivanja)
+- Vlasnik može ručno dodati ili ukloniti korisnika sa liste nepouzdanih korisnika uz navođenje razloga
+- Sistem automatski označava termin kao zauzet odmah nakon rezervacije, ukoliko korisnik nije na listi nepouzdanih korisnika
+- Ako je korisnik na listi nepouzdanih korisnika, rezervacija se stavlja na čekanje i vlasnik je dužan u roku od 1h odobriti ili odbiti zahtjev, a korisnik dobija notifikaciju o razlogu čekanja
+- Vlasnik može otkazati automatski potvrđenu rezervaciju u roku od 1h od trenutka rezervacije uz obavezno navođenje razloga, nakon čega korisnik dobija notifikaciju
 - Sistem ne smije dozvoliti dvostruku rezervaciju istog termina
-- Korisnik treba dobiti obavještenje o promjeni statusa termina
+- Korisnik treba dobiti obavještenje o svakoj promjeni statusa termina
 
 
  ### 14.1 USER STORY – Pregled kalendara termina
@@ -713,6 +720,7 @@ Omogućava bolju organizaciju i pregled iskorištenosti kapaciteta.
 - Sistem mora prikazati termine po danima i satima
 - Sistem mora jasno razlikovati slobodne i zauzete termine
 - Korisnik treba imati mogućnost pregleda različitih datuma
+- Sistem mora prikazati jasnu oznaku za termine koji čekaju odobrenje vlasnika (korisnici sa liste nepouzdanih korisnika)
 
 ### 14.2 USER STORY – Kreiranje slobodnog termina
 
@@ -734,20 +742,21 @@ Povećava mogućnost popunjenosti objekta.
 **Veze:** US-14
 
 **Acceptance Criteria:**
-- Kada vlasnik unese termin, tada se on sprema u sistem
+- Vlasnik može kreirati termine grupno (na nivou sedmice ili mjeseca), a ne samo pojedinačno
 - Sistem mora omogućiti unos datuma, vremena i trajanja
+- Sistem mora automatski spriječiti kreiranje termina van definisanog radnog vremena
+- Kada vlasnik unese termin, tada se on sprema u sistema
 - Sistem ne smije dozvoliti preklapanje termina
 - Novi termin treba biti prikazan kao slobodan
 
 
-### 15. USER STORY – Pregled zahtjeva
 
+## 15. USER STORY – Dashboard za vlasnika (Upravljanje rezervacijama)
 **ID storyja:** US-15
 
-**Naziv storyja:** Pregled zahtjeva za rezervaciju
+**Naziv storyja:** Pregled i monitoring svih rezervacija
 
-**Opis:**
-Kao vlasnik objekta, želim pregledati pristigle zahtjeve, kako bih mogao odlučiti o njima.
+**Opis:** Kao vlasnik objekta, želim imati pregled svih rezervacija u realnom vremenu, kako bih mogao pratiti popunjenost i intervenisati po potrebi.
 
 **Poslovna vrijednost:**
 Omogućava efikasno upravljanje rezervacijama.
@@ -760,20 +769,18 @@ Omogućava efikasno upravljanje rezervacijama.
 **Veze:** US-14 Obrada rezervacija
 
 **Acceptance Criteria:**
-- Kada postoji zahtjev za rezervaciju, tada ga vlasnik vidi na listi
-- Sistem mora omogućiti opciju “odobri” ili “odbij”
-- Sistem mora prikazati korisnika i termin
-- Sistem mora omogućiti pregled po datumu
+- Vlasnik vidi hronološku listu svih rezervacija (i automatskih i onih na čekanju).
+- Sistem jasno označava status svake rezervacije (Potvrđeno, Na čekanju, Otkazano).
+- Za svaku rezervaciju vidi se profil korisnika i njegova istorija prekršaja (broj nepojavljivanja).
+- Sistem omogućava filtriranje rezervacija po datumu i specifičnom terenu/sali.
 
-
-### 15.1 USER STORY – Odobravanje rezervacije
+### 15.1 USER STORY – Ručna verifikacija (Korisnici sa liste nepouzdanih)
 
 **ID storyja:** US-15.1
 
-**Naziv storyja:** Odobravanje rezervacije
+**Naziv storyja:** Odobravanje ili odbijanje zahtjeva korisnika pod restrikcijom
 
-**Opis:**
--Kao vlasnik objekta, želim odobriti rezervaciju, kako bi termin bio zauzet.
+**Opis:** Kao vlasnik objekta, želim da lično pregledam zahtjeve korisnika koji su na listi nepouzdanih, kako bih odlučio da li ću im dozvoliti termin.
 
 **Poslovna vrijednost:**
 Omogućava kontrolu nad korištenjem termina.
@@ -786,19 +793,21 @@ Omogućava kontrolu nad korištenjem termina.
 **Veze:** US-14
 
 **Acceptance Criteria:**
-- Kada vlasnik odobri zahtjev, tada termin postaje zauzet
-- Sistem mora spriječiti nove zahtjeve za isti termin
-- Korisnik treba dobiti potvrdu
+- Kada nepouzdan korisnik pokuša rezervisati slobodan termin, zahtjev se ne potvrđuje odmah, već ide u sekciju "Zahtjevi na čekanju".
+- Vlasnik mora dobiti notifikaciju o novom zahtjevu koji čeka ručnu provjeru.
+- Vlasnik ima opciju "Odobri" (termin postaje zauzet) ili "Odbij" (termin se oslobađa).
+- Prilikom odbijanja, vlasnik unosi obrazloženje koje se šalje korisniku.
+- Ukoliko vlasnik ne reaguje u roku od 1h od momenta slanja zahtjeva, sistem automatski odbija zahtjev kako termin ne bi ostao blokiran za druge.
 
+---
 
-### 15.2 USER STORY – Odbijanje rezervacije
+### 15.2 USER STORY – Otkazivanje bilo koje rezervacije od strane vlasnika u roku od 1h
 
 **ID storyja:** US-15.2
 
-**Naziv storyja:** Odbijanje rezervacije
+**Naziv storyja:** Otkazivanje bilo koje rezervacije od strane vlasnika u roku od 1h
 
-**Opis:**
-Kao vlasnik objekta, želim odbiti rezervaciju, kako bih zadržao termin slobodnim.
+**Opis:** Kao vlasnik objekta, želim imati pravo da otkažem bilo koju automatski potvrđenu rezervaciju u roku od sat vremena, ukoliko mi iznenada zatreba slobodan termin.
 
 **Poslovna vrijednost:**
 Omogućava selekciju korisnika i upravljanje rasporedom.
@@ -811,9 +820,11 @@ Omogućava selekciju korisnika i upravljanje rasporedom.
 **Veze:** US-14
 
 **Acceptance Criteria:**
-- Kada vlasnik odbije zahtjev, tada termin ostaje slobodan
-- Sistem mora evidentirati odbijanje
-- Korisnik treba dobiti obavještenje
+- Vlasnik može otkazati rezervaciju **svaku** isključivo u roku od 1h od trenutka rezervacije
+- Nakon isteka 1h, otkazivanje od strane vlasnika više nije moguće
+- Vlasnik mora unijeti razlog otkazivanja (npr. "Tehnički kvar na terenu" ili "Privatni termin").
+- Korisnik dobija notifikaciju sa razlogom otkazivanja
+- Otkazani termin se vraća u status "Slobodan"
 
 ## 16. USER STORY – Rezervisanje termina za individualni trening
 
@@ -842,7 +853,10 @@ Kao igrač, želim da rezervišem termin za individualni trening, kako bih mogao
 **Acceptance Criteria:**
 
 - Kada igrač izabere slobodan termin, tada sistem mora omogućiti rezervaciju  
-- Sistem mora prikazati samo dostupne termine  
+- Sistem mora prikazati samo dostupne termine
+- Ako igrač nije na listi nepouzdanih korisnika, sistem automatski potvrđuje rezervaciju bez čekanja na vlasnika
+- Ako je igrač na listi nepouzdanih korisnika, sistem šalje rezervaciju na ručno odobrenje i obavještava igrača notifikacijom sa razlogom
+- Vlasnik objekta ima 1h da otkaže automatski potvrđenu rezervaciju
 - Ako termin nije dostupan, sistem ne smije dozvoliti rezervaciju  
 - Korisnik treba dobiti potvrdu o uspješnoj rezervaciji  
 - Sistem ne smije dozvoliti istom igraču da rezerviše isti termin više puta  
@@ -878,7 +892,10 @@ Kao trener, želim da rezervišem termin za grupni trening, kako bi tim mogao tr
 
 - Kada trener izabere slobodan termin, tada sistem mora sačuvati rezervaciju  
 - Sistem mora prikazati dostupne termine za grupne treninge  
-- Ako termin nije dostupan, sistem ne smije dozvoliti rezervaciju  
+- Ako termin nije dostupan, sistem ne smije dozvoliti rezervaciju
+- Ako trener nije na listi nepouzdanih korisnika, sistem automatski potvrđuje rezervaciju bez čekanja na vlasnika
+- Ako je trener na listi nepouzdanih korisnika, sistem šalje rezervaciju na ručno odobrenje i obavještava trenera notifikacijom sa razlogom
+- Vlasnik ima 1h da otkaže automatski potvrđenu rezervaciju
 - Korisnik treba dobiti potvrdu o uspješnoj rezervaciji  
 - Sistem mora omogućiti pregled svih zakazanih grupnih treninga 
 
@@ -950,21 +967,25 @@ Kao registrovani korisnik (Igrač/Trener), želim otkazati rezervisani termin, k
 **Acceptance Criteria:**
 
 - Kada korisnik pristupi svojim rezervacijama, sistem mora prikazati listu predstojećih termina sa opcijom “Otkaži”
-- Ako korisnik pokuša otkazati termin unutar nedozvoljenog vremenskog okvira (npr. manje od 24h prije), sistem mora prikazati upozorenje o penalima ili onemogućiti akciju
 - Prije konačnog otkazivanja, sistem mora prikazati notifikaciju sa pitanjem “Da li ste sigurni da želite otkazati ovaj termin?”
 - Nakon potvrde otkazivanja, sistem mora automatski poslati notifikaciju vlasniku objekta i korisnicima na listi čekanja
 - Odmah nakon otkazivanja, status termina u javnom kalendaru se mora promijeniti iz “Zauzeto” u “Slobodno”
 - Korisnik treba dobiti vizuelnu potvrdu da je rezervacija uspješno poništena
+- Ako korisnik otkaže termin unutar nedozvoljenog vremenskog okvira (npr. manje od 24h prije), sistem to evidentira kao prekršaj
+- Nakon definisanog broja evidentiranih prekršaja (npr. 3), sistem automatski dodaje korisnika na listu nepouzdanih korisnika vlasniku objekta
+- Korisnik dobija notifikaciju da je dodan na listu nepouzdanih korisnika i iz kog razloga
+
+
 ---
 
 ## 20. USER STORY – Lista čekanja za termine
 
 **ID storyja:** US-20
 
-**Naziv storyja:** Prijava na listu čekanja
+**Naziv storyja:** Lista čekanja za zauzet termin
 
 **Opis:**
-Kao korisnik (Igrač/Trener), želim da se prijavim na listu čekanja za već zauzet termin, kako bih bio obaviješten ako se taj termin oslobodi.
+Kao korisnik (Igrač/Trener), želim da se prijavim na listu čekanja za već **zauzet** termin, kako bih bio obaviješten ako se taj termin oslobodi. 
 
 **Poslovna vrijednost:**
 - Povećava šansu za popunjavanje termina nakon iznenadnog otkazivanja
@@ -980,6 +1001,19 @@ Kao korisnik (Igrač/Trener), želim da se prijavim na listu čekanja za već za
 - Kada se taj termin otkaže (prema US-16), sistem mora poslati notifikaciju svim korisnicima sa liste čekanja
 - Sistem ne smije automatski rezervisati termin, već omogućiti korisniku sa liste da ga sam prvi rezerviše
 - Korisnik treba imati mogućnost da se ukloni sa liste čekanja ako mu termin više nije potreban
+
+
+### 20.1  USER STORY – Lista čekanja za nepouzdane korisnike 
+**ID storyja:** US-20
+
+**Naziv storya:** Uslovna rezervacija za nepouzdane korisnike
+**Opis:** Kao nepouzdan korisnik, želim pokušati rezervisati slobodan termin, pri čemu moja rezervacija ide na listu čekanja kako bi vlasnik sportskog objekta obavio ručnu provjeru
+
+**Acceptance Criteria:**
+- Korisnik dobija jasnu poruku: "Vaša rezervacija zahtijeva odobrenje vlasnika zbog prethodnih prekršaja."
+- Vlasnik sportskog objekta dobija hitnu notifikaciju da ima zahtjev na čekanju.
+- Vlasnik ima vremenski rok (1 h) da odluči.
+- Termin je "blokiran" za druge dok vlasnik ne odbije ovog korisnika.
 
 ---
 
