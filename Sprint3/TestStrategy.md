@@ -90,9 +90,9 @@ Strategija testiranja se direktno oslanja na **Acceptance Criteria (AC)** kako b
 * **Vlasnik i Kalendar (US-14, US-15):** Testira se AC za unos radnog vremena objekta i trajanja termina, te automatsko generisanje slobodnih termina bez preklapanja na osnovu tih parametara. Provjerava se **AC** koji nalaže vizuelno razdvajanje automatski potvrđenih rezervacija (pouzdani korisnici) od onih koji čekaju verifikaciju (nepouzdani korisnici) na dashboardu vlasnika.
 * **Rezervacije treninga (US-16, US-18):** Verifikacija **AC** koji korisniku prikazuje samo dostupne termine, uz jasnu razliku između individualnih i grupnih treninga. Testira se logika sistema koja na osnovu historije prekršaja korisnika odlučuje da li se rezervacija potvrđuje odmah ili šalje na listu za verifikaciju.
 * **Proces verifikacije (US-15, US-17):** Testira se **AC** prema kojem vlasnik upravlja zahtjevima na čekanju i vrši kontrolu kvaliteta rezervacija kroz tri scenarija:
-    1.  **Odobravanje nepouzdanog korisnika:** Provjerava se mogućnost da vlasnik ručno potvrdi termin korisniku sa prekršajima, čime status termina iz "Na čekanju" prelazi u "Zauzeto".
-    2.  **Odbijanje nepouzdanog korisnika:** Verifikuje se **AC** koji nalaže da vlasnik **mora unijeti obrazloženje** kako bi odbio zahtjev nepouzdanog korisnika.
-    3.  **Korištenje prava otkazivanja već zauzetog termina:** Testira se funkcionalnost kojom vlasnik otkazuje automatski potvrđen termin pouzdanog korisnika, uz **obavezan unos obrazloženja**.
+    *  **Odobravanje nepouzdanog korisnika:** Provjerava se mogućnost da vlasnik ručno potvrdi termin korisniku sa prekršajima, čime status termina iz "Na čekanju" prelazi u "Zauzeto".
+    *  **Odbijanje nepouzdanog korisnika:** Verifikuje se **AC** koji nalaže da vlasnik **mora unijeti obrazloženje** kako bi odbio zahtjev nepouzdanog korisnika.
+    *  **Korištenje prava otkazivanja već zauzetog termina:** Testira se funkcionalnost kojom vlasnik otkazuje automatski potvrđen termin pouzdanog korisnika, uz **obavezan unos obrazloženja**.
 * **Tajmer i automatizacija (US-15, PB-33):** Provjera AC za kritične rokove (24h/2h i 24h lock-out):
     * Ako vlasnik ne reaguje nakon 24h od kreiranja zahtjeva nepouzdanog korisnika, isti se **automatski poništava** (termin se oslobađa).
     * Za pouzdanog korisnika se testira lock-out mehanizam, te ako je do termina ostalo manje od 24h, vlasnik više nema tehničku mogućnost otkazivanja kroz UI.
