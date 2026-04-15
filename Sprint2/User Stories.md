@@ -395,25 +395,27 @@ Trener upravlja jednim ili više timova
 - Sistem mora prikazati listu svih igrača u timu
 - Nakon izmjena, sistem treba prikazati potvrdu
 
-### 8. USER STORY – Pregled tima (trener)
+### 8. USER STORY – Pregled tima 
 
 **ID storyja:** US-08
 
 **Naziv storyja:** Pregled detalja tima
 
 **Opis:**
-Kao registrovani korisnik, želim da imam pregled tima, kako bih imao uvid u sve relevantne informacije.
+Kao registrovani korisnik, želim da imam pregled tima, kako bih imao uvid u relevantne informacije.
 
 **Poslovna vrijednost:**
-Omogućava bolju organizaciju
-Povećava preglednost podataka
-Olakšava donošenje odluka
+- Omogućava bolju organizaciju
+- Povećava preglednost podataka
+- Olakšava donošenje odluka
 
 **Prioritet:** Srednji
 
 **Acceptance Criteria:**
 - Korisnik može vidjeti sve osnovne informacije o timu
-- Sistem mora prikazati listu igraca i njhovu statistiku 
+- Sistem mora prikazati listu igrača u tom timu
+- Sistem mora prikazati statistiku svakog igrača (broj odigranih utakmica, golovi/poeni, asistencije, kartoni – ako je primjenjivo)
+- Statistika mora biti ažurirana na osnovu unesenih podataka sa utakmica 
 - Sistem mora prikazati ligu u kojoj tim učestvuje
 - Podaci moraju biti ažurni
 ---
@@ -583,7 +585,16 @@ Kao organizator liga, želim izvršiti evidenciju završene utakmice, kako bi ko
 - Sistem mora omogućiti unos rezultata i osnovnih informacija o utakmici  
 - Ako podaci nisu validni ili nedostaju, sistem ne smije dozvoliti spremanje  
 - Organizator liga unosi sve rezultate za utakmice i timove u toj ligi za koju je vezan 
-- Organizator liga unosi statistiku vezanu za tu utakmicu - strijelci, posjed lopte, crveni i zuti kartoni i ostalo 
+- Sistem mora omogućiti unos detaljne statistike utakmice:
+  - strijelci / poeni
+  - asistencije
+  - kartoni / prekršaji
+  - posjed lopte (ako je primjenjivo)
+- Sistem mora povezati statistiku sa pojedinačnim igračima i timovima
+- Nakon unosa, statistika mora biti vidljiva u:
+  - pregledu utakmice
+  - profilu tima
+  - profilu igrača
 - Sistem mora omogućiti kasniji pregled unesenih podataka  
 
 ---
@@ -617,7 +628,6 @@ Kao organizator liga, želim unijeti bodove utakmice, kako bi sistem automatski 
 - Kada organizator unese bodove, ako su validni, tada sistem mora prikazati tačne rezultate  
 - Ako su bodovi negativni ili nelogični, sistem ne smije dozvoliti unos  
 - Nakon unosa bodova, sistem mora automatski ažurirati tabelu  
-- Korisnik treba dobiti potvrdu o uspješnom unosu bodova  
 - Sistem mora omogućiti unos bodova za obje ekipe 
 
 ---
@@ -650,10 +660,39 @@ Kao registrovani korisnik, želim da vidim tabelu rezultata i bodova svih timova
 **Acceptance Criteria:**
 
 - Kada korisnik pristupi tabeli, sistem mora prikazati sve timove sa njihovim bodovima i rangom  
+- Sistem mora prikazati dodatnu statistiku timova:
+  - broj pobjeda, poraza, neriješenih
+  - gol razlika / poeni
+- Sistem mora automatski računati statistiku na osnovu rezultata utakmica
 - Sistem mora prikazati tačne i ažurne podatke na osnovu unesenih rezultata utakmica  
 - Kada se unesu novi rezultati, tabela se mora automatski ažurirati  
-- Sistem mora omogućiti sortiranje tabele po bodovima ili drugim relevantnim parametrima (npr. gol razlika)  
+- Sistem mora omogućiti sortiranje tabele po bodovima ili drugim relevantnim parametrima (npr. gol razlika)
 - Ako podaci nisu dostupni, sistem mora prikazati odgovarajuću poruku umjesto prazne ili netačne tabele  
+
+
+### 13.1. USER STORY – Pregled statistike (igrači i timovi)
+
+**ID storyja:** US-13.1
+
+**Naziv storyja:** Pregled statistike igrača i timova
+
+**Opis:**
+Kao korisnik, želim da vidim detaljnu statistiku igrača i timova, kako bih mogao analizirati performanse i napredak.
+
+**Poslovna vrijednost:**
+- Povećava angažman korisnika
+- Omogućava analizu performansi
+- Poboljšava korisničko iskustvo
+
+**Prioritet:** Srednji
+
+**Acceptance Criteria:**
+- Sistem mora prikazati statistiku igrača (golovi/poeni, asistencije, utakmice)
+- Sistem mora prikazati statistiku timova (bodovi, pobjede, gol razlika)
+- Statistika mora biti automatski ažurirana nakon svake utakmice
+- Sistem mora omogućiti filtriranje statistike po ligi ili sezoni
+- Podaci moraju biti tačni i ažurni
+---
 
 ---
 
@@ -893,6 +932,8 @@ Kao trener, želim da rezervišem termin za grupni trening, kako bi tim mogao tr
 - Kada trener izabere slobodan termin, tada sistem mora sačuvati rezervaciju  
 - Sistem mora prikazati dostupne termine za grupne treninge  
 - Ako termin nije dostupan, sistem ne smije dozvoliti rezervaciju
+- Trener može definisati maksimalan broj igrača za grupni trening
+- Sistem mora spriječiti prijavu više igrača od dozvoljenog broja
 - Ako trener nije na listi nepouzdanih korisnika, sistem automatski potvrđuje rezervaciju bez čekanja na vlasnika
 - Ako je trener na listi nepouzdanih korisnika, sistem šalje rezervaciju na ručno odobrenje i obavještava trenera notifikacijom sa razlogom
 - Vlasnik ima 1h da otkaže automatski potvrđenu rezervaciju
@@ -917,7 +958,7 @@ Kao igrač, želim da vidim stanje rasporeda termina u tabeli, kako bih mogao us
 - Omogućava transparentnost rasporeda
 - Povećava organizaciju igrača
 
-**Prioritet:** Srednji
+**Prioritet:** Visok
 
 **Pretpostavke:**
 - Termini su jasno definisani i prikazani u sistemu
@@ -931,8 +972,49 @@ Kao igrač, želim da vidim stanje rasporeda termina u tabeli, kako bih mogao us
 
 **Acceptance Criteria:**
 
-- Kada igrač pristupi tabeli, sistem mora prikazati sve dostupne termine  
-- Ako postoje različiti tipovi termina, sistem treba jasno označiti individualne i grupne termine  
+- Kada igrač pristupi tabeli, sistem mora prikazati sve dostupne termine 
+- Sistem mora prikazati listu svih rezervisanih termina korisnika
+- Sistem posjeduje jasno označene individualne i grupne termine
+- Igrač vidi:
+  - svoje individualne termine
+  - grupne treninge na koje je prijavljen  
+- Sistem mora omogućiti pregled po datumu i vremenu  
+- Korisnik treba dobiti ažurne informacije o rasporedu  
+- Sistem ne smije prikazivati zastarjele ili netačne podatke 
+
+## 18.1 USER STORY – Pregled stanja na tabeli termina (trener)
+
+**ID storyja:** US-18.1
+
+**Naziv storyja:** Pregled stanja na tabeli termina
+
+**Opis:**
+Kao trener, želim da vidim stanje rasporeda termina u tabeli, kako bih mogao organizovati termin koji svima odgovara.
+
+**Poslovna vrijednost:**
+- Omogućava transparentnost rasporeda
+- Povećava organizaciju igrača
+
+**Prioritet:** Visok
+
+**Pretpostavke:**
+- Termini su jasno definisani i prikazani u sistemu
+
+
+**Otvorena pitanja:**
+- Da li su odvojeno označeni individualni termini treninga?
+- Da li se informacije prikazuju u realnom vremenu?
+
+**Veze:** US-10
+
+**Acceptance Criteria:**
+
+- Kada trener pristupi tabeli, sistem mora prikazati sve dostupne termine 
+- Sistem mora prikazati listu svih rezervisanih termina korisnika
+- Sistem posjeduje jasno označene individualne i grupne termine
+- Trener vidi:
+  - grupne treninge (za tim)
+  - broj prijavljenih igrača 
 - Sistem mora omogućiti pregled po datumu i vremenu  
 - Korisnik treba dobiti ažurne informacije o rasporedu  
 - Sistem ne smije prikazivati zastarjele ili netačne podatke  
