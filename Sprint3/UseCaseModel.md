@@ -310,7 +310,7 @@ Korisnik otkazuje prethodno rezervisan termin u slučaju da ga više ne može is
 ### Alternativni tokovi:
 A1: Prekasno otkazivanje – ako je prošao rok za otkazivanje, sistem prikazuje poruku: "Ne možete otkazati termin u ovom periodu"
 
-A2: Vlasnik otkazuje rezervaciju - vlasnik sportskog objekta može odlučiti u roku od 1h nakon kreiranja rezervacije da otkaže tu rezervaciju korisniku 
+A2: Vlasnik sportskog objekta može otkazati automatski potvrđenu rezervaciju najkasnije 24 sata prije početka termina uz obavezno navođenje razloga
 
 ### Ishod:
 Rezervacija je uspješno otkazana. Termin je oslobođen i dostupan ostalim korisnicima. Korisnici na listi čekanja su obaviješteni o oslobođenom terminu.
@@ -383,13 +383,12 @@ Vlasnik pregledava sve rezervacije u realnom vremenu. Sistem automatski odvaja p
 2. Sistem prikazuje hronološku listu rezervacija sa jasno označenim statusima (Potvrđeno, Na čekanju, Otkazano).
 3. Vlasnik selektuje određenu rezervaciju kako bi vidio detaljan profil korisnika.
 4. Sistem prikazuje podatke o korisniku: ime, kontakt i evidenciju prekršaja (broj nepojavljivanja ili kasnih otkazivanja).
-5. Sistem prikazuje tajmer (60 min), te korisnik u tom periodu treba odobriti ili odbiti rezervaciju korisnika koji se nalaze na listi nepouzdanih korisnika. Za ostale korisnike, vlasnik ima pravo u tom periodu otkazati rezervaciju koja je prethodno odobrena automatski.
+5. Sistem prikazuje preostalo vrijeme za odluku o nepouzdanim korisnicima (24h od zahtjeva ili 2h pred termin), dok za pouzdane korisnike omogućava otkazivanje samo ako je do termina ostalo više od 24h.
 6. Vlasnik na osnovu uvida u profil i tajmer donosi odluku o daljim akcijama (odobravanje, odbijanje ili otkazivanje).
 ### Alternativni tokovi:
 A1: Nema zahtjeva – ako ne postoje pristigli zahtjevi, sistem prikazuje poruku: "Nema dostupnih zahtjeva"
 
-A2:  Istekao rok – ako je prošlo više od 1h od rezervacije, opcija otkazivanja nije dostupna
-
+A2: Istekao rok – ako je preostalo vrijeme do termina manje od 24h, opcija otkazivanja za pouzdane korisnike se zaključava.
 ### Ishod:
 Vlasnik objekta ima potpun uvid u status termina i kredibilitet korisnika, što mu omogućava informisano upravljanje kapacitetima.
 
@@ -404,19 +403,19 @@ Odobravanje zahtjeva za rezervaciju
 ### Preduslovi:
 * Vlasnik objekta je prijavljen u sistem
 * Postoji zahtjev za rezervaciju koji čeka na odobrenje
-* Nije isteklo više od 60 minuta od iniciranja zahtjeva (unutar timeout roka).
+* Nije istekao rok za odluku (24h od zahtjeva ili 2h pred termin)
 ### Glavni tok:
 1. Vlasnik pregledava zahtjev za rezervaciju
 2. Vlasnik otvara detalje zahtjeva kako bi pregledao profil korisnika i historiju njegovih prethodnih prekršaja.
 3. Vlasnik klikne dugme "Odobri", čime potvrđuje da prihvata rizik rezervacije za navedenog korisnika.
 4. Sistem validira dostupnost termina u realnom vremenu kako bi osigurao da nije došlo do preklapanja.
 5. Sistem mijenja status rezervacije iz "Na čekanju" u "Potvrđeno".
-6. Sistem automatski prekida tajmer od 60 minuta koji je bio vezan za taj zahtjev.
+6. Sistem automatski prekida tajmer za verifikaciju koji je bio vezan za taj zahtjev.
 7. Sistem šalje notifikaciju korisniku sa potvrdom da je vlasnik ručno odobrio njegov termin.
 ### Alternativni tokovi:
 A1: Termin već zauzet – ako je termin u međuvremenu već zauzet, sistem prikazuje poruku: "Termin više nije dostupan" i zahtjev se ne može odobriti
 
-A2: Istek vremena za odobrenje – Ako vlasnik ne izvrši korak 3 unutar 60 minuta, sistem automatski odbija zahtjev.
+A2: Istek vremena za odobrenje – Ako vlasnik ne izvrši korak 3 unutar predviđenog roka (24h/2h pred termin), sistem automatski odbija zahtjev.
 
 ### Ishod:
 Rezervacija je uspješno odobrena. Termin je označen kao zauzet i korisnik je obaviješten o odobrenoj rezervaciji.
@@ -429,13 +428,13 @@ Vlasnik objekta
 ### Naziv use casea:
 Odbijanje zahtjeva ili otkazivanje rezervacije
 ### Kratak opis:
-Vlasnik objekta odbija zahtjev koji je na čekanju (za nepouzdane korisnike) ili koristi pravo otkazivanja automatski potvrđene rezervacije u roku od 60 minuta od njenog nastanka.
+Vlasnik objekta odbija zahtjev nepouzdanog korisnika u predviđenom roku ili otkazuje pouzdanu automatski potvrđenu rezervaciju najkasnije 24h prije početka.
 ### Preduslovi:
 * Vlasnik objekta je prijavljen u sistem
-* Zahtjev je u statusu "Na čekanju" ili je rezervacija "Potvrđena" prije manje od 60 minuta.
+* Zahtjev je u statusu "Na čekanju" ili je rezervacija "Potvrđena".
 ### Glavni tok:
 1. Vlasnik na Dashboardu selektuje rezervaciju koju želi odbiti ili otkazati.
-2. Sistem provjerava preostalo vrijeme (tajmer) kako bi utvrdio da li je intervencija i dalje moguća (unutar 1h).
+2. Sistem provjerava preostalo vrijeme (tajmer) kako bi utvrdio da li je intervencija i dalje moguća.
 3. Vlasnik klikne dugme "Odbij/Otkaži"
 4. Sistem otvara prozor za unos obrazloženja, gdje je vlasnik obavezan navesti razlog (npr. "Korisnik na listi nepouzdanih korisnika", "Privatni termin", "Tehnički kvar").
 5. Vlasnik potvrđuje akciju nakon unosa razloga.
@@ -443,7 +442,7 @@ Vlasnik objekta odbija zahtjev koji je na čekanju (za nepouzdane korisnike) ili
 7. Sistem oslobađa termin u kalendaru, čineći ga ponovo dostupnim za druge korisnike.
 8. Sistem šalje notifikaciju korisniku koja sadrži informaciju o otkazivanju i navedeno obrazloženje vlasnika.
 ### Alternativni tokovi:
-A1: Isteklo vrijeme za otkazivanje – ako je od momenta rezervacije prošlo više od 60 minuta, sistem onemogućava opciju otkazivanja bez dodatnih administrativnih procedura.
+A1: Isteklo vrijeme za otkazivanje – ako je do početka termina ostalo manje od 24 sata, sistem onemogućava opciju otkazivanja.
 
 A2: Nedostaje obrazloženje – ako vlasnik pokuša potvrditi otkazivanje bez unosa teksta, sistem prikazuje poruku: "Morate navesti razlog otkazivanja" i ne dozvoljava završetak akcije.
 
