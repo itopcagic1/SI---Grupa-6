@@ -52,8 +52,8 @@ Ovaj dokument sadrži listu stavki koje je potrebno završiti u okviru projekta.
 | PB-29 | Implementirati unos rezultata | Odgovorni unosi rezultate odigranih utakmica | Feature | Visok | S | To-Do | Sprint 8 | - |
 | PB-30 | Implementirati automatsku tabelu | Nakon unosa rezultata sistem automatski ažurira tabelu i bodove | Feature | Visok | L | To-Do | Sprint 8 | - |
 | PB-31 | Implementirati upravljanje objektima | Vlasnici unose i ažuriraju dostupnost svojih terena i dvorana | Feature | Srednji | M | To-Do | Sprint 9 | - |
-| PB-32 | Implementirati rezervaciju termina | Omogućiti korisniku da pošalje zahtjev za rezervaciju termina | Feature | Srednji | M | To-Do | Sprint 9 | - |
-| PB-33 | Implementirati proces potvrde termina | Omogućiti vlasniku objekta da odobri ili odbije zahtjev za rezervaciju, uz automatsku promjenu statusa termina | Feature | Srednji | L | To-Do | Sprint 9 | - |
+| PB-32 | Implementirati rezervaciju termina | Omogućiti korisniku da pošalje zahtjev za rezervaciju termina, pri čemu sistem automatski odobrava pouzdane, a na čekanje stavlja nepouzdane korisnike | Feature | Visok | M | To-Do | Sprint 9 | - |
+| PB-33 | Implementirati Dashboard za verifikaciju | Dashboard sa 60-min tajmerom za ručno odobravanje ili odbijanje termina nepouzdanim korisnicima, te mogućnost otkazivanja termina pouzdanom korisniku, isključivo u tom vremenskom periodu, uz automatsku promjenu statusa termina | Feature | Visok | L | To-Do | Sprint 9 | - |
 | PB-34 | Validacija podataka | Sprečavanje unosa netačnih podataka u svim formama sistema | Technical Task | Visok | M | To-Do | Sprint 9 | - |
 | PB-35 | Implementirati sistem obavještenja | Automatizovane notifikacije o rezultatima i tabelama za navijače (o  timu za koji navijaju) i igrače (o timu za koji igraju), te notifikacije igračima i trenerima o potvrdi, podsjetniku ili promjeni zauzetosti termina za rezervacije treninga | Feature | Srednji | L | To-Do | Sprint 10 | - |
 | PB-36 | Implementirati odabir omiljenog tima | Omogućiti registrovanim navijačima odabir omiljenog tima| Feature | Visok | S | To-Do | Sprint 10 | Osnova za personalizovane notifikacije |
