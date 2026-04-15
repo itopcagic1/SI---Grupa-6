@@ -139,7 +139,7 @@ Sve izmjene sheme baze (dodavanje kolona, kreiranje tabela, izmjena ograničenja
 
 ## 3. Dijagram arhitekture
 
-![Architecture Diagram](./SI-ArchitectureOverview.drawio1.png)
+![Architecture Diagram](./SI-ArchitectureOverview1.drawio.png)
 
 ---
 
