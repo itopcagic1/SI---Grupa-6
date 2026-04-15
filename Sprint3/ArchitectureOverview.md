@@ -90,13 +90,16 @@ Ciljna tačnost predikcije iznosi 60–70% (NFR-17). Predikcije nemaju nikakav u
 
 ---
 
-### 2.5 Sloj podataka – Baza podataka
+### 2.5 Sloj podataka – Baza podataka i Data Access Layer
 
 | Komponenta | Tehnologija |
 |---|---|
 | Baza podataka | PostgreSQL (Primary + Replica) |
+| Data Access Layer (DAL) | Sequelize ORM |
 
-Centralno trajno skladište svih podataka sistema. Jedino backend ima direktan pristup bazi.
+Centralno trajno skladište svih podataka sistema. Jedino backend ima direktan pristup bazi, i to isključivo **kroz Sequelize ORM** — nigdje u backend kodu ne pišu se sirovi SQL upiti direktno.
+
+#### PostgreSQL
 
 - Korisnici, uloge i permisije
 - Timovi, lige, utakmice i raspored
@@ -105,6 +108,25 @@ Centralno trajno skladište svih podataka sistema. Jedino backend ima direktan p
 - Audit log akcija
 
 Baza na nivou ograničenja (constraints) sprečava kreiranje duplih rezervacija za isti teren i vremenski interval putem pessimistic lockinga (NFR-16), te osigurava referencijalni integritet između entiteta. PostgreSQL Primary + Replica konfiguracija osigurava visoku dostupnost i failover za postizanje 99% uptime (NFR-03, NFR-11).
+
+#### Sequelize ORM — Data Access Layer
+
+Sequelize je ORM (Object-Relational Mapper) za Node.js koji služi kao jedini posrednik između backend poslovne logike i PostgreSQL baze podataka. Uvođenjem Sequelizea kao DAL-a postiže se jasna granica između sloja poslovne logike i sloja podataka.
+
+**Zašto Sequelize:**
+- Nativna podrška za PostgreSQL s dobro poznatim driver-om (`pg`)
+- Kompatibilan s Node.js + Express stackom koji je odabran za backend
+- Modeli se definišu kao JavaScript klase, što je konzistentno s ostatkom backend koda
+- Ugrađena zaštita od SQL injection napada kroz parametrizovane upite
+- Podrška za migracije (`sequelize-cli`) — verzionisane izmjene sheme baze
+
+**Uloga Sequelizea u sistemu:**
+
+Svaki entitet iz domenskog modela (Korisnik, Tim, Liga, Utakmica, Rezervacija, itd.) definiše se kao Sequelize Model. Model opisuje kolone tablice, tipove podataka, validacije na nivou modela i veze prema drugim modelima (`hasMany`, `belongsTo`, `belongsToMany`).
+
+**Migracije:**
+
+Sve izmjene sheme baze (dodavanje kolona, kreiranje tabela, izmjena ograničenja) provode se isključivo kroz Sequelize migracije (`sequelize-cli`). Ovo osigurava da su izmjene verzionisane, ponovljive i reverzibilne u svim okruženjima (development, staging, production).
 
 ---
 
@@ -117,7 +139,7 @@ Baza na nivou ograničenja (constraints) sprečava kreiranje duplih rezervacija 
 
 ## 3. Dijagram arhitekture
 
-![Architecture Diagram](./SI-ArchitectureOverview.drawio.png)
+![Architecture Diagram](./SI-ArchitectureOverview_drawio1.png)
 
 ---
 
@@ -222,4 +244,5 @@ Korisnik inicira izvoz → frontend šalje zahtjev backendu s parametrima izvje�
 | Notifikacijski kanal | Ostati samo na email notifikacijama ili dodati in-app obavještenja u kasnijim sprintovima? |
 
 ---
+
 
