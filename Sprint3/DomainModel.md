@@ -1,3 +1,6 @@
+## Domenski Model
+
+---
 **1. Glavni entiteti i ključni atributi**
 
 U tabeli ispod prikazani su glavni entiteti sistema i njihovi ključni atributi. Za svaki entitet naveden je kratak opis njegove uloge u sistemu, kao i najvažniji atributi, pri čemu su posebno označeni primarni i strani ključevi.
