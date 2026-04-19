@@ -33,7 +33,7 @@ Cilj Sprinta 4 je uspostavljanje tehničkih i procesnih temelja projekta koji ć
 
 ### Rizici
 
-- Neusaglašenost tima oko odabira branching strategije ili tehnološkog stacka može usporiti napredak u narednim sprintovima
+- Neusaglašenost tima oko odabira branching strategije može usporiti napredak u narednim sprintovima
 - Nepotpun ili preširok Initial Release Plan može dovesti do nerealistični očekivanja oko rokova i release tačaka
 - Loše postavljen skeleton projekta može zahtijevati refaktoring u kasnijim sprintovima
 - Ako Definition of Done ne bude prihvaćen od strane cijelog tima, može doći do nekonzistentnog kvaliteta isporuke
