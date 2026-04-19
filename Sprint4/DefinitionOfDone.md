@@ -2,13 +2,11 @@
 
 ## 1. Uvod
 
-Ovaj dokument definiše skup kriterija koje svaka User Story mora zadovoljiti kako bi se smatrala završenom u okviru projekta *Sistem za upravljanje sportskim terminima i ligama*.
-
-Definition of Done predstavlja zajednički standard kvaliteta za cijeli tim i osigurava da svaka implementirana funkcionalnost bude ne samo razvijena, već i testirana, validirana, pregledana i u potpunosti integrisana u sistem.
+Ovaj dokument definiše skup kriterija koje svaka stavka mora zadovoljiti kako bi se smatrala završenom u okviru projekta *Sistem za upravljanje sportskim terminima i ligama*.
 
 Svrha ovog dokumenta je eliminisati nejasnoće oko toga šta znači da je zadatak "gotov", te osigurati da svi članovi tima imaju isto razumijevanje završetka rada.
 
-Ovaj dokument važi za sve User Stories u svim sprintovima i koristi se kao kontrolna lista prilikom završetka svakog zadatka.
+Ovaj dokument važi za sve stavke u svim sprintovima i koristi se kao kontrolna lista prilikom završetka svakog zadatka.
 
 ---
 
@@ -16,55 +14,42 @@ Ovaj dokument važi za sve User Stories u svim sprintovima i koristi se kao kont
 
 Cilj Definition of Done dokumenta je:
 
-- osigurati konzistentan kvalitet implementacije kroz cijeli projekat  
-- omogućiti svim članovima tima jasno razumijevanje kada je zadatak zaista završen  
-- spriječiti situacije gdje je funkcionalnost djelimično implementirana ili nedovoljno testirana  
-- osigurati da svaka User Story zadovoljava i funkcionalne i tehničke zahtjeve  
-- omogućiti lakšu saradnju i integraciju rada između članova tima  
-- smanjiti rizik od grešaka i regresija u sistemu  
+- osigurati konzistentan kvalitet implementacije kroz cijeli projekat
+- omogućiti svim članovima tima jasno razumijevanje kada je zadatak zaista završen
+- spriječiti situacije gdje je funkcionalnost djelimično implementirana ili nedovoljno testirana
+- osigurati da svaka stavka zadovoljava i funkcionalne i tehničke zahtjeve
+- omogućiti lakšu saradnju i integraciju rada između članova tima
+- smanjiti rizik od grešaka i regresija u sistemu
 
 ---
 
-## 3. Definicija završetka (Definition of Done)
+## 3. Kriteriji za završetak stavke
 
-User Story se smatra završenim (**Done**) isključivo kada su svi kriteriji definisani u ovom dokumentu u potpunosti ispunjeni.
-
-Djelimična implementacija, neprovjeren kod, neispunjeni acceptance criteria ili neintegrisana funkcionalnost ne smatraju se završenim radom.
-
----
-
-## 4. Kriteriji za završetak User Story-ja
-
-User Story se smatra završenim (Done) tek kada su ispunjeni svi sljedeći kriteriji:
+Stavka se smatra završenom (**Done**) isključivo kada su svi sljedeći kriteriji definisani u ovom dokumentu u potpunosti ispunjeni:
 
 ---
 
 ### 1. Funkcionalnost je implementirana
 
-Implementacija User Story-ja je završena u skladu sa opisom i poslovnom vrijednošću.
+Implementacija stavke je završena u skladu sa opisom i poslovnom vrijednošću definisanom u odgovarajućoj User Story-ji.
 
 To podrazumijeva da:
-- su implementirani svi potrebni dijelovi sistema (frontend i backend gdje je primjenjivo)  
-- funkcionalnost odgovara opisu iz User Story-ja  
-- funkcionalnost je dostupna odgovarajućim korisničkim ulogama (admin, trener, igrač, vlasnik objekta, gost)  
-- su poštovana pravila pristupa i autorizacije  
-- implementacija je usklađena sa postojećom arhitekturom sistema  
-- funkcionalnost je pravilno integrisana u postojeći sistem bez narušavanja drugih dijelova  
+- su implementirani svi potrebni dijelovi sistema (frontend i backend gdje je primjenjivo)
+- funkcionalnost odgovara opisu iz User Story-ja
+- funkcionalnost je dostupna odgovarajućim korisničkim ulogama (admin, trener, igrač, vlasnik objekta, gost)
+- su poštovana pravila pristupa i autorizacije
+- implementacija je usklađena sa postojećom arhitekturom sistema
+- funkcionalnost je pravilno integrisana u postojeći sistem bez narušavanja drugih dijelova
 
 ---
 
 ### 2. Acceptance Criteria su u potpunosti zadovoljeni
 
-Svi acceptance criteria definisani u User Story-ju su implementirani, testirani i potvrđeni.
+Svi acceptance criteria definisani u odgovarajućem User Story-ju su implementirani, testirani i potvrđeni.
 
 To znači da:
-- funkcionalnost radi u svim očekivanim scenarijima  
-- svi definisani poslovni zahtjevi su ispunjeni  
-- sistem ispravno reaguje na nevalidne unose (pogrešni podaci, nedostajući podaci, nedozvoljene akcije)  
-- validacije su implementirane i funkcionišu ispravno  
-- poruke o greškama i potvrde korisniku su prikazane na odgovarajući način  
-
-User Story se ne može smatrati završenim bez potpunog ispunjenja acceptance criteria.
+- stavka se ne može smatrati završenom bez potpunog ispunjenja acceptance criteria.
+- Product Owner ili odgovorni član tima potvrdio je da funkcionalnost odgovara poslovnoj namjeri stavke
 
 ---
 
@@ -73,109 +58,165 @@ User Story se ne može smatrati završenim bez potpunog ispunjenja acceptance cr
 Implementirana funkcionalnost je uspješno pokrenuta i testirana u razvojnom okruženju.
 
 To podrazumijeva da:
-- aplikacija se može uspješno buildati bez grešaka  
-- nema runtime grešaka tokom izvršavanja funkcionalnosti  
-- funkcionalnost radi stabilno u integraciji sa ostatkom sistema  
-- podaci se ispravno obrađuju, čuvaju i prikazuju  
-- sistem se ponaša očekivano u realnim scenarijima korištenja  
+- aplikacija se može uspješno buildati bez grešaka
+- nema runtime grešaka tokom izvršavanja funkcionalnosti
+- funkcionalnost radi stabilno u integraciji sa ostatkom sistema
+- podaci se ispravno obrađuju, čuvaju i prikazuju
+- sistem se ponaša očekivano u realnim scenarijima korištenja
 
 ---
 
-### 4. Testiranje je izvršeno
+### 4. Stavka je pregledana unutar tima
+
+Stavka je pregledana od strane tima, i to na dva nivoa:
+
+**Pregled koda (Code Review):**
+- kod je pregledan od strane najmanje dva člana tima prije integracije u glavni branch
+- provjerena je ispravnost implementacije i usklađenost sa zahtjevima stavke
+- provjerena je struktura, čitljivost i organizacija koda
+- identifikovani su potencijalni problemi, sigurnosni rizici ili loše prakse
+- sve primjedbe iz code review-a su riješene prije merge-a
+
+**Pregled funkcionalnosti:**
+- implementacija je demonstrirana ili pregledana unutar tima
+- tim je potvrdio da stavka odgovara opisanim zahtjevima i poslovnoj namjeri
+
+---
+
+### 5. Testiranje je izvršeno
 
 Funkcionalnost je testirana i potvrđeno je da radi ispravno.
 
 Testiranje uključuje:
-- provjeru osnovnih scenarija korištenja (happy path)  
-- provjeru negativnih scenarija (nevalidni inputi, greške)  
-- provjeru edge case-ova (duplikati, konflikti termina, ograničenja sistema)  
-- provjeru da izmjene ne utiču negativno na postojeće funkcionalnosti (regresija)  
+- provjeru osnovnih scenarija korištenja (happy path)
+- provjeru negativnih scenarija (nevalidni inputi, greške)
+- provjeru edge case-ova (duplikati, konflikti termina, ograničenja sistema)
+- provjeru da izmjene ne utiču negativno na postojeće funkcionalnosti (regresija)
 
 Svi planirani testovi (unit, integracijski ili ručni) moraju biti uspješno izvršeni bez grešaka.
 
 ---
 
-### 5. Kod je pregledan (Code Review)
+### 6. Performanse su prihvatljive
 
-Kod je pregledan od strane najmanje jednog člana tima prije integracije u glavni branch.
+Implementirana funkcionalnost radi u prihvatljivom vremenskom okviru i ne uvodi performansne probleme u sistem.
 
-Code review uključuje:
-- provjeru ispravnosti implementacije  
-- provjeru usklađenosti sa zahtjevima User Story-ja  
-- provjeru strukture, čitljivosti i organizacije koda  
-- identifikaciju potencijalnih grešaka, sigurnosnih problema ili loših praksi  
-- davanje sugestija za poboljšanje  
-
-Sve primjedbe iz code review-a moraju biti riješene prije merge-a.
+To podrazumijeva da:
+- učitavanje podataka i odgovori sistema su u prihvatljivom vremenskom okviru
+- za kompleksne operacije (rezervacije, generisanje rasporeda, statistike) posebno je provjerena efikasnost logike
 
 ---
 
-### 6. Kod je integrisan u glavni branch
+### 7. Stavka je evidentirana u relevantnim artefaktima
+
+Stavka i sve relevantne promjene su evidentirane u alatima i dokumentaciji projekta.
+
+To podrazumijeva da:
+- stavka je označena kao "Done" u Product Backlogu 
+- eventualne tehničke odluke ili značajne promjene su dokumentovane 
+- test podaci korišteni tokom razvoja su uklonjeni i baza podataka nije zagađena testnim unosima
+
+---
+
+### 8. Sigurnost je provjerena
+
+To podrazumijeva da:
+- Implementacija zadovoljava sigurnosne zahtjeve sistema.
+- Dodavanje novih funkcionalnosti ili modifikacija postojećeg koda nije narušilo uspostavljene sigurnosne protokole niti stvorilo nove ranjivosti.
+
+---
+
+### 9. UI/UX konzistentnost je osigurana
+
+Korisnički interfejs je konzistentan sa ostatkom aplikacije.
+
+To podrazumijeva da:
+- UI komponente su usklađene sa postojećim stilom aplikacije 
+- funkcionalnost je dostupna i upotrebljiva za sve predviđene korisničke uloge
+
+---
+
+### 10. Kod je integrisan u glavni branch
 
 Implementacija je uspješno integrisana u zajednički repozitorij projekta.
 
 To podrazumijeva da:
-- je razvoj izvršen u posebnoj grani (feature branch)  
-- izmjene su commitane sa jasnim i smislenim commit porukama  
-- kod je pushan na udaljeni repozitorij  
-- (ako se koristi) kreiran je pull request i odobren od strane tima  
-- merge je izvršen u glavni branch (main) bez konflikata  
-- kod je dostupan svim članovima tima za dalji razvoj  
+- je razvoj izvršen u posebnoj grani (feature branch)
+- izmjene su commitane sa jasnim i smislenim commit porukama
+- kod je pushan na udaljeni repozitorij
+- merge je izvršen u glavni branch (main) bez konflikata
+- kod je dostupan svim članovima tima za dalji razvoj
 
 ---
 
-### 7. Izvršena je završna provjera (Final Review)
 
-Nakon integracije, izvršena je finalna provjera funkcionalnosti.
+### 11. Tim je obaviješten
+
+Ostali članovi tima su obaviješteni o završetku stavke ukoliko njihov rad zavisi od implementirane funkcionalnosti.
+
+---
+
+### 12. Stavka je spremna za demonstraciju na Sprint Review-u
+
+Implementirana funkcionalnost je demonstrabilna i pripremljena za prikaz na Sprint Review-u.
+
+To podrazumijeva da:
+- funkcionalnost se može demonstrirati u razvojnom okruženju bez grešaka
+- član tima je u stanju prikazati i objasniti implementiranu funkcionalnost
+- nema otvorenih blokatora koji bi spriječili demonstraciju
+- funkcionalnost je usklađena sa ciljevima sprinta
+
+---
+
+### 13. Izvršena je završna provjera (Final Review)
+
+Nakon integracije, izvršena je finalna provjera stavke.
 
 To uključuje:
-- provjeru rada funkcionalnosti nakon merge-a  
-- provjeru da nema regresija u sistemu  
-- provjeru usklađenosti sa ostatkom aplikacije  
-- potvrdu od strane tima da funkcionalnost zadovoljava sve zahtjeve  
+- provjeru rada funkcionalnosti nakon merge-a
+- provjeru da nema regresija u sistemu
+- provjeru usklađenosti sa ostatkom aplikacije
+- potvrdu od strane tima da stavka zadovoljava sve zahtjeve
 
-Tek nakon ove provjere, User Story može biti označen kao završen.
+Tek nakon ove provjere, stavka može biti označena kao završena.
 
 ---
 
-## 5. Dodatna pravila
+## 4. Dodatna pravila
 
 Pored osnovnih kriterija, važe i sljedeća pravila:
 
-- implementacija mora biti jasno povezana sa odgovarajućim User Story-jem i njegovim Acceptance Criteria  
-- funkcionalnost mora biti usklađena sa definisanom arhitekturom sistema  
-- implementacija mora poštovati postojeće modele podataka i relacije  
-- sigurnosni zahtjevi (autentifikacija, autorizacija, enkripcija podataka) moraju biti ispoštovani  
-- podaci prikazani korisniku moraju biti tačni, konzistentni i ažurni  
-- sistem mora pravilno obrađivati nevalidne unose i konfliktne situacije  
-- za kompleksne funkcionalnosti (rezervacije, evidencija utakmica, AI predikcije) mora se posebno provjeriti logika i stabilnost sistema  
+- implementacija mora biti jasno povezana sa odgovarajućom stavkom 
+- za kompleksne funkcionalnosti (rezervacije, evidencija utakmica, AI predikcije) mora se posebno provjeriti logika i stabilnost sistema
+- Definition of Done se ne mijenja tokom aktivnog sprinta; eventualne izmjene se dogovaraju između sprintova
 
 ---
 
-## 6. Kada User Story NIJE Done
+## 5. Izuzeci i prilagodbe
 
-User Story se ne smatra završenim ako:
+U određenim situacijama pojedini kriteriji možda nisu primjenjivi. Tim može odlučiti o izuzetku uz sljedeće uslove:
 
-- acceptance criteria nisu u potpunosti implementirani  
-- funkcionalnost radi samo djelimično  
-- implementacija nije testirana  
-- postoje poznate greške koje utiču na korištenje funkcionalnosti  
-- code review nije izvršen  
-- kod nije mergean u glavni branch  
-- funkcionalnost ne radi stabilno u sistemu  
-- postoje problemi u integraciji sa ostatkom sistema  
-- tim nije potvrdio da je funkcionalnost spremna  
+- **Dokumentacijske stavke** — kriteriji vezani za kod (code review, merge, testiranje) se ne primjenjuju
+- **Istraživačke stavke (spike) i prototipovi** — kriteriji kvaliteta koda mogu biti ublaženi uz eksplicitnu saglasnost tima
+- **Ostali izuzeci** — tim može glasanjem odlučiti da određeni kriterij nije primjenjiv za konkretnu stavku, uz obaveznu dokumentaciju razloga
 
 ---
 
-## 7. Zaključak
+## 6. Kontrolna lista (Checklist)
 
-Definition of Done osigurava da svaki User Story bude implementiran na konzistentan, kvalitetan i pouzdan način.
+Prije nego što se stavka označi kao **Done**, svaki član tima koji završava zadatak treba provjeriti sljedeće:
 
-Primjenom ovog dokumenta tim osigurava da svaka funkcionalnost:
-- zadovoljava definisane zahtjeve  
-- radi stabilno u sistemu  
-- ne narušava postojeće funkcionalnosti  
-- spremna je za dalji razvoj i korištenje  
+- [ ] Funkcionalnost je implementirana u skladu sa User Story-jem
+- [ ] Svi acceptance criteria su ispunjeni i potvrđeni
+- [ ] Funkcionalnost radi stabilno u razvojnom okruženju
+- [ ] Testiranje je izvršeno (happy path, negativni scenariji, edge case-ovi, regresija)
+- [ ] Performanse su prihvatljive
+- [ ] Sigurnosne provjere su zadovoljene
+- [ ] UI/UX je konzistentan sa ostatkom aplikacije
+- [ ] Stavka je pregledana unutar tima (code review + pregled funkcionalnosti)
+- [ ] Kod je integrisan u glavni branch bez konflikata
+- [ ] Stavka je evidentirana u relevantnim artefaktima
+- [ ] Tim je obaviješten gdje je potrebno
+- [ ] Stavka je demonstrabilna i spremna za Sprint Review
+- [ ] Završna provjera je izvršena
 
-Tek kada su svi kriteriji iz ovog dokumenta ispunjeni, User Story se može označiti kao **Done**.
