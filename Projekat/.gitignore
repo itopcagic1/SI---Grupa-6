@@ -1,0 +1,32 @@
+# Dependencies
+**/node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment variables & Secrets
+.env
+.env.local
+**/.env
+
+# Prisma
+backend/prisma/migrations/
+*.db
+*.db-journal
+
+# Build & Compiled files
+dist/
+build/
+.next/
+out/
+
+# AI Service (Python)
+ai-service/__pycache__/
+ai-service/venv/
+ai-service/.venv/
+*.py[cod]
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
