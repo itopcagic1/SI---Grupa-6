@@ -54,6 +54,6 @@ Ostali članovi tima su obaviješteni ako njihov rad zavisi od implementirane fu
 
 Implementirana funkcionalnost je demonstrabilna i pripremljena za prikaz.
 
-### 12. Izvršena je završna provjera
+### 13. Izvršena je završna provjera
 
 Nakon integracije, izvršena je finalna provjera stavke.
