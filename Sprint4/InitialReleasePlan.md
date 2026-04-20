@@ -1,6 +1,6 @@
 # Initial Release Plan
 
-## Planirani inkrementi / release cjeline
+## Planirani inkrementi
 
 Razvoj sistema *Sistem za upravljanje sportskim terminima i ligama* organizovan je kroz Scrum metodologiju. Release plan je definisan na osnovu prioriteta iz Product Backlog-a, User Stories i Risk Register-a.
 
@@ -116,11 +116,9 @@ Sistem omogućava upravljanje realnim sportskim resursima (tereni i termini), č
 Dodati napredne funkcionalnosti i završne komponente sistema koje poboljšavaju korisničko iskustvo i omogućavaju analitiku.
 
 ### Glavne funkcionalnosti
-- PB-36: Responzivni UI  
-- PB-37: PDF izvoz podataka  
-- PB-38: Testiranje sistema  
-
-*(Napomena: AI funkcionalnosti su planirane kao opcionalno proširenje sistema i zavise od dostupnosti podataka i stabilnosti sistema.)*
+- PB-37: Implementirati AI predikcije rezultata i poretka na tabeli 
+- PB-38: Responzivni UI  
+- PB-39: PDF izvoz podataka  
 
 ### Zavisnosti
 - Stabilan sistem iz prethodnih release-ova  
@@ -135,9 +133,8 @@ Dodati napredne funkcionalnosti i završne komponente sistema koje poboljšavaju
 ### Okvirni sprintovi
 - Sprint 11: napredne funkcionalnosti i finalizacija  
 
-### Vrijednost release-a
-Finalni release unapređuje sistem kroz bolje korisničko iskustvo, izvještavanje i stabilnost, čime se dobija kompletna verzija spremna za produkcijsko korištenje.
-
+### Vrijednost
+Finalni release unapređuje sistem kroz bolje korisničko iskustvo, izvještavanje, stabilnost i završni deployment, čime se dobija kompletna verzija sistema spremna za produkcijsko korištenje.
 ---
 
 ## ZAKLJUČAK
