@@ -8,10 +8,12 @@
 
 ## Kriteriji završetka
 
-**01 · Funkcionalnost je implementirana**
+**01 · Funkcionalnost je implementirana**:
+
 Implementacija završena u skladu sa opisom i poslovnom vrijednošću definisanom u User Story-ju.
 
-**02 · Acceptance criteria su ispunjeni**
+**02 · Acceptance criteria su ispunjeni**:
+
 Svi acceptance criteria su implementirani, testirani i potvrđeni.
 
 **03 · Radi u dev okruženju**
