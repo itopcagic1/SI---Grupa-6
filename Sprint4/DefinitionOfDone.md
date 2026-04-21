@@ -8,7 +8,8 @@ Stavka je **Done** isključivo kada su **svi** sljedeći kriteriji u potpunosti 
 
 - Funkcionalnost je implementirana ili dokumentovana prema dogovoru
 - Svi definisani Acceptance Criteria su u potpunosti ispunjeni
-- Poslovna pravila sistema i uloge su ispoštovane
+- Poslovna pravila sistema su ispoštovana 
+- Uloge su ispravno implementirane
 
 ### Tehnička ispravnost:
 
