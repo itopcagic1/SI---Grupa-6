@@ -23,7 +23,7 @@ Završna validacija human-first faze projekta i uspostavljanje tehničkih temelj
 | PBI ID  | Naziv                                    | Odgovorna osoba/e                          | Napomena                                                                                                                                                                                         |
 |---------|------------------------------------------|--------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | PB-14 | Definition of Done                       | Anes Mirvić, Irma    Topčagić                |                                                                                                        |
-| PB-15| Postavljanje tehničkog skeletona |  Maida Biber |
+| PB-15| Postavljanje tehničkog skeletona |  Maida Biber, Amna Kerla|
 | PB-16 | Struktura repozitorija i osnovni tehnički setup |                       Ilma Hindija, Zeir Mašić  |
 
                                    
