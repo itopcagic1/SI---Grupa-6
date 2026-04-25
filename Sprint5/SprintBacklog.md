@@ -3,6 +3,7 @@
 Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 5.
 
 | ID | Naziv zadatka | Odgovorne osobe | Status | Napomena |
+|----|----------------|------------------|--------|----------|
 | PB-14 | Ažuriranje Definition of Done | Irma Topčagić | Done | Dodani mjerljivi kriteriji za validaciju i testiranje |
 | PB-17 | Definisanje ER dijagrama i relacija entiteta | Semir Jamaković | Done | Uspostavljena logička struktura baze podataka |
 | PB-17.1 | Kreiranje fizičke strukture baze (Migracije) | Irma Toočagić, Maida Biber | To-Do | Prioritet: Završiti prije implementacije feature-a. |
