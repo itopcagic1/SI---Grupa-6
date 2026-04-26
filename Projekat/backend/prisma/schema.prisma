@@ -11,15 +11,23 @@ datasource db {
 // KORISNICI I AUTENTIFIKACIJA
 // ==========================================
 
+enum Uloga {
+  ADMINISTRATOR
+  ORGANIZATOR
+  TRENER
+  IGRAC
+  VLASNIK
+  NAVIJAC
+}
 model Korisnik {
   korisnikId                 Int       @id @default(autoincrement())
   punoIme                    String?
   email                      String    @unique
-  lozinkaHash                String    // Promijenjeno u jasnije 'lozinkaHash'
+  lozinkaHash                String   
   datumKreiranja             DateTime  @default(now())
   brojPreksrenihRezervacija  Int       @default(0)
   statusPouzdanosti          String?
-  uloga                      String?   // npr. ADMINISTRATOR, ORGANIZATOR, IGRAC
+  uloga          Uloga    @default(NAVIJAC)
 
   // Relacije
   organizovanaTakmicenja     Takmicenje[]
