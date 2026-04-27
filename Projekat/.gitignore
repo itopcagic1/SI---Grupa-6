@@ -8,10 +8,6 @@ frontend/node_modules/
 .env.local
 **/.env
 
-# Prisma
-backend/prisma/migrations/
-*.db
-*.db-journal
 
 # Build & Compiled files
 dist/
