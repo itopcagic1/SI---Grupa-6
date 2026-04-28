@@ -1,15 +1,33 @@
+require('dotenv').config();
 const express = require('express');
-const app = express();
-const authRoutes = require('./routes/authRoutes');
 const cors = require('cors');
-app.use(cors());
-
+const cookieParser = require('cookie-parser');
+const authRoutes = require('./routes/authRoutes');
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json()); 
+
+// CORS (dozvoli frontend sa porta 5173 ili 3000)
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
+}));
+
+// JSON parser
+app.use(express.json());
+
+// Cookie parser (za refresh token)
+app.use(cookieParser());
+
 
 app.use('/api/auth', authRoutes);
 
+
+app.get('/', (req, res) => {
+  res.send('API radi 🚀');
+});
+
+
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server radi na portu ${PORT}`);
 });
