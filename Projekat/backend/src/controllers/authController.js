@@ -46,7 +46,7 @@ async function register(req, res) {
   } catch (error) {
     const status = error?.status || 500;
 
-    if (error.code === "NEVALJANA_ULOGA") {
+    if (error.code === "NEDOZVOLJENA_ULOGA") {
       return res.status(status).json({
         greska: error.code,
         poruka: error.message,

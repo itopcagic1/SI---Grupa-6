@@ -10,17 +10,17 @@ const registerSchema = z.object({
   email: z.string({
     required_error: "Email i lozinka su obavezni", 
   }).trim()
-  .email("Nevaljalan format emaila")
+  .email("Neispravan format emaila")
   .refine((val) => val === val.toLowerCase(), {
     message: "Email mora biti napisan isključivo malim slovima",
   }),
   lozinka: z.string({
     required_error: "Email i lozinka su obavezni",
-  }).min(8, "Lozinka mora imati barem 8 znakova")
-    .regex(/[A-Z]/, "Mora sadržavati veliko slovo")
-    .regex(/[a-z]/, "Mora sadržavati malo slovo")
-    .regex(/[0-9]/, "Mora sadržavati broj")
-    .regex(/[@#$%^&*!]/, "Mora sadržavati specijalni znak"),
+  }).min(8, "Lozinka mora imati najmanje 8 znakova")
+    .regex(/[A-Z]/, "Lozinka mora sadržavati veliko slovo")
+    .regex(/[a-z]/, "Lozinka mora sadržavati malo slovo")
+    .regex(/[0-9]/, "Lozinka mora sadržavati broj")
+    .regex(/[@#$%^&*!]/, "Lozinka mora sadržavati specijalni znak"),
   trazenaUloga: z.string().optional(),
   documents: z.array(z.string()).optional(),
 });
@@ -28,11 +28,11 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email({ message: 'Email nije validan' }),
   lozinka: z.string()
-    .min(8, "Lozinka mora imati barem 8 znakova")
-    .regex(/[A-Z]/, "Mora sadržavati veliko slovo")
-    .regex(/[a-z]/, "Mora sadržavati malo slovo")
-    .regex(/[0-9]/, "Mora sadržavati broj")
-    .regex(/[@#$%^&*!]/, "Mora sadržavati specijalni znak"),
+    .min(8, "Lozinka mora imati najmanje 8 znakova")
+    .regex(/[A-Z]/, "Lozinka mora sadržavati veliko slovo")
+    .regex(/[a-z]/, "Lozinka mora sadržavati malo slovo")
+    .regex(/[0-9]/, "Lozinka mora sadržavati broj")
+    .regex(/[@#$%^&*!]/, "Lozinka mora sadržavati specijalni znak"),
 });
 
 module.exports = {

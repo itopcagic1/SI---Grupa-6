@@ -11,7 +11,7 @@ async function registerUser({ ime, email, lozinka, trazenaUloga, documents }) {
   if (!dozvoljeneUloge.includes(trazenaUlogaUpper)) {
     const error = new Error('Uloga mora biti: NAVIJAC, IGRAC, TRENER ili VLASNIK');
     error.status = 400;
-    error.code = "NEVALJANA_ULOGA";
+    error.code = "NEDOZVOLJENA_ULOGA";
     error.dozvoljene = dozvoljeneUloge;
     throw error;
   }
@@ -66,7 +66,7 @@ async function loginUser({ email, lozinka }) {
   if (!passwordMatches) {
    const error = new Error('Email ili lozinka nisu ispravni');
     error.status = 401;
-    error.code = "NEVALJANE_AKREDITIVE";
+    error.code = "NEISPRAVNE_AKREDITIVE";
     throw error;
   }
 
