@@ -1,4 +1,4 @@
-## AI Usage Log 1
+## AI Usage Log 1 - Zapis 1
 
 **Datum:** 25/04/2026  
 
@@ -65,7 +65,7 @@ Anes Mirvić
 
 ## AI Usage Log – Zapis 3
 
-**Datum:** 25/04/2026 - 27/04/2026  
+**Datum:** 25/04/2026 
 
 **Sprint broj:** Sprint 5
 
@@ -140,3 +140,165 @@ Korisnik je koristio AI alat prilikom rada na integracijskim testovima, tražeć
 
 **Ko je koristio alat:**  
 Irma Topčagić
+
+## AI Usage Log – Zapis 5
+
+**Datum:** 28/04/2026  
+
+**Sprint broj:** Sprint 5
+
+**Alat koji je korišten:** Claude Sonnet 4.6  
+
+**Svrha korištenja:**  
+Pomoć pri podešavanju testnog okruženja i instalaciji potrebnih zavisnosti  
+
+**Kratak opis zadatka ili upita:**  
+Korisnik je koristio AI alat tokom rada na testovima kako bi dobio informacije o dodatnim paketima, konfiguraciji i fajlovima koji su potrebni da testovi ispravno rade.  
+
+**Šta je AI predložio ili generisao:**  
+- listu potrebnih instalacija i paketa za test okruženje  
+- sugestije o dodatnim konfiguracionim fajlovima  
+- preporuke za ispravnu strukturu test setup-a  
+
+**Šta je tim prihvatio:**  
+- instalaciju potrebnih paketa i zavisnosti  
+- osnovnu strukturu test okruženja  
+
+**Šta je tim izmijenio:**  
+- prilagođena je konfiguracija prema postojećoj strukturi projekta  
+- određeni koraci su pojednostavljeni zbog specifičnosti implementacije  
+
+**Šta je tim odbacio:**  
+- dodatne kompleksne konfiguracije koje nisu bile potrebne za trenutni scope projekta  
+
+**Rizici, problemi ili greške koje su uočene:**  
+- mogućnost neslaganja između lokalnog i test okruženja  
+- potreba za dodatnim ručnim podešavanjem zavisnosti  
+
+**Ko je koristio alat:**  
+Ilma Hindija
+
+## AI Usage Log – Zapis 6
+
+**Datum:** 25/04/2026  
+
+**Sprint broj:** Sprint 5
+
+**Alat koji je korišten:** Claude Sonnet 4.6  
+
+**Svrha korištenja:**  
+Analiza ERD dijagrama i relacija između entiteta  
+
+**Kratak opis zadatka ili upita:**  
+Korisnik je koristio AI alat za analizu ERD dijagrama kako bi provjerio logičku ispravnost i konzistentnost veza između entiteta u bazi podataka. Fokus je bio na razumijevanju strukture modela i međusobnih relacija tabela.  
+
+**Šta je AI predložio ili generisao:**  
+- analiza ERD dijagrama i veza između entiteta  
+- provjera logičke konzistentnosti relacija između tabela  
+- identifikacija potencijalnih nejasno definisanih ili dvosmislenih veza  
+- objašnjenje kako su entiteti međusobno povezani u okviru sistema  
+
+**Šta je tim prihvatio:**  
+- uvid u trenutno stanje ERD dijagrama i relacija između entiteta  
+- zaključke o tome da su postojeće veze logički konzistentne / gdje postoje nejasnoće  
+- smjernice koje dijelove modela baze treba dodatno provjeriti ili razjasniti  
+
+**Šta je tim izmijenio:**  
+- nije bilo direktnih izmjena u modelu baze na osnovu ove analize  
+
+**Šta je tim odbacio:**  
+- nije bilo konkretnih implementacionih prijedloga za odbacivanje  
+- analiza nije rezultirala promjenom arhitekture u ovoj fazi  
+
+**Rizici, problemi ili greške koje su uočene:**  
+- moguće nejasnoće u definiciji pojedinih relacija između entiteta  
+- potreba za dodatnom validacijom modela kroz implementaciju i testiranje  
+- rizik da se logičke neusklađenosti ne uoče bez praktične provjere  
+
+**Ko je koristio alat:**  
+Semir Jamaković
+
+## AI Usage Log – Zapis 7
+
+**Datum:** 27/04/2026  
+
+**Sprint broj:** Sprint 5
+
+**Alat koji je korišten:** Claude Sonnet 4.6  
+
+**Svrha korištenja:**  
+Pomoć pri implementaciji validacije podataka i strukture autentifikacijskog sistema  
+
+**Kratak opis zadatka ili upita:**  
+Korisnik je koristio AI alat kao pomoć pri implementaciji validacije podataka koristeći Zod, kao i pri strukturiranju kontrolera za autentifikaciju korisnika, uključujući login i registraciju.  
+
+**Šta je AI predložio ili generisao:**  
+- implementaciju validacije koristeći Zod 
+- strukturu kontrolera za autentifikaciju (register/login)  
+- način obrade grešaka i konzistentne API odgovore  
+- organizaciju koda prema separation of concerns principu  
+
+**Šta je tim prihvatio:**  
+- Zod validacijski pristup  
+- osnovnu strukturu auth kontrolera  
+- standardizovan način obrade grešaka  
+
+**Šta je tim izmijenio:**  
+- prilagođene su validacione šeme specifičnim poslovnim pravilima projekta  
+- struktura fajlova je prilagođena postojećoj arhitekturi backend-a  
+
+**Šta je tim odbacio:**  
+- generičke implementacije koje nisu odgovarale projektu  
+- nepotrebne dodatne apstrakcije  
+
+**Rizici, problemi ili greške koje su uočene:**  
+- potreba za dodatnim testiranjem validacije  
+- moguće neslaganje frontend i backend validacija ako nisu usklađene  
+
+**Ko je koristio alat:**  
+Mehdi Zaimović
+
+## AI Usage Log – Zapis 8
+
+**Datum:** 27/04/2026  
+
+**Sprint broj:** Sprint 5  
+
+**Alat koji je korišten:** Claude Sonnet 4.6  
+
+**Svrha korištenja:**  
+Instalacija i konfiguracija ključnih frontend biblioteka te unapređenje UX-a na autentifikacijskim formama  
+
+**Kratak opis zadatka ili upita:**  
+Korisnik je koristio AI alat za pomoć pri instalaciji i konfiguraciji frontend zavisnosti, implementaciji validacije formi, dodavanju animacija i povezivanju frontend-a sa backend API-jem. Fokus je bio na poboljšanju korisničkog iskustva na registraciji i login formama.  
+
+**Šta je AI predložio ili generisao:**  
+- upute za instalaciju i konfiguraciju biblioteka u projektu  
+- implementaciju React Hook Form za naprednu validaciju formi  
+- implementaciju Framer Motion za animacije i poboljšanje UX-a  
+- preporuke za organizaciju dependencies i rješavanje grešaka pri instalaciji paketa  
+- način povezivanja frontend validacije sa vizuelnim feedback-om  
+- pristup asinhronoj komunikaciji sa backend-om kroz API klijent  
+
+**Šta je tim prihvatio:**  
+- korištenje React Hook Form za validaciju formi  
+- korištenje Framer Motion za animacije  
+- konfiguraciju axios klijenta za komunikaciju sa backend-om  
+- osnovni pristup asinhronom rukovanju greškama  
+
+**Šta je tim izmijenio:**  
+- struktura formi prilagođena potrebama aplikacije  
+- axios konfiguracija organizovana u authApi.js radi modularnosti  
+- UI feedback dodatno prilagođen (poruke grešaka i validacije)  
+
+**Šta je tim odbacio:**  
+- alternativne biblioteke koje nisu bile kompatibilne sa projektom  
+- nepotrebno kompleksna rješenja iz AI prijedloga  
+
+**Rizici, problemi ili greške koje su uočene:**  
+- moguće greške pri instalaciji zbog verzija paketa  
+- potreba za usklađivanjem frontend i backend validacije  
+- rizik nekonzistentnog UX-a ako se pravila ne sinhronizuju  
+
+**Ko je koristio alat:**  
+Maida Biber
