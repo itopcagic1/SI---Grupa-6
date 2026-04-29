@@ -6,6 +6,7 @@ frontend/node_modules/
 # Environment variables & Secrets
 .env
 .env.local
+.env.test
 **/.env
 
 
@@ -26,3 +27,9 @@ ai-service/.venv/
 .vscode/
 .idea/
 Thumbs.db
+
+# Testing & Coverage
+coverage/
+**/coverage/
+*.lcov
+.nyc_output/
