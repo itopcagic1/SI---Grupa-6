@@ -3,7 +3,6 @@
 ## Pregled
 Ovaj dokument opisuje sve autentifikacijske API-je i rute za Sistem za upravljanje sportskim ligama. Uključuje registraciju sa PENDING sistemom, prijavu, odjavu, i admin operacije.
 
-**Osnovni URL:** `http://localhost:3000`
 **Verzija:** 1.0
 **Status:** Sprint 5 - In Progress
 
