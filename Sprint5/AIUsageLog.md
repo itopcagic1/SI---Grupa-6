@@ -150,30 +150,31 @@ Irma Topčagić
 **Alat koji je korišten:** Claude Sonnet 4.6  
 
 **Svrha korištenja:**  
-Pomoć pri podešavanju testnog okruženja i instalaciji potrebnih zavisnosti  
+Pomoć pri podešavanju testnog okruženja, instalaciji zavisnosti i pisanju integracijskih i jediničnih (unit) testova za frontend aplikaciju.
 
 **Kratak opis zadatka ili upita:**  
-Korisnik je koristio AI alat tokom rada na testovima kako bi dobio informacije o dodatnim paketima, konfiguraciji i fajlovima koji su potrebni da testovi ispravno rade.  
+Zatražena je pomoć za uspostavljanje testnog okruženja (React/Vite) na frontendu, s ciljem pisanja i verifikacije testova za glavne komponente (`Login`, `Register`) te API pozive, budući da takvo okruženje prethodno nije postojalo u projektu.
 
 **Šta je AI predložio ili generisao:**  
-- listu potrebnih instalacija i paketa za test okruženje  
-- sugestije o dodatnim konfiguracionim fajlovima  
-- preporuke za ispravnu strukturu test setup-a  
+- listu potrebnih instalacija i paketa (Vitest, React Testing Library, jsdom)
+- izmjene u `vite.config.js` i kreiranje `setupTests.js` fajla
+- rješenje za mockovanje `localStorage` objekta unutar JSDOM okruženja
+
 
 **Šta je tim prihvatio:**  
-- instalaciju potrebnih paketa i zavisnosti  
-- osnovnu strukturu test okruženja  
+- instalaciju predloženih paketa i cjelokupnu konfiguraciju Vite testnog okruženja
+- kod za testove API-ja, te Login i Register komponenti
+- rješenje sa polyfill-om za `localStorage`
 
 **Šta je tim izmijenio:**  
-- prilagođena je konfiguracija prema postojećoj strukturi projekta  
-- određeni koraci su pojednostavljeni zbog specifičnosti implementacije  
+- zatraženo je brisanje generisanih testova za komponentu `Dashboard` jer ta funkcionalnost još uvijek nije implementirana i nalazi se u kodu samo kao "placeholder"
 
 **Šta je tim odbacio:**  
-- dodatne kompleksne konfiguracije koje nisu bile potrebne za trenutni scope projekta  
+- testiranje nedovršenih dijelova aplikacije koji trenutno nisu u *scope*-u sprinta
 
 **Rizici, problemi ili greške koje su uočene:**  
-- mogućnost neslaganja između lokalnog i test okruženja  
-- potreba za dodatnim ručnim podešavanjem zavisnosti  
+- uočena je greška `localStorage.clear is not a function` zbog ograničenja JSDOM virtuelnog okruženja, što je uspješno riješeno ručnim dodavanjem mock/polyfill koda u setup fajl
+- uočena je bitna konceptualna razlika u testiranju frontenda naspram backenda, koja ne zahtijeva striktno razdvajanje `unit` i `integration` testova u posebne direktorije
 
 **Ko je koristio alat:**  
 Ilma Hindija
