@@ -13,11 +13,11 @@ const authLimiter = rateLimit({
 
 
 const validate = (schema) => (req, res, next) => {
-  console.log("Request body:", req.body);
+  
   const result = schema.safeParse(req.body);
 
   if (!result.success) {
-    console.log("Zod greške:", JSON.stringify(result.error.errors, null, 2));
+    
     return res.status(400).json({ 
       greska: "GRESKA_VALIDACIJE", 
       poruka: result.error.errors[0]?.message || "Neispravni podaci"
