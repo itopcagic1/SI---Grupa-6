@@ -22,7 +22,17 @@ const generateRefreshToken = () => {
   return crypto.randomBytes(64).toString('hex');
 };
 
-async function registerUser({ punoIme, ime, email, lozinka, trazenaUloga, documents }) {
+async function registerUser({ punoIme, ime, email, lozinka, potvrdalozinke, trazenaUloga, documents }) {
+  console.log("Servis prima:", { punoIme, email, lozinka, potvrdalozinke });
+
+  if (!potvrdalozinke || lozinka !== potvrdalozinke) {
+    console.log("Lozinke se ne podudaraju!", { lozinka, potvrdalozinke });
+    const error = new Error('Lozinke se ne podudaraju');
+    error.status = 400;
+    error.code = 'LOZINKE_SE_NE_PODUDARAJU';
+    throw error;
+  }
+
   const dozvoljeneUloge = ['NAVIJAC', 'IGRAC', 'TRENER', 'VLASNIK'];
   const trazenaUlogaUpper = trazenaUloga ? trazenaUloga.toUpperCase() : 'NAVIJAC';
 

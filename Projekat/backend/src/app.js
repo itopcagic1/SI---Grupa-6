@@ -24,7 +24,7 @@ app.use('/api/auth', authRoutes);
 
 
 app.get('/', (req, res) => {
-  res.send('API radi 🚀');
+  res.send('API radi');
 });
 
 

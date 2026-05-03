@@ -1,9 +1,9 @@
 const { login, logout } = require('../../controllers/authController');
 const authService = require('../../services/authService');
 
-jest.mock('../services/authService');
+jest.mock('../../services/authService');
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+
 
 function mockRes() {
   const res = {};
