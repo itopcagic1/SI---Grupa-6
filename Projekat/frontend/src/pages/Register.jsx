@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { registerUser } from '../api/authApi';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion'; 
 
 function Register() {
-  const { register, handleSubmit, getValues, trigger, watch, formState: { errors } } = useForm();
+  // DODANO: mode: "onChange" omogućava provjeru dok kucaš
+  const { register, handleSubmit, getValues, trigger, watch, formState: { errors } } = useForm({
+    mode: "onChange"
+  });
+  const [statusMessage, setStatusMessage] = useState(null);
 
   const onSubmit = async (data) => {
+    setStatusMessage(null);
     try {
       const result = await registerUser(data);
-      alert("Uspješna registracija! Status: " + result.poruka_uloge.status);
+      setStatusMessage({ type: 'success', text: "Uspješna registracija! Status: " + result.poruka_uloge.status });
     } catch (err) {
-      alert("Greška: " + (err.response?.data?.poruka || "Nešto nije u redu"));
+      setStatusMessage({ type: 'error', text: "Greška: " + (err.response?.data?.poruka || "Nešto nije u redu") });
     }
   };
 
@@ -70,9 +76,19 @@ function Register() {
 
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white/90 backdrop-blur-md py-10 px-8 shadow-[0_20px_50px_rgba(234,88,12,0.1)] rounded-[40px] border border-white/50">
+
+            {statusMessage && (
+              <div className={`mb-5 px-5 py-3.5 rounded-2xl text-sm font-semibold border-2 ${
+                statusMessage.type === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-400 text-red-700'
+              }`}>
+                {statusMessage.text}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               
-              {/* ime i prezime */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Ime i Prezime</label>
                 <input 
@@ -83,7 +99,6 @@ function Register() {
                 {errors.punoIme && <p className="text-red-500 text-xs mt-1 ml-1">{errors.punoIme.message}</p>}
               </div>
 
-              {/* email */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Email adresa</label>
                 <input 
@@ -95,11 +110,13 @@ function Register() {
                 {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
-              {/* lozinka */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Lozinka</label>
                 <input 
-                  {...register("lozinka", { required: "Lozinka je obavezna", onChange: () => trigger("potvrdalozinke") })} 
+                  {...register("lozinka", { 
+                    required: "Lozinka je obavezna", 
+                    onChange: () => trigger("potvrdalozinke") 
+                  })} 
                   type="password"
                   placeholder="••••••••"
                   className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.lozinka ? 'border-red-400' : 'border-amber-100'}`}
@@ -107,11 +124,19 @@ function Register() {
                 {errors.lozinka && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lozinka.message}</p>}
               </div>
 
-              {/* potvrda lozinke */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Potvrdi lozinku</label>
                 <input 
-                  {...register("potvrdalozinke", { required: "Potvrda lozinke je obavezna", validate: (value) => value === watch("lozinka") || "Lozinke se ne podudaraju" })} 
+                  {...register("potvrdalozinke", { 
+                    required: "Potvrda lozinke je obavezna", 
+                    validate: (value) => {
+                      // Ako je korisnik počeo kucati, a ne poklapa se, odmah javi grešku
+                      if (watch('lozinka') !== value && value.length > 0) {
+                        return "Lozinke se ne podudaraju";
+                      }
+                      return true;
+                    }
+                  })} 
                   type="password"
                   placeholder="••••••••"
                   className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.potvrdalozinke ? 'border-red-400' : 'border-amber-100'}`}
@@ -119,7 +144,6 @@ function Register() {
                 {errors.potvrdalozinke && <p className="text-red-500 text-xs mt-1 ml-1">{errors.potvrdalozinke.message}</p>}
               </div>
 
-              {/* uloga */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Registruj se kao</label>
                 <div className="relative">
