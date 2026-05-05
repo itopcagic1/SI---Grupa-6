@@ -7,9 +7,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 
-// CORS (dozvoli frontend sa porta 5173 ili 3000)
+// CORS 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:3000',
+    'https://sportmanager-frontend.onrender.com'
+  ],
   credentials: true
 }));
 
