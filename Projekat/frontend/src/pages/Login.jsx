@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../api/authApi';
@@ -5,8 +6,10 @@ import { loginUser } from '../api/authApi';
 function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
+  const [statusMessage, setStatusMessage] = useState(null);
 
   const onSubmit = async (data) => {
+    setStatusMessage(null);
     try {
       const res = await loginUser(data);
 
@@ -15,7 +18,7 @@ function Login() {
 
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.poruka || 'Greška pri prijavi');
+      setStatusMessage({ type: 'error', text: err.response?.data?.poruka || 'Greška pri prijavi' });
     }
   };
 
@@ -31,6 +34,17 @@ function Login() {
         </div>
 
         <div className="bg-white/90 backdrop-blur-xl py-10 px-8 shadow-2xl rounded-[40px] border border-white/50">
+
+          {statusMessage && (
+            <div className={`mb-5 px-5 py-3.5 rounded-2xl text-sm font-semibold border-2 ${
+              statusMessage.type === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-400 text-red-700'
+            }`}>
+              {statusMessage.text}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2 ml-1">
