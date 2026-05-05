@@ -21,6 +21,9 @@ const registerSchema = z.object({
     .regex(/[a-z]/, "Lozinka mora sadržavati malo slovo")
     .regex(/[0-9]/, "Lozinka mora sadržavati broj")
     .regex(/[@#$%^&*!]/, "Lozinka mora sadržavati specijalni znak"),
+  potvrdalozinke: z.string({
+    required_error:"Potvrda lozinke je obavezna",
+  }),
   trazenaUloga: z.string().optional(),
   documents: z.array(z.string()).optional(),
 });

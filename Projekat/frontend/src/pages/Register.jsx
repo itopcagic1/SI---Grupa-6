@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion'; 
 
 function Register() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, getValues, trigger, watch, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
     try {
@@ -78,8 +78,9 @@ function Register() {
                 <input 
                   {...register("punoIme", { required: "Ime je obavezno" })} 
                   placeholder="npr. Edin Džeko"
-                  className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm"
+                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.punoIme ? 'border-red-400' : 'border-amber-100'}`}
                 />
+                {errors.punoIme && <p className="text-red-500 text-xs mt-1 ml-1">{errors.punoIme.message}</p>}
               </div>
 
               {/* email */}
@@ -89,19 +90,33 @@ function Register() {
                   {...register("email", { required: "Email je obavezan" })} 
                   type="email"
                   placeholder="ime@primjer.ba"
-                  className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm"
+                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.email ? 'border-red-400' : 'border-amber-100'}`}
                 />
+                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
               {/* lozinka */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Lozinka</label>
                 <input 
-                  {...register("lozinka", { required: "Lozinka je obavezna" })} 
+                  {...register("lozinka", { required: "Lozinka je obavezna", onChange: () => trigger("potvrdalozinke") })} 
                   type="password"
                   placeholder="••••••••"
-                  className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm"
+                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.lozinka ? 'border-red-400' : 'border-amber-100'}`}
                 />
+                {errors.lozinka && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lozinka.message}</p>}
+              </div>
+
+              {/* potvrda lozinke */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Potvrdi lozinku</label>
+                <input 
+                  {...register("potvrdalozinke", { required: "Potvrda lozinke je obavezna", validate: (value) => value === watch("lozinka") || "Lozinke se ne podudaraju" })} 
+                  type="password"
+                  placeholder="••••••••"
+                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.potvrdalozinke ? 'border-red-400' : 'border-amber-100'}`}
+                />
+                {errors.potvrdalozinke && <p className="text-red-500 text-xs mt-1 ml-1">{errors.potvrdalozinke.message}</p>}
               </div>
 
               {/* uloga */}
