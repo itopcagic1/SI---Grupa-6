@@ -39,7 +39,7 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     const { korisnik, accessToken, refreshToken } = await authService.loginUser(req.body);
-
+    
     res.cookie('refreshToken', refreshToken, cookieOptions);
 
     return res.status(200).json({

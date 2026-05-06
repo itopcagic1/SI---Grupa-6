@@ -95,6 +95,13 @@ async function loginUser({ email, lozinka }) {
     throw error;
   }
 
+  if (user.statusPouzdanosti === 'BLOKIRAN') {
+    const error = new Error('Vaš nalog je blokiran');
+    error.status = 403;
+    error.code = 'KORISNIK_BLOKIRAN';
+    throw error;
+  }
+
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken();
 
