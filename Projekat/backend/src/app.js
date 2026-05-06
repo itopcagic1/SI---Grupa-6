@@ -3,9 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/authRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const sportRoutes = require('./routes/sportRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 
 // CORS 
 app.use(cors({
@@ -26,6 +27,9 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 
+
+app.use('/api/teams', teamRoutes);
+app.use('/api/sports', sportRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');
