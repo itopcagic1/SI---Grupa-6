@@ -12,11 +12,16 @@ function Login() {
     setStatusMessage(null);
     try {
       const res = await loginUser(data);
+      console.log(res.korisnik);
 
       localStorage.setItem('token', res.access_token);
       localStorage.setItem('korisnik', JSON.stringify(res.korisnik));
 
+      if (res.korisnik.trenutnaUloga === 'ADMINISTRATOR') {
+      navigate('/admin/korisnici');
+    } else {
       navigate('/dashboard');
+    }
     } catch (err) {
       setStatusMessage({ type: 'error', text: err.response?.data?.poruka || 'Greška pri prijavi' });
     }
