@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import Login from '../Login';
 import * as authApi from '../../api/authApi';
 
-// Mock react-router-dom to track useNavigate
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -14,7 +13,6 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock the API call
 vi.mock('../../api/authApi', () => ({
   loginUser: vi.fn(),
 }));
@@ -35,18 +33,18 @@ describe('Login Component', () => {
 
   it('renders login form correctly', () => {
     renderComponent();
-    
+
     expect(screen.getByText('Dobrodošli nazad')).toBeInTheDocument();
+    expect(screen.getByText('Prijavite se na svoj račun')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('ime@primjer.ba')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Unesite lozinku')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Prijavi se/i })).toBeInTheDocument();
   });
 
   it('shows validation errors when submitting empty form', async () => {
     renderComponent();
-    
-    const submitBtn = screen.getByRole('button', { name: /Prijavi se/i });
-    fireEvent.click(submitBtn);
+
+    fireEvent.click(screen.getByRole('button', { name: /Prijavi se/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Email je obavezan')).toBeInTheDocument();
@@ -59,15 +57,15 @@ describe('Login Component', () => {
       access_token: 'fake-token',
       korisnik: { id: 1, ime: 'Test User' },
     };
-    
+
     authApi.loginUser.mockResolvedValueOnce(mockResponse);
-    
+
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('ime@primjer.ba'), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    fireEvent.change(screen.getByPlaceholderText('Unesite lozinku'), {
       target: { value: 'password123' },
     });
 
@@ -84,29 +82,26 @@ describe('Login Component', () => {
     });
   });
 
-  it('shows alert on login failure', async () => {
-    const mockAlert = vi.spyOn(window, 'alert').mockImplementation(() => {});
+  it('shows error message on login failure', async () => {
     const mockError = {
       response: { data: { poruka: 'Pogrešna lozinka' } },
     };
-    
+
     authApi.loginUser.mockRejectedValueOnce(mockError);
-    
+
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('ime@primjer.ba'), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    fireEvent.change(screen.getByPlaceholderText('Unesite lozinku'), {
       target: { value: 'wrongpass' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Prijavi se/i }));
 
     await waitFor(() => {
-      expect(mockAlert).toHaveBeenCalledWith('Pogrešna lozinka');
+      expect(screen.getByText('Pogrešna lozinka')).toBeInTheDocument();
     });
-
-    mockAlert.mockRestore();
   });
 });

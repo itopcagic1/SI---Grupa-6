@@ -1,7 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { registerUser } from '../api/authApi';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion'; 
 
 function Register() {
   const { register, handleSubmit, getValues, trigger, watch, formState: { errors } } = useForm();
@@ -16,146 +15,107 @@ function Register() {
   };
 
   return (
-    <div className="relative min-h-screen bg-amber-50 flex flex-col justify-center py-12 px-6 lg:px-8 font-sans overflow-hidden">
-      
-      <motion.div 
-        initial={{ x: -200, y: -200, opacity: 0 }}
-        animate={{ x: 0, y: 0, opacity: 0.07 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="absolute top-[15%] left-[10%] md:left-[20%] text-[10rem] select-none grayscale hover:grayscale-0 transition-all duration-700 -rotate-12"
-      >
-        🏀
-      </motion.div>
-    
-      <motion.div 
-        initial={{ x: -200, y: 200, opacity: 0 }}
-        animate={{ x: 0, y: 0, opacity: 0.07 }}
-        transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-        className="absolute bottom-[10%] left-[5%] md:left-[15%] text-[12rem] select-none grayscale hover:grayscale-0 transition-all duration-700 rotate-12"
-      >
-        ⚽
-      </motion.div>
-      
-      <motion.div 
-        initial={{ x: 200, y: -200, opacity: 0 }}
-        animate={{ x: 0, y: 0, opacity: 0.07 }}
-        transition={{ duration: 1.3, ease: "easeOut", delay: 0.1 }}
-        className="absolute top-[10%] right-[5%] md:right-[18%] text-[9rem] select-none grayscale hover:grayscale-0 transition-all duration-700 rotate-45"
-      >
-        🎾
-      </motion.div>
-      
-      <motion.div 
-        initial={{ x: 200, y: 200, opacity: 0 }}
-        animate={{ x: 0, y: 0, opacity: 0.07 }}
-        transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
-        className="absolute bottom-[15%] right-[10%] md:right-[20%] text-[11rem] select-none grayscale hover:grayscale-0 transition-all duration-700 -rotate-45"
-      >
-        🏐
-      </motion.div>
-
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10"
-      >
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-          <h1 className="text-5xl font-black text-amber-950 lowercase italic tracking-tighter">
-            sport<span className="text-orange-600">.ba</span>
-          </h1>
-          <h2 className="mt-4 text-2xl font-bold text-slate-700">Napravi novi račun</h2>
-          <p className="mt-2 text-sm text-slate-500 font-medium tracking-wide">Postani dio naše sportske zajednice</p>
-        </div>
-
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white/90 backdrop-blur-md py-10 px-8 shadow-[0_20px_50px_rgba(234,88,12,0.1)] rounded-[40px] border border-white/50">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              
-              {/* ime i prezime */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Ime i Prezime</label>
-                <input 
-                  {...register("punoIme", { required: "Ime je obavezno" })} 
-                  placeholder="npr. Edin Džeko"
-                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.punoIme ? 'border-red-400' : 'border-amber-100'}`}
-                />
-                {errors.punoIme && <p className="text-red-500 text-xs mt-1 ml-1">{errors.punoIme.message}</p>}
+    <div className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <section className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-500 px-6 py-16 text-white lg:flex-1 lg:px-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.25),_transparent_35%)] opacity-50 blur-3xl" />
+          <div className="absolute inset-y-0 right-0 hidden w-2/3 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.12),_transparent_55%)] lg:block" />
+          <div className="relative z-10 mx-auto w-full max-w-xl">
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/90">
+              Platforma uživo
+            </span>
+            <h1 className="mt-8 text-5xl font-black tracking-tight sm:text-6xl">
+              SportManager
+            </h1>
+            <p className="mt-5 max-w-lg text-lg leading-8 text-white/80">
+              Pridruži se igri. Organizuj. Takmiči se. Ostani povezan.
+            </p>
+            <div className="mt-12 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">500+</p>
+                <p className="mt-2 text-sm text-white/75">Aktivne lige</p>
               </div>
-
-              {/* email */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Email adresa</label>
-                <input 
-                  {...register("email", { required: "Email je obavezan" })} 
-                  type="email"
-                  placeholder="ime@primjer.ba"
-                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.email ? 'border-red-400' : 'border-amber-100'}`}
-                />
-                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">12K+</p>
+                <p className="mt-2 text-sm text-white/75">Igrači</p>
               </div>
-
-              {/* lozinka */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Lozinka</label>
-                <input 
-                  {...register("lozinka", { required: "Lozinka je obavezna", onChange: () => trigger("potvrdalozinke") })} 
-                  type="password"
-                  placeholder="••••••••"
-                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.lozinka ? 'border-red-400' : 'border-amber-100'}`}
-                />
-                {errors.lozinka && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lozinka.message}</p>}
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">98%</p>
+                <p className="mt-2 text-sm text-white/75">Zadovoljstvo</p>
               </div>
-
-              {/* potvrda lozinke */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Potvrdi lozinku</label>
-                <input 
-                  {...register("potvrdalozinke", { required: "Potvrda lozinke je obavezna", validate: (value) => value === watch("lozinka") || "Lozinke se ne podudaraju" })} 
-                  type="password"
-                  placeholder="••••••••"
-                  className={`w-full px-5 py-3.5 bg-white border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm ${errors.potvrdalozinke ? 'border-red-400' : 'border-amber-100'}`}
-                />
-                {errors.potvrdalozinke && <p className="text-red-500 text-xs mt-1 ml-1">{errors.potvrdalozinke.message}</p>}
-              </div>
-
-              {/* uloga */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-amber-900/50 mb-2 ml-1">Registruj se kao</label>
-                <div className="relative">
-                  <select 
-                    {...register("trazenaUloga")}
-                    className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-amber-950 appearance-none cursor-pointer shadow-sm"
-                  >
-                    <option value="NAVIJAC">Navijač</option>
-                    <option value="IGRAC">Igrač</option>
-                    <option value="TRENER">Trener</option>
-                    <option value="VLASNIK">Vlasnik sportskog objekta</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-orange-600 font-bold italic text-xl">
-                    ↓
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  type="submit"
-                  className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-orange-700 transition-all shadow-lg shadow-orange-600/30 active:scale-95 transform"
-                >
-                  Registruj se
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-8 text-center border-t border-amber-50 pt-6">
-              <p className="text-sm text-slate-400 font-medium">
-                Već imaš nalog? <Link to="/login" className="text-orange-600 font-black hover:underline ml-1 uppercase text-xs tracking-tighter">Prijavi se</Link>
-              </p>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </section>
+
+        <main className="flex flex-1 items-center justify-center px-6 py-12 lg:px-12 lg:py-16">
+          <div className="w-full max-w-md rounded-[36px] bg-white p-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/60 lg:p-10">
+            <div className="mb-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Kreiraj račun</p>
+              <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">Kreirajte svoj račun</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-500">Počnite upravljati sportskim aktivnostima kroz modernu timsku kontrolnu ploču.</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Puno ime</label>
+                <input
+                  {...register('punoIme', { required: 'Ime je obavezno' })}
+                  placeholder="npr. Edin Džeko"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.punoIme && <p className="mt-2 text-sm font-medium text-rose-500">{errors.punoIme.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <input
+                  {...register('email', { required: 'Email je obavezan' })}
+                  type="email"
+                  placeholder="ime@primjer.ba"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.email && <p className="mt-2 text-sm font-medium text-rose-500">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Lozinka</label>
+                <input
+                  {...register('lozinka', { required: 'Lozinka je obavezna', onChange: () => trigger('potvrdalozinke') })}
+                  type="password"
+                  placeholder="Najmanje 8 znakova"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.lozinka && <p className="mt-2 text-sm font-medium text-rose-500">{errors.lozinka.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Potvrdite lozinku</label>
+                <input
+                  {...register('potvrdalozinke', { required: 'Potvrda lozinke je obavezna', validate: (value) => value === watch('lozinka') || 'Lozinke se ne podudaraju' })}
+                  type="password"
+                  placeholder="Ponovo unesite lozinku"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.potvrdalozinke && <p className="mt-2 text-sm font-medium text-rose-500">{errors.potvrdalozinke.message}</p>}
+              </div>
+
+              <button
+                type="submit"
+                className="mt-1 w-full rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-lg shadow-violet-500/20 transition duration-200 hover:from-violet-500 hover:to-indigo-500 hover:shadow-xl hover:scale-[1.03] focus:outline-none"
+              >
+                Registruj se
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-slate-500">
+              Već imate račun?{' '}
+              <Link to="/login" className="font-semibold text-violet-600 hover:underline hover:text-violet-700">
+                Prijavi se
+              </Link>
+            </p>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

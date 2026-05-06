@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../api/authApi';
@@ -5,8 +6,10 @@ import { loginUser } from '../api/authApi';
 function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
 
   const onSubmit = async (data) => {
+    setErrorMessage('');
     try {
       const res = await loginUser(data);
 
@@ -15,73 +18,96 @@ function Login() {
 
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.poruka || 'Greška pri prijavi');
+      setErrorMessage(err.response?.data?.poruka || 'Greška pri prijavi');
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-amber-50 flex flex-col justify-center py-12 px-6 font-sans overflow-hidden">
-      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-6xl font-black text-amber-950 lowercase italic tracking-tighter">
-            sport<span className="text-orange-600">.ba</span>
-          </h1>
-          <h2 className="mt-4 text-2xl font-bold text-slate-700">Dobrodošli nazad</h2>
-          <p className="text-slate-500 mt-2">Unesite podatke za pristup svom profilu</p>
-        </div>
-
-        <div className="bg-white/90 backdrop-blur-xl py-10 px-8 shadow-2xl rounded-[40px] border border-white/50">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2 ml-1">
-                Email adresa
-              </label>
-              <input
-                {...register('email', { required: 'Email je obavezan' })}
-                type="email"
-                placeholder="ime@primjer.ba"
-                className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm"
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message}</p>}
-            </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-2 ml-1">
-                <label className="text-xs font-black uppercase tracking-widest text-amber-900/60">
-                  Lozinka
-                </label>
-                <a href="#" className="text-[10px] font-bold text-orange-600 hover:underline uppercase tracking-tighter">
-                  Zaboravili ste lozinku?
-                </a>
+    <div className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <section className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-500 px-6 py-16 text-white lg:flex-1 lg:px-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.25),_transparent_35%)] opacity-50 blur-3xl" />
+          <div className="absolute inset-y-0 right-0 hidden w-2/3 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.12),_transparent_55%)] lg:block" />
+          <div className="relative z-10 mx-auto w-full max-w-xl">
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/90">
+              Platforma uživo
+            </span>
+            <h1 className="mt-8 text-5xl font-black tracking-tight sm:text-6xl">
+              SportManager
+            </h1>
+            <p className="mt-5 max-w-lg text-lg leading-8 text-white/80">
+              Pridruži se igri. Organizuj. Takmiči se. Ostani povezan.
+            </p>
+            <div className="mt-12 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">500+</p>
+                <p className="mt-2 text-sm text-white/75">Aktivne lige</p>
               </div>
-              <input
-                {...register('lozinka', { required: 'Lozinka je obavezna' })}
-                type="password"
-                placeholder="••••••••"
-                className="w-full px-5 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium shadow-sm"
-              />
-              {errors.lozinka && <p className="text-red-500 text-xs mt-1 font-bold">{errors.lozinka.message}</p>}
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">12K+</p>
+                <p className="mt-2 text-sm text-white/75">Igrači</p>
+              </div>
+              <div className="rounded-[28px] border border-white/15 bg-white/10 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-3xl font-extrabold">98%</p>
+                <p className="mt-2 text-sm text-white/75">Zadovoljstvo</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <main className="flex flex-1 items-center justify-center px-6 py-12 lg:px-12 lg:py-16">
+          <div className="w-full max-w-md rounded-[36px] bg-white p-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/60 lg:p-10">
+            <div className="mb-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Dobrodošli nazad</p>
+              <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">Prijavite se na svoj račun</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-500">Pristupite kontrolnoj ploči i upravljajte svojim timovima.</p>
             </div>
 
-            <div className="pt-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <input
+                  {...register('email', { required: 'Email je obavezan' })}
+                  type="email"
+                  placeholder="ime@primjer.ba"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.email && <p className="mt-2 text-sm font-medium text-rose-500">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700">Lozinka</label>
+                  <a href="#" className="text-sm font-semibold text-violet-600 hover:text-violet-500">
+                    Zaboravili ste lozinku?
+                  </a>
+                </div>
+                <input
+                  {...register('lozinka', { required: 'Lozinka je obavezna' })}
+                  type="password"
+                  placeholder="Unesite lozinku"
+                  className="mt-3 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {errors.lozinka && <p className="mt-2 text-sm font-medium text-rose-500">{errors.lozinka.message}</p>}
+              </div>
+
               <button
                 type="submit"
-                className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-orange-700 transition-all shadow-lg shadow-orange-600/30 active:scale-95 transform"
+                className="mt-1 w-full rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-lg shadow-violet-500/20 transition duration-200 hover:from-violet-500 hover:to-indigo-500 hover:shadow-xl hover:scale-[1.03] focus:outline-none"
               >
                 Prijavi se
               </button>
-            </div>
-          </form>
+              {errorMessage && <p className="mt-4 text-sm font-medium text-rose-500 text-center">{errorMessage}</p>}
+            </form>
 
-          <div className="mt-8 text-center border-t border-amber-50 pt-6">
-            <p className="text-sm text-slate-400 font-medium">
-              Nemaš nalog?{' '}
-              <Link to="/register" className="text-orange-600 font-black hover:underline ml-1 uppercase text-xs tracking-tighter">
-                Registruj se
+            <p className="mt-6 text-center text-sm text-slate-500">
+              Nemate račun?{' '}
+              <Link to="/register" className="font-semibold text-violet-600 hover:text-violet-700">
+                Kreirajte ga
               </Link>
             </p>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
