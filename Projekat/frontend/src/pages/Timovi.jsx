@@ -193,19 +193,19 @@ function Timovi() {
   }, [teams, searchQuery, sportFilter]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-amber-50">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+      <nav className="bg-white border-b border-amber-100 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">S</div>
-            <span className="font-semibold text-gray-900 text-base">SportManager</span>
+            <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+            <span className="font-semibold text-amber-950 text-base">SportManager</span>
           </div>
           <div className="flex gap-1">
-            <Link to="/lige" className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 font-medium">
+            <Link to="/lige" className="px-4 py-2 rounded-lg text-sm text-amber-700 hover:bg-amber-50 font-medium">
               Lige
             </Link>
-            <span className="px-4 py-2 rounded-lg text-sm text-indigo-700 bg-indigo-50 font-medium">
+            <span className="px-4 py-2 rounded-lg text-sm text-orange-600 bg-orange-50 font-medium">
               Timovi
             </span>
           </div>
@@ -213,16 +213,16 @@ function Timovi() {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition relative"
+            className="flex items-center gap-2 hover:bg-amber-50 px-3 py-2 rounded-lg transition relative"
           >
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-amber-950">
               {korisnikData?.ime && korisnikData?.prezime 
                 ? `${korisnikData.ime} ${korisnikData.prezime}` 
                 : korisnikData?.ime || korisnikData?.email || 'Korisnik'}
             </span>
           </button>
           {userMenuOpen && (
-            <div className="absolute top-16 right-6 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-[160px] z-40">
+            <div className="absolute top-16 right-6 bg-white border border-amber-100 rounded-xl shadow-lg py-2 min-w-[160px] z-40">
               <button
                 onClick={handleLogout}
                 className="w-full px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 transition font-medium"
@@ -239,13 +239,13 @@ function Timovi() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Timovi</h1>
-            <p className="text-sm text-gray-500 mt-1">Upravljajte i organizujte vaše timove</p>
+            <h1 className="text-2xl font-bold text-amber-950">Timovi</h1>
+            <p className="text-sm text-amber-700 mt-1">Upravljajte i organizujte vaše timove</p>
           </div>
           {isAuthenticated && (
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -283,13 +283,13 @@ function Timovi() {
               placeholder="Pretraži timove..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white outline-none focus:border-indigo-400 transition"
+              className="w-full pl-9 pr-4 py-2.5 border border-amber-100 rounded-xl text-sm bg-white outline-none focus:border-orange-500 transition"
             />
           </div>
           <select
             value={sportFilter}
             onChange={(e) => setSportFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-indigo-400 transition min-w-[160px]"
+            className="border border-amber-100 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-orange-500 transition min-w-[160px]"
           >
             <option value="">Svi sportovi</option>
             {sports.map((sport) => (
@@ -302,30 +302,30 @@ function Timovi() {
 
         {/* Teams Grid */}
         {loading ? (
-          <div className="py-20 text-center text-gray-400 text-sm">Učitavanje podataka...</div>
+          <div className="py-20 text-center text-amber-500 text-sm">Učitavanje podataka...</div>
         ) : filteredTeams.length === 0 ? (
-          <div className="py-20 text-center text-gray-400 text-sm">Nema dostupnih timova.</div>
+          <div className="py-20 text-center text-amber-500 text-sm">Nema dostupnih timova.</div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTeams.map((team) => (
               <div
                 key={team.timId}
-                className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col gap-3"
+                className="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm hover:shadow-md transition flex flex-col gap-3"
               >
                 <div className="flex items-start justify-between">
-                  <h3 className="font-bold text-gray-900 text-base">{team.naziv}</h3>
+                  <h3 className="font-bold text-amber-950 text-base">{team.naziv}</h3>
                   {isAuthenticated && (
                     <div className="relative group">
-                      <button className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
+                      <button className="p-1 rounded-lg hover:bg-amber-50 text-amber-400">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
                         </svg>
                       </button>
                       {/* Dropdown */}
-                      <div className="absolute right-0 top-7 z-10 hidden group-focus-within:flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[120px]">
+                      <div className="absolute right-0 top-7 z-10 hidden group-focus-within:flex flex-col bg-white border border-amber-100 rounded-xl shadow-lg py-1 min-w-[120px]">
                         <button
                           onClick={() => openEditModal(team)}
-                          className="px-4 py-2 text-sm text-left hover:bg-gray-50 text-gray-700"
+                          className="px-4 py-2 text-sm text-left hover:bg-amber-50 text-amber-950"
                         >
                           Uredi
                         </button>
@@ -341,7 +341,7 @@ function Timovi() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
+                  <span className="px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-100">
                     {team.sport?.naziv || 'Sport nije definisan'}
                   </span>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -353,11 +353,11 @@ function Timovi() {
                   </span>
                 </div>
 
-                <p className="text-sm text-gray-500 line-clamp-2">{team.opis || 'Nema opisa'}</p>
+                <p className="text-sm text-amber-700 line-clamp-2">{team.opis || 'Nema opisa'}</p>
 
                 {team.league && (
-                  <p className="text-xs text-gray-400">
-                    <span className="font-medium text-gray-500">Liga:</span> {team.league}
+                  <p className="text-xs text-amber-600">
+                    <span className="font-medium text-amber-950">Liga:</span> {team.league}
                   </p>
                 )}
               </div>
@@ -370,40 +370,40 @@ function Timovi() {
       <Modal isOpen={modalOpen} onClose={closeModal}>
         <button
           onClick={closeModal}
-          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition"
+          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-amber-50 text-amber-400 transition"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
+        <h2 className="text-xl font-bold text-amber-950 mb-6">
           {selectedTeam ? 'Uredi tim' : 'Kreiraj novi tim'}
         </h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">
               Naziv tima <span className="text-red-500">*</span>
             </label>
             <input
               {...register('name', { required: 'Naziv je obavezan' })}
               placeholder="npr. Thunder Strikers"
               className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${
-                errors.name ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-indigo-400'
+                errors.name ? 'border-red-400 focus:border-red-500' : 'border-amber-100 focus:border-orange-500'
               }`}
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">
               Sport <span className="text-red-500">*</span>
             </label>
             <select
               {...register('sportId', { required: 'Sport je obavezan' })}
               className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${
-                errors.sportId ? 'border-red-400' : 'border-gray-200 focus:border-indigo-400'
+                errors.sportId ? 'border-red-400' : 'border-amber-100 focus:border-orange-500'
               }`}
             >
               <option value="">Izaberite sport</option>
@@ -417,21 +417,21 @@ function Timovi() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">
               Liga (opciono)
             </label>
             <input
               {...register('league')}
               placeholder="npr. Summer Championship 2026"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-400 transition"
+              className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Status</label>
             <select
               {...register('status')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-400 transition"
+              className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition"
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -442,12 +442,12 @@ function Timovi() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Opis</label>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Opis</label>
             <textarea
               {...register('description')}
               rows={4}
               placeholder="Opcioni opis tima..."
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-400 transition resize-none"
+              className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition resize-none"
             />
           </div>
 
@@ -459,14 +459,14 @@ function Timovi() {
             <button
               type="button"
               onClick={closeModal}
-              className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+              className="flex-1 border border-amber-100 rounded-xl py-2.5 text-sm font-semibold text-amber-950 hover:bg-amber-50 transition"
             >
               Odustani
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white rounded-xl py-2.5 text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {selectedTeam ? 'Sačuvaj promjene' : 'Kreiraj tim'}
             </button>
