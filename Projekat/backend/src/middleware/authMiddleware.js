@@ -1,33 +1,30 @@
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 
-
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuta
-  max: 10,
-  message: { 
-    greska: "PREVISE_ZAHTJEVA", 
-    poruka: "Pokušajte ponovo kasnije." 
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    greska: 'PREVISE_ZAHTJEVA',
+    poruka: 'Previše pokušaja. Pokušajte ponovo kasnije.'
   }
 });
 
-
 const validate = (schema) => (req, res, next) => {
-  console.log("Request body:", req.body);
   const result = schema.safeParse(req.body);
 
   if (!result.success) {
-    console.log("Zod greške:", JSON.stringify(result.error.errors, null, 2));
-    return res.status(400).json({ 
-      greska: "GRESKA_VALIDACIJE", 
-      poruka: result.error.errors[0]?.message || "Neispravni podaci"
+    return res.status(400).json({
+      greska: 'GRESKA_VALIDACIJE',
+      poruka: result.error.errors[0]?.message || 'Neispravni podaci'
     });
   }
 
-  req.body = result.data; // overwrite sa validiranim podacima
+  req.body = result.data;
   next();
 };
-
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -35,25 +32,25 @@ const authenticateToken = (req, res, next) => {
 
   if (!token) {
     return res.status(401).json({
-      greska: "NEOVLASTEN",
-      poruka: "Token nije pronadjen ili je nevaljan"
+      greska: 'NEOVLASTEN',
+      poruka: 'Token nije pronadjen ili je nevaljan'
     });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // kasnije koristimo userId
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(403).json({
-      greska: "TOKEN_ISTEKAO",
-      poruka: "Vas token je istekao. Molimo prijavite se ponovo"
+      greska: 'TOKEN_ISTEKAO',
+      poruka: 'Vas token je istekao. Molimo prijavite se ponovo'
     });
   }
 };
 
-module.exports = { 
-  authLimiter, 
-  validate, 
-  authenticateToken 
+module.exports = {
+  authLimiter,
+  validate,
+  authenticateToken
 };
