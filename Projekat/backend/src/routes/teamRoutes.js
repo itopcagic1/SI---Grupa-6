@@ -2,23 +2,20 @@ const express = require('express');
 const router = express.Router();
 const teamController = require('../controllers/teamController');
 
-// Pregled timova (US-08)
+const { authenticateToken } = require('../middleware/authMiddleware');
+
+// Pregled timova (Javno - ne treba token)
 router.get('/', teamController.getTeams);
 router.get('/:id', teamController.getTeamDetails);
 
-// Upravljanje timovima (US-05.3)
-router.post('/', teamController.createNewTeam);
-router.delete('/:id', teamController.deleteTeam);
+// Zaštićene rute (Sada koristimo ispravno ime: authenticateToken)
+router.post('/', authenticateToken, teamController.createNewTeam);
+router.patch('/:id', authenticateToken, teamController.updateTeam);
+router.put('/:id', authenticateToken, teamController.updateTeam);
+router.delete('/:id', authenticateToken, teamController.deleteTeam);
 
-// Izmjena tima (US-06)
-router.patch('/:id', teamController.updateTeam);
-
-// Članovi tima - Igrači i Treneri (US-07 & US-05.4)
-router.post('/:id/players', teamController.addPlayer);
-router.post('/:id/coaches', teamController.addCoach);
-
-// Uklanjanje članova
-router.delete('/:id/players/:userId', teamController.removePlayer);
-router.delete('/:id/coaches/:userId', teamController.removePlayer);
+router.post('/:id/players', authenticateToken, teamController.addPlayer);
+router.post('/:id/coaches', authenticateToken, teamController.addCoach);
+router.delete('/:id/players/:playerId', authenticateToken, teamController.removePlayer);
 
 module.exports = router;

@@ -38,7 +38,7 @@ const createTeam = async (data) => {
     where: { naziv: data.name }
   });
 
-  if (existingTeam) throw new Error("A team with this name already exists.");
+  if (existingTeam) throw new Error("Tim sa ovim nazivom već postoji.");
 
   return await prisma.tim.create({
     data: {
@@ -66,32 +66,71 @@ const updateTeam = async (id, data) => {
 
 // US-05.3.3: Delete team (with a check if it's in a league)
 const deleteTeam = async (id) => {
+  const parsedId = parseInt(id);
+
   const inLeague = await prisma.ucesceUTakmicenju.findFirst({
-    where: { timId: parseInt(id) }
+    where: { timId: parsedId }
   });
 
-  if (inLeague) throw new Error("Cannot delete team: It is currently registered in a league.");
+  if (inLeague) {
+    throw new Error("Ne možeš obrisati tim: Tim je trenutno registrovan u ligi.");
+  }
+
+  // prvo obriši sve članove iz ClanstvoTima
+  await prisma.clanstvoTima.deleteMany({
+    where: { timId: parsedId }
+  });
 
   return await prisma.tim.delete({
-    where: { timId: parseInt(id) }
+    where: { timId: parsedId }
   });
 };
 
 
 // US-07 (Igrači) & US-05.4 (Treneri)
-const addMemberToTeam = async (teamId, userId, roleInTeam) => {
+const addMemberToTeam = async (teamId, userId, roleInTeam, currentUserRole) => {
+  const team = await prisma.tim.findUnique({
+    where: { timId: parseInt(teamId) }
+  });
 
+  if (!team) {
+    throw new Error(`Tim sa ID-em ${teamId} ne postoji u sistemu.`);
+  }
+
+  // 1. Pronađi korisnika kojeg želimo dodati
   const user = await prisma.korisnik.findUnique({
     where: { korisnikId: parseInt(userId) }
   });
 
-  if (!user) throw new Error("User not found.");
+  if (!user) throw new Error("Korisnik nije pronađen.");
 
+  // 2. Provjera uloge: Ako korisnik već nema tu ulogu u sistemu
   if (user.uloga !== roleInTeam) {
-    throw new Error(`User is ${user.uloga} in system, cannot be added as ${roleInTeam}.`);
+    
+    // Samo Administrator može mijenjati/odobravati uloge pri dodavanju u tim
+    if (currentUserRole !== 'ADMINISTRATOR') {
+      throw new Error(`Korisnik je ${user.uloga} i ne može biti dodan kao ${roleInTeam} bez odobrenja administratora.`);
+    }
+
+    // Admin ga može dodati samo ako se uloga poklapa sa onom koju je korisnik tražio
+    if (user.trazenaUloga !== roleInTeam) {
+      throw new Error(
+        `Administrator ne može dodati korisnika kao ${roleInTeam} jer je korisnik tražio da bude ${user.trazenaUloga}.`
+      );
+    }
+
+    // Ako je sve u redu, ažuriraj korisnika u bazi
+    console.log(`Admin odobrava ulogu ${roleInTeam} za korisnika ${userId}`);
+    await prisma.korisnik.update({
+      where: { korisnikId: user.korisnikId },
+      data: { 
+        uloga: roleInTeam, 
+        statusUloge: 'ODOBREN' 
+      }
+    });
   }
 
-  // provjeri da li je korisnik vec u ovom konkretnom timu
+  // 3. Provjeri da li je korisnik već član tog konkretnog tima
   const alreadyInThisTeam = await prisma.clanstvoTima.findFirst({
     where: {
       timId: parseInt(teamId),
@@ -100,25 +139,25 @@ const addMemberToTeam = async (teamId, userId, roleInTeam) => {
   });
 
   if (alreadyInThisTeam) {
-    throw new Error("User is already a member of this team.");
+    throw new Error("Korisnik je već član ovog tima.");
   }
 
-  // zatim provjeri da li je korisnik u nekom drugom timu
+  // 4. Provjeri da li je korisnik već aktivan u nekom drugom timu
   const alreadyInAnotherTeam = await prisma.clanstvoTima.findFirst({
     where: {
       korisnikId: parseInt(userId),
       status: "ACTIVE"
-
     }
   });
 
   if (alreadyInAnotherTeam) {
     const errorMsg = roleInTeam === "TRENER"
-      ? "This coach is already leading another team!"
-      : "This player is already a member of another team!";
+      ? "Ovaj trener već vodi drugi tim!"
+      : "Ovaj igrač je već član drugog tima!";
     throw new Error(errorMsg);
   }
 
+  // 5. Ako su sve provjere prošle, kreiraj zapis u tabeli ClanstvoTima
   return await prisma.clanstvoTima.create({
     data: {
       timId: parseInt(teamId),
@@ -139,6 +178,23 @@ const removeMemberFromTeam = async (teamId, userId) => {
   });
 };
 
+const isUserCoachOfTeam = async (teamId, userId) => {
+ if (!userId) {
+    console.error("Greška: userId nije proslijeđen funkciji isUserCoachOfTeam!");
+    return false;
+  }
+
+  const membership = await prisma.clanstvoTima.findFirst({
+    where: {
+      timId: parseInt(teamId),
+      korisnikId: parseInt(userId), 
+      ulogaUTimu: 'TRENER',
+      status: 'ACTIVE'
+    }
+  });
+  return !!membership;
+};
+
 module.exports = {
   getAllTeams,
   getTeamById,
@@ -146,5 +202,6 @@ module.exports = {
   updateTeam,
   deleteTeam,
   addMemberToTeam,
-  removeMemberFromTeam
+  removeMemberFromTeam,
+  isUserCoachOfTeam
 };
