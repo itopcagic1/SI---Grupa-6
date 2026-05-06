@@ -14,6 +14,9 @@ const app = express();
 app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 3000;
+const ligaRoutes = require('./routes/ligaRoutes');
+
+app.use('/api/lige', ligaRoutes);
 
 // CORS
 app.use(cors({
