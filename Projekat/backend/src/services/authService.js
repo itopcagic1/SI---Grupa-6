@@ -23,10 +23,7 @@ const generateRefreshToken = () => {
 };
 
 async function registerUser({ punoIme, ime, email, lozinka, potvrdalozinke, trazenaUloga, documents }) {
-  console.log("Servis prima:", { punoIme, email, lozinka, potvrdalozinke });
-
   if (!potvrdalozinke || lozinka !== potvrdalozinke) {
-    console.log("Lozinke se ne podudaraju!", { lozinka, potvrdalozinke });
     const error = new Error('Lozinke se ne podudaraju');
     error.status = 400;
     error.code = 'LOZINKE_SE_NE_PODUDARAJU';
@@ -121,9 +118,7 @@ async function logoutUser(korisnikId) {
     data: { refreshToken: null },
   });
 
-  return {
-    korisnikId,
-  };
+  return { korisnikId };
 }
 
 async function getUserProfile(korisnikId) {
