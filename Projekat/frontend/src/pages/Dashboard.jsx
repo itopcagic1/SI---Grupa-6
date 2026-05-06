@@ -34,6 +34,12 @@ function Dashboard() {
         </p>
       )}
 
+      <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <button onClick={() => navigate('/lige')} style={{ marginRight: '10px' }}>
+          Upravljanje Ligama
+        </button>
+      </div>
+
       <button onClick={handleLogout}>Logout</button>
     </div>
   );

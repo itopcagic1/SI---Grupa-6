@@ -16,7 +16,7 @@ function Login() {
       localStorage.setItem('token', res.access_token);
       localStorage.setItem('korisnik', JSON.stringify(res.korisnik));
 
-      navigate('/dashboard');
+      navigate('/lige');
     } catch (err) {
       setStatusMessage({ type: 'error', text: err.response?.data?.poruka || 'Greška pri prijavi' });
     }
