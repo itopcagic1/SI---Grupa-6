@@ -5,7 +5,11 @@ const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ligaRoutes = require('./routes/ligaRoutes');
 
+
+
+app.use('/api/lige', ligaRoutes);
 
 // CORS 
 app.use(cors({
