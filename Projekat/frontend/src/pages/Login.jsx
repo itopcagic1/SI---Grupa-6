@@ -23,6 +23,11 @@ function Login() {
       navigate('/dashboard');
     }
     } catch (err) {
+      const kod = err.response?.data?.greska; 
+    if (kod === 'KORISNIK_BLOKIRAN') {
+      navigate('/blokiran'); 
+      return;
+    }
       setStatusMessage({ type: 'error', text: err.response?.data?.poruka || 'Greška pri prijavi' });
     }
   };

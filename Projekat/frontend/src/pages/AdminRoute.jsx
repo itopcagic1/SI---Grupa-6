@@ -18,7 +18,7 @@ export default function AdminRoute({ children }) {
         background: '#fafafa',
         gap: '1rem',
       }}>
-        <span style={{ fontSize: '4rem' }}>🚫</span>
+        
         <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
           Nemate pristup ovoj stranici
         </h1>

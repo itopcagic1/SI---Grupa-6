@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminKorisnici from './pages/AdminKorisnici';
 import AdminRoute from './pages/AdminRoute';
+import Blokiran from './pages/Blokiran';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/blokiran" element={<Blokiran />} />
         <Route path="/admin/korisnici" element={
     <AdminRoute>
       <AdminKorisnici />
