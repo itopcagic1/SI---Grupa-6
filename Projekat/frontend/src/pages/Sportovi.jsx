@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
 import { fetchSports, createSport, updateSport, deleteSport } from '../api/teamApi';
 
 function Sportovi() {
+  const navigate = useNavigate();
   const [sports, setSports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -74,7 +76,15 @@ function Sportovi() {
   return (
     <div className="p-8 max-w-5xl mx-auto min-h-screen bg-amber-50/30">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-amber-950">Upravljanje sportovima</h1>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-amber-700 hover:text-amber-900 transition flex items-center gap-1 bg-white border border-amber-200 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Nazad
+          </button>
+          <h1 className="text-2xl font-bold text-amber-950">Upravljanje sportovima</h1>
+        </div>
         {isAdmin && (
           <button onClick={() => openModal()} className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-xl text-sm font-bold transition">
             + Novi sport

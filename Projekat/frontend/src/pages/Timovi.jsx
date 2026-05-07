@@ -339,7 +339,7 @@ function Timovi() {
   }, [teams, searchQuery, sportFilter]);
 
   return (
-    <div className="min-h-screen bg-amber-50">
+    <div className="min-h-screen bg-amber-50 font-sans">
       {/* Navbar */}
       <nav className="bg-white border-b border-amber-100 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
@@ -349,6 +349,9 @@ function Timovi() {
           <div className="hidden md:flex gap-4 ml-6">
             <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
             <Link to="/teams" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Timovi</Link>
+            {isAdmin && (
+                <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -371,8 +374,8 @@ function Timovi() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-amber-950">Timovi</h1>
-            <p className="text-sm text-amber-700 mt-1">Upravljajte i organizujte vaše timove</p>
+            <h1 className="text-4xl font-black text-slate-800 tracking-tight">Timovi</h1>
+            <p className="text-slate-500 mt-2 text-lg">Sportski timovi</p>
           </div>
           {isAdmin && (
             <div className="flex gap-3">
