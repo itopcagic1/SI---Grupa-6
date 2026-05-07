@@ -12,16 +12,20 @@ const getSportById = async (id) => {
 };
 
 const createSport = async (data) => {
+  const naziv = typeof data.naziv === 'string' ? data.naziv.trim() : '';
+
   // US-05.1: Provjera duplikata
   const existing = await prisma.sport.findUnique({
-    where: { naziv: data.naziv }
+    where: { naziv }
   });
+
   if (existing) {
-  throw new Error("Sport sa ovim nazivom već postoji!");
-}
+    throw new Error("Sport sa ovim nazivom vec postoji!");
+  }
+
   return await prisma.sport.create({
     data: {
-      naziv: data.naziv,
+      naziv,
       opis: data.opis,
       jeTimskiSport: data.jeTimskiSport ?? true
     }
@@ -40,10 +44,11 @@ const deleteSport = async (id) => {
     where: { sportId: parseInt(id) }
   });
 };
-module.exports = { 
-  getAllSports, 
-  getSportById, 
-  createSport, 
-  updateSport, 
-  deleteSport 
+
+module.exports = {
+  getAllSports,
+  getSportById,
+  createSport,
+  updateSport,
+  deleteSport
 };

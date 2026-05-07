@@ -23,6 +23,13 @@ const getSportById = async (req, res) => {
 
 const createSport = async (req, res) => {
   try {
+    const naziv = typeof req.body.naziv === 'string' ? req.body.naziv.trim() : '';
+
+    if (!naziv) {
+      return res.status(400).json({ error: 'Naziv sporta je obavezan.' });
+    }
+
+    req.body.naziv = naziv;
     const newSport = await sportService.createSport(req.body);
     res.status(201).json(newSport);
   } catch (error) {

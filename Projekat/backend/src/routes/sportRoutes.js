@@ -1,18 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const sportController = require('../controllers/sportController');
-const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware'); // Importuj zaštitu
+const { authenticateToken } = require('../middleware/authMiddleware');
+const { requireRole } = require('../middleware/roleMiddleware');
 
 // JAVNA RUTA (Svi mogu da vide listu sportova)
-router.get('/', sportController.getAllSports); 
+router.get('/', sportController.getAllSports);
 
-// ZAŠTIĆENE RUTE (Samo administrator smije da mijenja)
-// Pretpostavljam da imaš authorizeRole middleware, ako nemaš koristi samo authenticateToken
-router.post('/', authenticateToken, sportController.createSport);          
-router.patch('/:id', authenticateToken, sportController.updateSport);      
-router.delete('/:id', authenticateToken, sportController.deleteSport);   
+// ZASTICENE RUTE (Samo administrator smije da mijenja)
+router.post('/', authenticateToken, requireRole('ADMINISTRATOR'), sportController.createSport);
+router.patch('/:id', authenticateToken, requireRole('ADMINISTRATOR'), sportController.updateSport);
+router.delete('/:id', authenticateToken, requireRole('ADMINISTRATOR'), sportController.deleteSport);
 router.get('/:id', sportController.getSportById);
 
-
 module.exports = router;
-
