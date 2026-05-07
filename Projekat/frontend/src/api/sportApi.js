@@ -9,6 +9,8 @@ export const updateSport = async (id, sportData) => {
   return response.data;
 };
 
+
+
 export const deleteSport = async (id) => {
   const response = await api.delete(`/sports/${id}`, authConfig());
   return response.data;
