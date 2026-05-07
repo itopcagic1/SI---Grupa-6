@@ -13,6 +13,20 @@ async function kreirajLigu({ naziv, sportId, sezona, opis, datumPocetka, datumZa
     throw error;
   }
 
+  const postojecaLiga = await prisma.takmicenje.findFirst({
+    where: {
+      naziv,
+      sportId: Number(sportId),
+    },
+  });
+
+  if (postojecaLiga) {
+    const error = new Error('Liga sa ovim nazivom već postoji za odabrani sport.');
+    error.status = 409;
+    error.code = 'DUPLIKAT_LIGE';
+    throw error;
+  }
+
   const liga = await prisma.takmicenje.create({
     data: {
       naziv,
