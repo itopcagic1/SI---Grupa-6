@@ -21,7 +21,7 @@ export default function AdminKorisnici() {
   const korisnik = JSON.parse(localStorage.getItem('korisnik'));
 
   const handleLogout = async () => {
-    try { if (token) await logoutUser(token); } catch {}
+    try { if (token) await logoutUser(token); } catch { }
     localStorage.removeItem('token');
     localStorage.removeItem('korisnik');
     navigate('/login');
@@ -44,7 +44,7 @@ export default function AdminKorisnici() {
     try {
       const data = await getKorisnici(token, 'PENDING');
       setPendingBroj(data.korisnici.length);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => { ucitajPendingBroj(); }, []);
@@ -120,9 +120,31 @@ export default function AdminKorisnici() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
-        <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px' }}>
-          sport<span style={{ color: '#ea580c' }}>.ba</span>
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px' }}>
+            sport<span style={{ color: '#ea580c' }}>.ba</span>
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => navigate('/teams')} style={{
+              padding: '0.4rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb',
+              background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#1e293b',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+            >
+              Timovi
+            </button>
+            <button onClick={() => navigate('/lige')} style={{
+              padding: '0.4rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb',
+              background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#1e293b',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+            >
+              Lige
+            </button>
+          </div>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500 }}>
             {korisnik?.punoIme || korisnik?.email}
@@ -349,7 +371,7 @@ export default function AdminKorisnici() {
                     padding: '0.6rem', borderRadius: '8px', border: '1px solid #fca5a5',
                     background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
                   }}>
-                     Obriši korisnika
+                    Obriši korisnika
                   </button>
                 ) : (
                   <div style={{ background: '#fee2e2', borderRadius: '8px', padding: '0.8rem', textAlign: 'center' }}>

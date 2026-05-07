@@ -1,0 +1,380 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  fetchTeams,
+  fetchSports,
+  fetchCoaches, // 1. DODANO: Import funkcije
+  createTeam,
+  updateTeam,
+  deleteTeam,
+} from '../api/teamApi';
+
+function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Timovi() {
+  const [teams, setTeams] = useState([]);
+  const [sports, setSports] = useState([]);
+  const [coaches, setCoaches] = useState([]); // 2. DODANO: State za trenere
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [submissionMessage, setSubmissionMessage] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sportFilter, setSportFilter] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const token = localStorage.getItem('token');
+  const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
+  const isAuthenticated = Boolean(token);
+
+  const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
+  const navigate = useNavigate();
+
+  const getInitials = (ime, prezime) => {
+    return ((ime?.[0] || '') + (prezime?.[0] || '')).toUpperCase();
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      sportId: '',
+      trenerId: '',
+      description: '',
+      status: 'ACTIVE',
+      league: '',
+    },
+  });
+
+  const loadData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [teamsData, sportsData, coachesData] = await Promise.all([
+        fetchTeams(),
+        fetchSports(),
+        fetchCoaches()
+      ]);
+
+      // Provjera: ako podaci nisu niz, postavi prazan niz da map() ne pukne
+      setTeams(Array.isArray(teamsData) ? teamsData : []);
+      setSports(Array.isArray(sportsData) ? sportsData : []);
+      setCoaches(Array.isArray(coachesData) ? coachesData : []);
+    } catch (err) {
+      // KLJUČNO: Ne ispisuj cijeli 'err', nego samo poruku
+      const errorMsg = err.response?.data?.message || "Došlo je do greške pri učitavanju.";
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const openCreateModal = () => {
+    setSelectedTeam(null);
+    reset({ name: '', sportId: '', trenerId: '', description: '', status: 'ACTIVE', league: '' });
+    setSubmissionMessage('');
+    setError('');
+    setModalOpen(true);
+  };
+
+  const openEditModal = (team) => {
+    setSelectedTeam(team);
+    reset({
+      name: team.naziv,
+      sportId: String(team.sportId),
+      trenerId: team.trenerId ? String(team.trenerId) : '',
+      description: team.opis || '',
+      status: team.status || 'ACTIVE',
+      league: team.league || '',
+    });
+    setSubmissionMessage('');
+    setError('');
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedTeam(null);
+  };
+
+  const onSubmit = async (data) => {
+    setError('');
+    setSubmissionMessage('');
+
+    if (!isAuthenticated) {
+      setError('Morate biti prijavljeni.');
+      return;
+    }
+
+    try {
+      // Priprema podataka za backend (da se poklapaju sa teamController.js)
+      const payload = {
+        name: data.name,
+        sportId: Number(data.sportId),
+        description: data.description,
+        status: data.status,
+        // Backend prima trenerId i dodaje ga u tim (ako imaš tu logiku)
+        trenerId: data.trenerId ? Number(data.trenerId) : null,
+      };
+
+      if (selectedTeam) {
+        await updateTeam(selectedTeam.timId, payload);
+        setSubmissionMessage('Tim uspješno ažuriran.');
+      } else {
+        await createTeam(payload);
+        setSubmissionMessage('Tim uspješno kreiran.');
+      }
+
+      closeModal();
+      loadData(); // Osvježi listu
+    } catch (err) {
+      const message = err.response?.data?.message || 'Greška pri spremanju tima.';
+      setError(message);
+    }
+  };
+
+  const handleDelete = async (team) => {
+    if (!isAuthenticated) {
+      setError('Morate biti prijavljeni da biste obrisali tim.');
+      return;
+    }
+    const confirmed = window.confirm(`Jeste li sigurni da želite obrisati tim "${team.naziv}"?`);
+    if (!confirmed) return;
+    setError('');
+    try {
+      await deleteTeam(team.timId);
+      setSubmissionMessage(`Tim "${team.naziv}" je obrisan.`);
+      await loadData();
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Greška pri brisanju tima.';
+      setError(message);
+    }
+  };
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'ACTIVE', label: 'Aktivan' },
+      { value: 'INACTIVE', label: 'Neaktivan' },
+    ],
+    []
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUserMenuOpen(false);
+    navigate('/');
+  };
+
+  const filteredTeams = useMemo(() => {
+    return teams.filter((team) => {
+      const matchesSearch =
+        !searchQuery ||
+        team.naziv.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (team.opis && team.opis.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSport =
+        !sportFilter || String(team.sportId) === sportFilter;
+      return matchesSearch && matchesSport;
+    });
+  }, [teams, searchQuery, sportFilter]);
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-amber-100 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+            <span className="font-semibold text-amber-950 text-base">SportManager</span>
+          </div>
+          <div className="flex gap-1">
+            <Link to="/lige" className="px-4 py-2 rounded-lg text-sm text-amber-700 hover:bg-amber-50 font-medium">Lige</Link>
+            <span className="px-4 py-2 rounded-lg text-sm text-orange-600 bg-orange-50 font-medium">Timovi</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex items-center gap-2 hover:bg-amber-50 px-3 py-2 rounded-lg transition relative"
+          >
+            <span className="text-sm font-medium text-amber-950">
+              {korisnikData?.ime && korisnikData?.prezime
+                ? `${korisnikData.ime} ${korisnikData.prezime}`
+                : korisnikData?.ime || korisnikData?.email || 'Korisnik'}
+            </span>
+          </button>
+          {userMenuOpen && (
+            <div className="absolute top-16 right-6 bg-white border border-amber-100 rounded-xl shadow-lg py-2 min-w-[160px] z-40">
+              <button onClick={handleLogout} className="w-full px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 transition font-medium">
+                Odjava
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-amber-950">Timovi</h1>
+            <p className="text-sm text-amber-700 mt-1">Upravljajte i organizujte vaše timove</p>
+          </div>
+          {isAdmin && (
+            <div className="flex gap-3">
+              <button onClick={() => navigate('/sports')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+                Upravljaj sportovima
+              </button>
+              <button onClick={openCreateModal} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Kreiraj tim
+              </button>
+            </div>
+          )}
+        </div>
+
+
+
+        {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {submissionMessage && <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{submissionMessage}</div>}
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Pretraži timove..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border border-amber-100 rounded-xl text-sm bg-white outline-none focus:border-orange-500 transition"
+            />
+          </div>
+          <select
+            value={sportFilter}
+            onChange={(e) => setSportFilter(e.target.value)}
+            className="border border-amber-100 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-orange-500 transition min-w-[160px]"
+          >
+            <option value="">Svi sportovi</option>
+            {sports.map((sport) => (
+              <option key={sport.sportId} value={String(sport.sportId)}>{sport.naziv}</option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <div className="py-20 text-center text-amber-500 text-sm">Učitavanje podataka...</div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredTeams.map((team) => (
+              <div key={team.timId} className="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm hover:shadow-md transition flex flex-col gap-3">
+                <div className="flex items-start justify-between">
+                  <h3 className="font-bold text-amber-950 text-base">{team.naziv}</h3>
+                  {(isAdmin || korisnikData?.trenutnaUloga === 'TRENER') && (
+                    <div className="relative group">
+                      <button className="p-1 rounded-lg hover:bg-amber-50 text-amber-400">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+                      </button>
+                      <div className="absolute right-0 top-7 z-10 hidden group-focus-within:flex flex-col bg-white border border-amber-100 rounded-xl shadow-lg py-1 min-w-[120px]">
+                        <button onClick={() => openEditModal(team)} className="px-4 py-2 text-sm text-left hover:bg-amber-50 text-amber-950">Uredi</button>
+                        <button onClick={() => handleDelete(team)} className="px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600">Obriši</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-100">{team.sport?.naziv || 'Sport nije definisan'}</span>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${team.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>{team.status === 'ACTIVE' ? 'Aktivan' : 'Neaktivan'}</span>
+                </div>
+                <p className="text-sm text-amber-700 line-clamp-2">{team.opis || 'Nema opisa'}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
+      <Modal isOpen={modalOpen} onClose={closeModal}>
+        <button onClick={closeModal} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-amber-50 text-amber-400 transition">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
+        <h2 className="text-xl font-bold text-amber-950 mb-6">{selectedTeam ? 'Uredi tim' : 'Kreiraj novi tim'}</h2>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Naziv tima <span className="text-red-500">*</span></label>
+            <input {...register('name', { required: 'Naziv je obavezan' })} className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${errors.name ? 'border-red-400' : 'border-amber-100 focus:border-orange-500'}`} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Sport <span className="text-red-500">*</span></label>
+            <select {...register('sportId', { required: 'Sport je obavezan' })} className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${errors.sportId ? 'border-red-400' : 'border-amber-100 focus:border-orange-500'}`}>
+              <option value="">Izaberite sport</option>
+              {sports.map((sport) => (<option key={sport.sportId} value={sport.sportId}>{sport.naziv}</option>))}
+            </select>
+          </div>
+
+          {/* 4. POPRAVLJENO: Mapiranje trenera */}
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Trener tima</label>
+            <select
+              {...register('trenerId')}
+              className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition"
+            >
+              <option value="">Izaberite trenera</option>
+              {coaches.map((trener) => (
+                <option key={trener.id} value={trener.id}>
+                  {trener.ime}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Status</label>
+            <select {...register('status')} className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition">
+              {statusOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Opis</label>
+            <textarea {...register('description')} rows={4} className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition resize-none" />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={closeModal} className="flex-1 border border-amber-100 rounded-xl py-2.5 text-sm font-semibold text-amber-950 hover:bg-amber-50">Odustani</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60">{selectedTeam ? 'Sačuvaj' : 'Kreiraj'}</button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+export default Timovi;

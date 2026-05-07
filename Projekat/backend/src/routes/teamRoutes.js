@@ -1,43 +1,16 @@
 const express = require('express');
-
 const router = express.Router();
-
+const teamController = require('../controllers/teamController');
 const { authenticateToken } = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/roleMiddleware');
 
-// GET svi timovi (javno)
-router.get('/', (req, res) => {
-  res.json({ poruka: 'Svi timovi' });
-});
+// 1. JAVNE RUTE
+router.get('/coaches', teamController.getCoaches); // Ovo mora biti PRVO
+router.get('/', teamController.getTeams);
+router.get('/:id', teamController.getTeamDetails);
 
-// CREATE tim
-router.post(
-  '/',
-  authenticateToken,
-  requireRole('ADMINISTRATOR', 'ORGANIZATOR'),
-  (req, res) => {
-    res.json({ poruka: 'Tim kreiran' });
-  }
-);
-
-// UPDATE tim
-router.put(
-  '/:id',
-  authenticateToken,
-  requireRole('ADMINISTRATOR', 'ORGANIZATOR'),
-  (req, res) => {
-    res.json({ poruka: 'Tim azuriran' });
-  }
-);
-
-// DELETE tim
-router.delete(
-  '/:id',
-  authenticateToken,
-  requireRole('ADMINISTRATOR', 'ORGANIZATOR'),
-  (req, res) => {
-    res.json({ poruka: 'Tim obrisan' });
-  }
-);
+// 2. ZAŠTIĆENE RUTE
+router.post('/', authenticateToken, teamController.createNewTeam);
+router.patch('/:id', authenticateToken, teamController.updateTeam);
+router.delete('/:id', authenticateToken, teamController.deleteTeam);
 
 module.exports = router;
