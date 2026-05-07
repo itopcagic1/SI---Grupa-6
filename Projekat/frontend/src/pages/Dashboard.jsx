@@ -37,17 +37,25 @@ function Dashboard() {
               to="/teams"
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
-              Upravljaj timovima
+              Timovi
             </Link>
             <Link
               to="/lige"
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
-              Upravljanje ligama
+              Lige
             </Link>
+            {korisnik?.trenutnaUloga === 'ADMINISTRATOR' && (
+              <Link
+                to="/admin/korisnici"
+                className="inline-flex items-center justify-center rounded-2xl bg-slate-800 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-slate-900"
+              >
+                Korisnici
+              </Link>
+            )}
             <button
               onClick={handleLogout}
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-slate-900 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
               Odjava
             </button>
