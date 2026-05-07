@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getKorisnici, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika } from '../api/adminApi';
 import { logoutUser } from '../api/authApi';
 
@@ -13,8 +13,8 @@ export default function AdminKorisnici() {
   const [greska, setGreska] = useState('');
   const [razlogMap, setRazlogMap] = useState({});
   const [poruka, setPoruka] = useState('');
-  const [odabraniKorisnik, setOdabraniKorisnik] = useState(null); // popup
-  const [brisanjePotvrdа, setBrisanjePotvrda] = useState(false);
+  const [odabraniKorisnik, setOdabraniKorisnik] = useState(null);
+  const [brisanjePotvrda, setBrisanjePotvrda] = useState(false);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -111,108 +111,71 @@ export default function AdminKorisnici() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
+    <div className="min-h-screen bg-amber-50 font-sans">
 
-      {/* Navbar */}
-      <nav style={{
-        background: '#fff', borderBottom: '1px solid #e5e7eb',
-        padding: '0 2rem', height: '64px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e293b', letterSpacing: '-0.5px' }}>
-            sport<span style={{ color: '#ea580c' }}>.ba</span>
-          </span>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={() => navigate('/teams')} style={{
-              padding: '0.4rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb',
-              background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#1e293b',
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-            >
-              Timovi
-            </button>
-            <button onClick={() => navigate('/lige')} style={{
-              padding: '0.4rem 1rem', borderRadius: '8px', border: '1px solid #e5e7eb',
-              background: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#1e293b',
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-            >
-              Lige
-            </button>
+      {/* Navbar — isti stil kao Lige.jsx */}
+      <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-6">
+          <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
+            sport<span className="text-orange-600">.ba</span>
+          </Link>
+          <div className="hidden md:flex gap-4 ml-6">
+            <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
+            <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
+            <span className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Admin Panel</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500 }}>
-            {korisnik?.punoIme || korisnik?.email}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
+            {korisnik ? (korisnik.punoIme?.charAt(0) || korisnik.email.charAt(0)).toUpperCase() : '?'}
+          </div>
+          <span className="text-sm font-semibold text-slate-700 hidden sm:block">
+            {korisnik ? korisnik.punoIme || korisnik.email : 'Gost'}
           </span>
-          <button onClick={handleLogout} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '0.4rem 1rem', borderRadius: '8px',
-            border: '1px solid #e5e7eb', background: '#fff',
-            cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#ef4444',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
-            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-            </svg>
-            Odjavi se
-          </button>
+          {korisnik && (
+            <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
+              Odjava
+            </button>
+          )}
         </div>
       </nav>
 
-      <div style={{ padding: '2.5rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2.2rem', fontWeight: 900, color: '#0f172a', marginBottom: '2rem', letterSpacing: '-1px' }}>
-          Admin Panel
-        </h1>
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-8">Admin Panel</h1>
 
         {/* Tabovi */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="flex gap-3 mb-6">
           {['pending', 'svi'].map((t) => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding: '0.5rem 1.2rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
-              background: tab === t ? '#ea580c' : '#e5e7eb',
-              color: tab === t ? '#fff' : '#374151', fontWeight: 700, fontSize: '0.9rem',
-            }}>
+            <button key={t} onClick={() => setTab(t)} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-colors ${tab === t ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-amber-200 hover:bg-amber-50'}`}>
               {t === 'pending' ? 'Novi zahtjevi' : 'Svi korisnici'}
               {t === 'pending' && pendingBroj > 0 && (
-                <span style={{
-                  marginLeft: '8px',
-                  background: tab === 'pending' ? '#fff' : '#ea580c',
-                  color: tab === 'pending' ? '#ea580c' : '#fff',
-                  borderRadius: '999px', padding: '0 7px', fontSize: '0.78rem', fontWeight: 800,
-                }}>{pendingBroj}</span>
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-black ${tab === 'pending' ? 'bg-white text-orange-600' : 'bg-orange-600 text-white'}`}>
+                  {pendingBroj}
+                </span>
               )}
             </button>
           ))}
         </div>
 
         {/* Pretraga i filter */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.2rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '1rem' }}></span>
+        <div className="flex gap-3 mb-5 flex-wrap items-center">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
             <input
               type="text"
               placeholder="Pronađi korisnika po imenu ili emailu..."
               value={pretraga}
               onChange={(e) => setPretraga(e.target.value)}
-              style={{
-                padding: '0.45rem 0.9rem 0.45rem 0.9rem',
-                borderRadius: '8px', border: '1px solid #d1d5db',
-                fontSize: '0.9rem', background: '#fff', minWidth: '300px', outline: 'none',
-              }}
+              className="w-full pl-10 pr-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-slate-700 shadow-sm"
             />
           </div>
           {tab === 'svi' && (
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{
-              padding: '0.45rem 0.9rem', borderRadius: '8px',
-              border: '1px solid #d1d5db', fontSize: '0.9rem', background: '#fff',
-            }}>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none font-medium text-slate-700 shadow-sm">
               <option value="">Svi statusi</option>
               <option value="PENDING">PENDING</option>
               <option value="ODOBREN">ODOBREN</option>
@@ -223,85 +186,80 @@ export default function AdminKorisnici() {
 
         {/* Poruke */}
         {poruka && (
-          <div style={{ background: '#d1fae5', color: '#065f46', padding: '0.7rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontWeight: 600 }}>
+          <div className="mb-4 px-5 py-3 bg-green-50 border border-green-200 text-green-800 rounded-2xl font-bold text-sm">
             ✓ {poruka}
           </div>
         )}
         {greska && (
-          <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.7rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontWeight: 600 }}>
+          <div className="mb-4 px-5 py-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl font-bold text-sm">
             ✕ {greska}
           </div>
         )}
 
         {/* Tabela */}
         {loading ? (
-          <p style={{ color: '#6b7280' }}>Učitavanje...</p>
+          <div className="text-center py-20">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Učitavanje...</p>
+          </div>
         ) : korisnici.length === 0 ? (
-          <p style={{ color: '#6b7280' }}>Nema korisnika za prikaz.</p>
+          <div className="text-center py-20 bg-white rounded-[32px] border border-amber-100 shadow-sm">
+            <p className="text-slate-500 text-lg font-medium">Nema korisnika za prikaz.</p>
+          </div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem' }}>
+          <div className="bg-white rounded-[32px] border border-amber-100 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
               <thead>
-                <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                  <th style={th}>Ime</th>
-                  <th style={th}>Email</th>
-                  <th style={th}>Uloga</th>
-                  <th style={th}>Tražena uloga</th>
-                  <th style={th}>Status zahtjeva</th>
-                  <th style={th}>Status naloga</th>
-                  {tab === 'pending' && <th style={th}>Akcije</th>}
+                <tr className="bg-amber-50 text-left">
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Ime</th>
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Email</th>
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Uloga</th>
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Tražena uloga</th>
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Status zahtjeva</th>
+                  <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Status naloga</th>
+                  {tab === 'pending' && <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Akcije</th>}
                 </tr>
               </thead>
               <tbody>
                 {korisnici.map((k) => (
-                  <tr
-                    key={k.korisnikId}
-                    onClick={() => setOdabraniKorisnik(k)}
-                    style={{ borderTop: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                  >
-                    <td style={td}>{k.punoIme || '—'}</td>
-                    <td style={td}>{k.email}</td>
-                    <td style={td}>{k.uloga}</td>
-                    <td style={td}>{k.trazenaUloga || '—'}</td>
-                    <td style={td}>
-                      <span style={{
-                        padding: '3px 10px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700,
-                        background: k.statusUloge === 'PENDING' ? '#fef3c7' : k.statusUloge === 'ODOBREN' ? '#d1fae5' : k.statusUloge === 'ODBIJEN' ? '#fee2e2' : '#f3f4f6',
-                        color: k.statusUloge === 'PENDING' ? '#92400e' : k.statusUloge === 'ODOBREN' ? '#065f46' : k.statusUloge === 'ODBIJEN' ? '#991b1b' : '#6b7280',
-                      }}>
+                  <tr key={k.korisnikId} onClick={() => setOdabraniKorisnik(k)}
+                    className="border-t border-amber-50 cursor-pointer hover:bg-amber-50 transition-colors">
+                    <td className="px-5 py-4 font-medium text-slate-800">{k.punoIme || '—'}</td>
+                    <td className="px-5 py-4 text-slate-600">{k.email}</td>
+                    <td className="px-5 py-4 text-slate-800 font-semibold">{k.uloga}</td>
+                    <td className="px-5 py-4 text-slate-600">{k.trazenaUloga || '—'}</td>
+                    <td className="px-5 py-4">
+                      <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest
+                        ${k.statusUloge === 'PENDING' ? 'bg-amber-50 text-amber-700' :
+                          k.statusUloge === 'ODOBREN' ? 'bg-green-50 text-green-700' :
+                          k.statusUloge === 'ODBIJEN' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
                         {k.statusUloge || '—'}
                       </span>
                     </td>
-                    <td style={td}>
-                      <span style={{
-                        padding: '3px 10px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700,
-                        background: k.statusPouzdanosti === 'BLOKIRAN' ? '#fee2e2' : '#f3f4f6',
-                        color: k.statusPouzdanosti === 'BLOKIRAN' ? '#991b1b' : '#6b7280',
-                      }}>
+                    <td className="px-5 py-4">
+                      <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest
+                        ${k.statusPouzdanosti === 'BLOKIRAN' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
                         {k.statusPouzdanosti || 'AKTIVAN'}
                       </span>
                     </td>
                     {tab === 'pending' && (
-                      <td style={td} onClick={(e) => e.stopPropagation()}>
+                      <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                         {k.statusUloge === 'PENDING' && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', gap: '0.4rem' }}>
-                              <button onClick={() => handleObradi(k.korisnikId, 'ODOBRI')} style={{ ...dugme, background: '#16a34a', color: '#fff' }}>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <button onClick={() => handleObradi(k.korisnikId, 'ODOBRI')}
+                                className="px-3 py-1.5 bg-green-600 text-white rounded-lg font-bold text-xs hover:bg-green-700 transition-colors">
                                 Odobri
                               </button>
-                              <button onClick={() => handleObradi(k.korisnikId, 'ODBIJ')} style={{ ...dugme, background: '#dc2626', color: '#fff' }}>
+                              <button onClick={() => handleObradi(k.korisnikId, 'ODBIJ')}
+                                className="px-3 py-1.5 bg-red-600 text-white rounded-lg font-bold text-xs hover:bg-red-700 transition-colors">
                                 Odbij
                               </button>
                             </div>
-                            <input
-                              type="text"
-                              placeholder="Razlog odbijanja..."
+                            <input type="text" placeholder="Razlog odbijanja..."
                               value={razlogMap[k.korisnikId] || ''}
                               onChange={(e) => setRazlog(k.korisnikId, e.target.value)}
-                              style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.83rem', outline: 'none' }}
-                            />
+                              className="px-3 py-1.5 border border-amber-200 rounded-lg text-xs outline-none focus:border-orange-500 w-40" />
                           </div>
                         )}
                       </td>
@@ -316,103 +274,73 @@ export default function AdminKorisnici() {
 
       {/* Popup detalji korisnika */}
       {odabraniKorisnik && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
-          onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }}
-        >
-          <div
-            style={{ background: '#fff', borderRadius: '16px', padding: '2rem', maxWidth: '440px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+          onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }}>
+          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}>
+
+            <div className="px-8 py-6 border-b border-amber-50 flex justify-between items-start">
               <div>
-                <h2 style={{ margin: 0, fontWeight: 900, color: '#0f172a', fontSize: '1.2rem' }}>
-                  {odabraniKorisnik.punoIme || '—'}
-                </h2>
-                <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.88rem' }}>{odabraniKorisnik.email}</p>
+                <h2 className="text-xl font-black text-slate-800">{odabraniKorisnik.punoIme || '—'}</h2>
+                <p className="text-sm text-slate-500 mt-1">{odabraniKorisnik.email}</p>
               </div>
-              <button onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }} style={{
-                background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.3rem', color: '#94a3b8', lineHeight: 1,
-              }}>✕</button>
+              <button onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }}
+                className="text-slate-400 hover:text-slate-600 p-2 bg-slate-50 rounded-full transition-colors text-sm">✕</button>
             </div>
 
-            {/* Detalji */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '1.5rem' }}>
-              {[
-                ['Uloga', odabraniKorisnik.uloga],
-                ['Tražena uloga', odabraniKorisnik.trazenaUloga || '—'],
-                ['Status zahtjeva', odabraniKorisnik.statusUloge || '—'],
-                ['Status naloga', odabraniKorisnik.statusPouzdanosti || 'AKTIVAN'],
-              ].map(([label, value]) => (
-                <div key={label} style={{ background: '#f8fafc', borderRadius: '8px', padding: '0.7rem 1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px' }}>{label}</div>
-                  <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem' }}>{value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Akcije — samo ako nije admin */}
-            {odabraniKorisnik.uloga !== 'ADMINISTRATOR' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-
-                {/* Blokiranje */}
-                <button onClick={handleBlokiranje} style={{
-                  padding: '0.6rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700,
-                  background: odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? '#e5e7eb' : '#f59e0b',
-                  color: odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? '#374151' : '#fff',
-                  fontSize: '0.9rem',
-                }}>
-                  {odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? 'Odblokiraj korisnika' : ' Blokiraj korisnika'}
-                </button>
-
-                {/* Brisanje */}
-                {!brisanjePotvrdа ? (
-                  <button onClick={() => setBrisanjePotvrda(true)} style={{
-                    padding: '0.6rem', borderRadius: '8px', border: '1px solid #fca5a5',
-                    background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
-                  }}>
-                    Obriši korisnika
-                  </button>
-                ) : (
-                  <div style={{ background: '#fee2e2', borderRadius: '8px', padding: '0.8rem', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 0.7rem', color: '#991b1b', fontWeight: 600, fontSize: '0.88rem' }}>
-                      Sigurno želiš obrisati ovog korisnika?
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                      <button onClick={() => setBrisanjePotvrda(false)} style={{ ...dugme, background: '#e5e7eb', color: '#374151' }}>
-                        Odustani
-                      </button>
-                      <button onClick={handleObrisi} style={{ ...dugme, background: '#dc2626', color: '#fff' }}>
-                        Da, obriši
-                      </button>
-                    </div>
+            <div className="px-8 py-6">
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                  ['Uloga', odabraniKorisnik.uloga],
+                  ['Tražena uloga', odabraniKorisnik.trazenaUloga || '—'],
+                  ['Status zahtjeva', odabraniKorisnik.statusUloge || '—'],
+                  ['Status naloga', odabraniKorisnik.statusPouzdanosti || 'AKTIVAN'],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-amber-50 rounded-2xl px-4 py-3">
+                    <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-1">{label}</div>
+                    <div className="font-bold text-slate-800 text-sm">{value}</div>
                   </div>
-                )}
+                ))}
               </div>
-            )}
 
-            {odabraniKorisnik.uloga === 'ADMINISTRATOR' && (
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>
-                Administrator nalog ne može biti blokiran ili obrisan.
-              </p>
-            )}
+              {odabraniKorisnik.uloga !== 'ADMINISTRATOR' ? (
+                <div className="flex flex-col gap-3">
+                  <button onClick={handleBlokiranje}
+                    className={`w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm transition-colors
+                      ${odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN'
+                        ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>
+                    {odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? 'Odblokiraj korisnika' : 'Blokiraj korisnika'}
+                  </button>
+
+                  {!brisanjePotvrda ? (
+                    <button onClick={() => setBrisanjePotvrda(true)}
+                      className="w-full py-3 bg-red-50 text-red-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-red-100 transition-colors">
+                      Obriši korisnika
+                    </button>
+                  ) : (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+                      <p className="text-sm text-red-700 font-bold mb-3">Sigurno želiš obrisati ovog korisnika?</p>
+                      <div className="flex gap-2 justify-center">
+                        <button onClick={() => setBrisanjePotvrda(false)}
+                          className="px-4 py-2 bg-white border border-amber-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors">
+                          Odustani
+                        </button>
+                        <button onClick={handleObrisi}
+                          className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
+                          Da, obriši
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-center text-sm text-slate-400">Administrator nalog ne može biti blokiran ili obrisan.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
-
-const th = {
-  padding: '0.8rem 1.2rem', fontWeight: 700, color: '#475569',
-  fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.05em',
-};
-
-const td = {
-  padding: '0.85rem 1.2rem', verticalAlign: 'middle', color: '#1e293b',
-};
-
-const dugme = {
-  padding: '0.3rem 0.8rem', borderRadius: '6px', border: 'none',
-  cursor: 'pointer', fontWeight: 700, fontSize: '0.83rem',
-};
