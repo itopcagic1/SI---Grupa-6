@@ -343,32 +343,27 @@ function Timovi() {
       {/* Navbar */}
       <nav className="bg-white border-b border-amber-100 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-sm">S</div>
-            <span className="font-semibold text-amber-950 text-base">SportManager</span>
-          </div>
-          <div className="flex gap-1">
-            <Link to="/lige" className="px-4 py-2 rounded-lg text-sm text-amber-700 hover:bg-amber-50 font-medium">Lige</Link>
-            <span className="px-4 py-2 rounded-lg text-sm text-orange-600 bg-orange-50 font-medium">Timovi</span>
+          <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
+            sport<span className="text-orange-600">.ba</span>
+          </Link>
+          <div className="hidden md:flex gap-4 ml-6">
+            <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
+            <Link to="/teams" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Timovi</Link>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 hover:bg-amber-50 px-3 py-2 rounded-lg transition relative"
-          >
-            <span className="text-sm font-medium text-amber-950">
-              {korisnikData?.ime && korisnikData?.prezime
-                ? `${korisnikData.ime} ${korisnikData.prezime}`
-                : korisnikData?.ime || korisnikData?.email || 'Korisnik'}
-            </span>
-          </button>
-          {userMenuOpen && (
-            <div className="absolute top-16 right-6 bg-white border border-amber-100 rounded-xl shadow-lg py-2 min-w-[160px] z-40">
-              <button onClick={handleLogout} className="w-full px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 transition font-medium">
-                Odjava
-              </button>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
+            {korisnikData ? (korisnikData.punoIme?.charAt(0) || korisnikData.ime?.charAt(0) || korisnikData.email?.charAt(0) || '?').toUpperCase() : '?'}
+          </div>
+          <span className="text-sm font-semibold text-slate-700 hidden sm:block">
+            {korisnikData?.ime && korisnikData?.prezime
+              ? `${korisnikData.ime} ${korisnikData.prezime}`
+              : korisnikData?.punoIme || korisnikData?.ime || korisnikData?.email || 'Gost'}
+          </span>
+          {korisnikData && (
+            <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
+              Odjava
+            </button>
           )}
         </div>
       </nav>
