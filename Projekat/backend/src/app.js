@@ -17,6 +17,7 @@ app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 3000;
 
+// CORS
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -26,9 +27,11 @@ app.use(cors({
   credentials: true,
 }));
 
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
+// --- ROUTES SEKCIJA ---
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/competitions', competitionRoutes);
