@@ -15,3 +15,4 @@ router.get('/:id', sportController.getSportById);
 
 
 module.exports = router;
+

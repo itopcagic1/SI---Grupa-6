@@ -37,3 +37,8 @@ export const deleteSport = (id) => api.delete(`/sports/${id}`, getAuthHeader()).
 export const createTeam = (teamData) => api.post('/teams', teamData, getAuthHeader()).then(res => res.data);
 export const updateTeam = (id, teamData) => api.patch(`/teams/${id}`, teamData, getAuthHeader()).then(res => res.data);
 export const deleteTeam = (id) => api.delete(`/teams/${id}`, getAuthHeader()).then(res => res.data);
+
+export const fetchTeamDetails = (id) => api.get(`/teams/${id}`, getAuthHeader()).then(res => res.data);
+export const fetchPlayers = () => api.get('/teams/players', getAuthHeader()).then(res => res.data);
+export const addPlayerToTeam = (teamId, userId) => api.post(`/teams/${teamId}/players`, { userId }, getAuthHeader()).then(res => res.data);
+export const removePlayerFromTeam = (teamId, playerId) => api.delete(`/teams/${teamId}/players/${playerId}`, getAuthHeader()).then(res => res.data);

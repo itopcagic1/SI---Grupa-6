@@ -7,6 +7,7 @@ import AdminRoute from './pages/AdminRoute';
 import Blokiran from './pages/Blokiran';
 import Timovi from './pages/Timovi';
 import Sportovi from './pages/Sportovi';
+import Lige from './pages/Lige';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           </AdminRoute>} />
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
+        <Route path="/lige" element={<Lige />} />
       </Routes>
     </Router>
   );

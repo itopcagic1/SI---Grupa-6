@@ -8,14 +8,9 @@ function Dashboard() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('token');
-
-      if (token) {
-        await logoutUser(token);
-      }
-
+      if (token) await logoutUser(token);
       localStorage.removeItem('token');
       localStorage.removeItem('korisnik');
-
       navigate('/login');
     } catch (err) {
       localStorage.removeItem('token');
@@ -37,12 +32,18 @@ function Dashboard() {
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Link
               to="/teams"
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
               Upravljaj timovima
+            </Link>
+            <Link
+              to="/lige"
+              className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
+            >
+              Upravljanje ligama
             </Link>
             <button
               onClick={handleLogout}

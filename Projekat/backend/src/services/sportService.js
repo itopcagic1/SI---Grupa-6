@@ -17,7 +17,7 @@ const createSport = async (data) => {
     where: { naziv: data.naziv }
   });
   if (existing) {
-  throw new Error("Sport with this name already exists.");
+  throw new Error("Sport sa ovim nazivom već postoji!");
 }
   return await prisma.sport.create({
     data: {

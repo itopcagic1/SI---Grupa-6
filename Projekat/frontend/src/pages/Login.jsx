@@ -17,11 +17,7 @@ function Login() {
       localStorage.setItem('token', res.access_token);
       localStorage.setItem('korisnik', JSON.stringify(res.korisnik));
 
-      if (res.korisnik.trenutnaUloga === 'ADMINISTRATOR') {
-      navigate('/admin/korisnici');
-    } else {
-      navigate('/dashboard');
-    }
+   navigate('/dashboard');
     } catch (err) {
       const kod = err.response?.data?.greska; 
     if (kod === 'KORISNIK_BLOKIRAN') {
