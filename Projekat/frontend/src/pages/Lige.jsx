@@ -58,7 +58,7 @@ function Lige() {
   const loadSportovi = async () => {
     try {
       const data = await fetchSportovi();
-      setSportovi(data.sportovi || []);
+      setSportovi(Array.isArray(data) ? data : data.sportovi || []);
     } catch (err) {
       console.error('Greška pri učitavanju sportova', err);
     }

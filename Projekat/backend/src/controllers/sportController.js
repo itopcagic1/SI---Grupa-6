@@ -1,23 +1,51 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const sportService = require('../services/sportService');
 
-async function dohvatiSveSporte(req, res) {
+const getAllSports = async (req, res) => {
   try {
-    const sportovi = await prisma.sport.findMany({
-      orderBy: { naziv: 'asc' }
-    });
-    return res.status(200).json({
-      uspjeh: true,
-      sportovi
-    });
+    const sports = await sportService.getAllSports();
+    res.json(sports);
   } catch (error) {
-    return res.status(500).json({
-      greska: 'GRESKA_DOHVATANJA_SPORTOVA',
-      poruka: 'Greška pri dohvatanju sportova'
-    });
+    res.status(500).json({ error: error.message });
   }
-}
-
-module.exports = {
-  dohvatiSveSporte
 };
+const getSportById = async (req, res) => {
+  try {
+    const sport = await sportService.getSportById(req.params.id);
+   if (!sport) {
+      return res.status(404).json({ error: "Sport not found." });
+    }
+    res.json(sport);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const createSport = async (req, res) => {
+  try {
+    const newSport = await sportService.createSport(req.body);
+    res.status(201).json(newSport);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const updateSport = async (req, res) => {
+  try {
+    const updated = await sportService.updateSport(req.params.id, req.body);
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const deleteSport = async (req, res) => {
+  try {
+    await sportService.deleteSport(req.params.id);
+    res.json({ message: "Sport successfully deleted." });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+module.exports = { getAllSports, getSportById, createSport, updateSport, deleteSport };
