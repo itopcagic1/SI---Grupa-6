@@ -39,4 +39,8 @@ router.delete(
   ligaController.obrisiLigu
 );
 
+
+router.post('/:id/timovi', authenticateToken, requireRole('ADMINISTRATOR'), ligaController.dodajTimULigu);
+router.delete('/:id/timovi/:timId', authenticateToken, requireRole('ADMINISTRATOR'), ligaController.ukloniTimIzLige);
+
 module.exports = router;

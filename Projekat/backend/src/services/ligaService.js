@@ -180,10 +180,56 @@ async function obrisiLigu(takmicenjeId, korisnikId, korisnikUloga) {
   return { takmicenjeId: Number(takmicenjeId) };
 }
 
+async function dodajTimULigu(takmicenjeId, timId) {
+  const postojeci = await prisma.ucesceUTakmicenju.findFirst({
+    where: {
+      takmicenjeId: Number(takmicenjeId),
+      timId: Number(timId),
+    },
+  });
+
+  if (postojeci) {
+    const error = new Error('Tim je već dodan u ovu ligu.');
+    error.status = 409;
+    throw error;
+  }
+
+  return await prisma.ucesceUTakmicenju.create({
+    data: {
+      takmicenjeId: Number(takmicenjeId),
+      timId: Number(timId),
+    },
+    include: {
+      tim: { select: { timId: true, naziv: true } },
+    },
+  });
+}
+
+async function ukloniTimIzLige(takmicenjeId, timId) {
+  const postojeci = await prisma.ucesceUTakmicenju.findFirst({
+    where: {
+      takmicenjeId: Number(takmicenjeId),
+      timId: Number(timId),
+    },
+  });
+
+  if (!postojeci) {
+    const error = new Error('Tim nije pronađen u ovoj ligi.');
+    error.status = 404;
+    throw error;
+  }
+
+  return await prisma.ucesceUTakmicenju.delete({
+    where: { ucesceId: postojeci.ucesceId },
+  });
+}
+
 module.exports = {
   kreirajLigu,
   dohvatiSveLige,
   dohvatiLiguPoId,
   izmijeniLigu,
   obrisiLigu,
+  dodajTimULigu,     
+  ukloniTimIzLige,    
 };

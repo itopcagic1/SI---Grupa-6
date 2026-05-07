@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import AdminKorisnici from './pages/AdminKorisnici';
 import AdminRoute from './pages/AdminRoute';
 import Blokiran from './pages/Blokiran';
+import Timovi from './pages/Timovi';
+import Sportovi from './pages/Sportovi';
 
 function App() {
   return (
@@ -16,9 +18,11 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/blokiran" element={<Blokiran />} />
         <Route path="/admin/korisnici" element={
-    <AdminRoute>
-      <AdminKorisnici />
-    </AdminRoute>} />
+          <AdminRoute>
+            <AdminKorisnici />
+          </AdminRoute>} />
+        <Route path="/teams" element={<Timovi />} />
+        <Route path="/sports" element={<Sportovi />} />
       </Routes>
     </Router>
   );
