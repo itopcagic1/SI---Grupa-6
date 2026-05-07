@@ -17,4 +17,5 @@ Tokom Sprint 5 Review sastanka prezentovali smo trenutno stanje sistema za auten
 
 ### 3. Ograničenje broja pokušaja (Rate Limiting)
 - **Problem:** Asistent je istakao da naše trenutno ograničenje nije dobro konfigurisano. Postavili smo limit od samo 10 pokušaja prijave ili registracije unutar 15 minuta.
-- **Rješenje:** Potrebno je revidirati i izmijeniti logiku za ograničenje pokušaja (rate limiting) jer je postojeća konfiguracija neadekvatna.
+- **Rješenje:** Potrebno je revidirati i izmijeniti logiku za ograničenje pokušaja (rate limiting) jer je postojeća konfiguracija neadekvatna. 
+
