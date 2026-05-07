@@ -5,12 +5,11 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/authRoutes');
-const leagueRoutes = require('./routes/leagueRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const competitionRoutes = require('./routes/competitionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const sportRoutes = require('./routes/sportRoutes'); 
-const ligaRoutes = require('./routes/ligaRoutes');   
+const sportRoutes = require('./routes/sportRoutes');
+const ligaRoutes = require('./routes/ligaRoutes');
 
 const app = express();
 
@@ -18,7 +17,6 @@ app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 3000;
 
-// CORS
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -28,18 +26,15 @@ app.use(cors({
   credentials: true,
 }));
 
-// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
-// --- ROUTES SEKCIJA ---
 app.use('/api/auth', authRoutes);
-app.use('/api/leagues', leagueRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/competitions', competitionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/sports', sportRoutes);
 app.use('/api/lige', ligaRoutes);
-app.use('/api/sports', sportRoutes); 
 
 app.get('/', (req, res) => {
   res.send('API radi');

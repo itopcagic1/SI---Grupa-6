@@ -4,7 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   fetchTeams,
   fetchSports,
-  fetchCoaches, // 1. DODANO: Import funkcije
+  fetchCoaches,
+  fetchPlayers,
+  addPlayerToTeam,
+  removePlayerFromTeam,
   createTeam,
   updateTeam,
   deleteTeam,
@@ -28,6 +31,128 @@ function Modal({ isOpen, onClose, children }) {
   );
 }
 
+function CoachModal({ isOpen, onClose, team, onRefresh }) {
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [selectedPlayerId, setSelectedPlayerId] = useState('');
+  const [naziv, setNaziv] = useState('');
+  const [opis, setOpis] = useState('');
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && team) {
+      fetchPlayers().then(d => setAllPlayers(Array.isArray(d) ? d : [])).catch(() => setAllPlayers([]));
+      setMsg(''); setErr(''); setSelectedPlayerId('');
+      setNaziv(team.naziv || '');
+      setOpis(team.opis || '');
+    }
+  }, [isOpen, team]);
+
+  if (!isOpen || !team) return null;
+
+  const currentPlayers = (team.clanstvaUcesnika || []).filter(
+    c => c.ulogaUTimu === 'IGRAC' && c.status === 'ACTIVE'
+  );
+  const availablePlayers = allPlayers.filter(
+    p => !currentPlayers.some(cp => cp.korisnikId === p.id)
+  );
+
+  const handleSaveInfo = async () => {
+    if (!naziv.trim()) { setErr('Naziv ne može biti prazan.'); return; }
+    setErr(''); setMsg(''); setSavingInfo(true);
+    try {
+      await updateTeam(team.timId, { name: naziv, description: opis, status: team.status });
+      setMsg('Podaci tima uspješno sačuvani.');
+      onRefresh();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Greška pri ažuriranju tima.');
+    } finally { setSavingInfo(false); }
+  };
+
+  const handleAdd = async () => {
+    if (!selectedPlayerId) return;
+    setErr(''); setMsg(''); setLoading(true);
+    try {
+      await addPlayerToTeam(team.timId, Number(selectedPlayerId));
+      setMsg('Igrač uspješno dodan!');
+      setSelectedPlayerId('');
+      onRefresh();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Greška pri dodavanju.');
+    } finally { setLoading(false); }
+  };
+
+  const handleRemove = async (playerId) => {
+    setErr(''); setMsg(''); setLoading(true);
+    try {
+      await removePlayerFromTeam(team.timId, playerId);
+      setMsg('Igrač uklonjen iz tima.');
+      onRefresh();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Greška pri uklanjanju.');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} onClick={onClose}>
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-amber-50 text-amber-400 transition">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
+        <h2 className="text-xl font-bold text-amber-950 mb-1">Uredi tim</h2>
+        <p className="text-sm text-amber-700 mb-5">{team.sport?.naziv || '—'} · {team.status === 'ACTIVE' ? 'Aktivan' : 'Neaktivan'}</p>
+
+        {/* Naziv i opis — trener može mijenjati */}
+        <div className="space-y-3 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Naziv tima</label>
+            <input value={naziv} onChange={e => setNaziv(e.target.value)} className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-amber-900 mb-1.5">Opis</label>
+            <textarea value={opis} onChange={e => setOpis(e.target.value)} rows={3} className="w-full border border-amber-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-500 transition resize-none" />
+          </div>
+          <button onClick={handleSaveInfo} disabled={savingInfo} className="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50 transition">
+            {savingInfo ? 'Čuvanje...' : 'Sačuvaj izmjene'}
+          </button>
+        </div>
+
+        <hr className="border-amber-100 mb-4" />
+
+        {msg && <div className="mb-3 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">{msg}</div>}
+        {err && <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</div>}
+
+        <h3 className="text-sm font-semibold text-amber-900 mb-2">Igrači u timu</h3>
+        {currentPlayers.length === 0
+          ? <p className="text-sm text-amber-500 mb-4 italic">Nema igrača u timu.</p>
+          : <ul className="mb-4 space-y-2">
+              {currentPlayers.map(c => (
+                <li key={c.korisnikId} className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-amber-950 font-medium">{c.korisnik?.punoIme || `Igrač #${c.korisnikId}`}</span>
+                  <button onClick={() => handleRemove(c.korisnikId)} disabled={loading} className="text-xs text-red-600 hover:text-red-700 font-semibold disabled:opacity-50 transition">Ukloni</button>
+                </li>
+              ))}
+            </ul>
+        }
+
+        <h3 className="text-sm font-semibold text-amber-900 mb-2">Dodaj igrača</h3>
+        <div className="flex gap-2">
+          <select value={selectedPlayerId} onChange={e => setSelectedPlayerId(e.target.value)} className="flex-1 border border-amber-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-orange-500 transition">
+            <option value="">Izaberite igrača...</option>
+            {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.ime}</option>)}
+          </select>
+          <button onClick={handleAdd} disabled={!selectedPlayerId || loading} className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-50 transition">
+            {loading ? '...' : 'Dodaj'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Timovi() {
   const [teams, setTeams] = useState([]);
   const [sports, setSports] = useState([]);
@@ -40,7 +165,11 @@ function Timovi() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sportFilter, setSportFilter] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
+  const [deleteConfirmTeam, setDeleteConfirmTeam] = useState(null);
+  const [deletingTeamId, setDeletingTeamId] = useState(null);
+  const [openMenuTeamId, setOpenMenuTeamId] = useState(null);
+  const [coachModalOpen, setCoachModalOpen] = useState(false);
+  const [coachModalTeam, setCoachModalTeam] = useState(null);
   const token = localStorage.getItem('token');
   const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
   const isAuthenticated = Boolean(token);
@@ -164,16 +293,22 @@ function Timovi() {
       setError('Morate biti prijavljeni da biste obrisali tim.');
       return;
     }
-    const confirmed = window.confirm(`Jeste li sigurni da želite obrisati tim "${team.naziv}"?`);
-    if (!confirmed) return;
+    if (deleteConfirmTeam?.timId !== team.timId) {
+      setDeleteConfirmTeam(team);
+      return;
+    }
     setError('');
     try {
+      setDeletingTeamId(team.timId);
       await deleteTeam(team.timId);
       setSubmissionMessage(`Tim "${team.naziv}" je obrisan.`);
-      await loadData();
+      setTeams(prev => prev.filter(t => t.timId !== team.timId));
+      setDeleteConfirmTeam(null);
     } catch (err) {
       const message = err.response?.data?.message || err.message || 'Greška pri brisanju tima.';
       setError(message);
+    } finally {
+      setDeletingTeamId(null);
     }
   };
 
@@ -294,16 +429,45 @@ function Timovi() {
               <div key={team.timId} className="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm hover:shadow-md transition flex flex-col gap-3">
                 <div className="flex items-start justify-between">
                   <h3 className="font-bold text-amber-950 text-base">{team.naziv}</h3>
-                  {(isAdmin || korisnikData?.trenutnaUloga === 'TRENER') && (
-                    <div className="relative group">
-                      <button className="p-1 rounded-lg hover:bg-amber-50 text-amber-400">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
-                      </button>
-                      <div className="absolute right-0 top-7 z-10 hidden group-focus-within:flex flex-col bg-white border border-amber-100 rounded-xl shadow-lg py-1 min-w-[120px]">
-                        <button onClick={() => openEditModal(team)} className="px-4 py-2 text-sm text-left hover:bg-amber-50 text-amber-950">Uredi</button>
-                        <button onClick={() => handleDelete(team)} className="px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600">Obriši</button>
-                      </div>
-                    </div>
+                 {isAdmin && (
+                    <div className="relative">
+  <button
+    onClick={() => setOpenMenuTeamId(openMenuTeamId === team.timId ? null : team.timId)}
+    className="p-1 rounded-lg hover:bg-amber-50 text-amber-400"
+  >
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+  </button>
+  {openMenuTeamId === team.timId && (
+    <div className="absolute right-0 top-7 z-10 flex flex-col bg-white border border-amber-100 rounded-xl shadow-lg py-1 min-w-[140px]">
+      <button onClick={() => { openEditModal(team); setOpenMenuTeamId(null); }} className="px-4 py-2 text-sm text-left hover:bg-amber-50 text-amber-950">Uredi</button>
+      {deleteConfirmTeam?.timId === team.timId ? (
+        <div className="px-3 py-2 flex flex-col gap-1 border-t border-amber-50">
+          <span className="text-xs text-red-600 font-semibold">Sigurni ste?</span>
+          <div className="flex gap-2">
+            <button onClick={() => handleDelete(team)} disabled={deletingTeamId === team.timId} className="flex-1 text-xs bg-red-600 text-white rounded-lg py-1 font-bold disabled:opacity-60">
+              {deletingTeamId === team.timId ? '...' : 'DA'}
+            </button>
+            <button onClick={() => { setDeleteConfirmTeam(null); setOpenMenuTeamId(null); }} className="flex-1 text-xs bg-amber-50 text-amber-800 rounded-lg py-1 font-bold">
+              NE
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => handleDelete(team)} className="px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600">Obriši</button>
+      )}
+    </div>
+  )}
+</div>
+                  )}
+                  {!isAdmin && team.clanstvaUcesnika?.some(
+                    c => c.korisnikId === korisnikData?.korisnikId && c.ulogaUTimu === 'TRENER' && c.status === 'ACTIVE'
+                  ) && (
+                    <button
+                      onClick={() => { setCoachModalTeam(team); setCoachModalOpen(true); }}
+                      className="text-xs text-orange-600 font-semibold border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition"
+                    >
+                      Upravljaj
+                    </button>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -373,6 +537,13 @@ function Timovi() {
           </div>
         </form>
       </Modal>
+
+      <CoachModal
+        isOpen={coachModalOpen}
+        onClose={() => { setCoachModalOpen(false); setCoachModalTeam(null); }}
+        team={coachModalTeam}
+        onRefresh={loadData}
+      />
     </div>
   );
 }

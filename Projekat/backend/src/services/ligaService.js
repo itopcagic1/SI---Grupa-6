@@ -65,6 +65,11 @@ async function dohvatiLiguPoId(takmicenjeId) {
     include: {
       sport: { select: { sportId: true, naziv: true } },
       organizator: { select: { korisnikId: true, punoIme: true, email: true } },
+      ucesniciTakmicenja: {
+        include: {
+          tim: { select: { timId: true, naziv: true } }
+        }
+      },
       plasmaniNaTabeli: {
         include: {
           tim: { select: { timId: true, naziv: true, logoUrl: true } },
@@ -173,6 +178,11 @@ async function obrisiLigu(takmicenjeId, korisnikId, korisnikUloga) {
     throw error;
   }
 
+  await Promise.all([
+  prisma.ucesceUTakmicenju.deleteMany({ where: { takmicenjeId: Number(takmicenjeId) } }),
+  prisma.plasmanNaTabeli.deleteMany({ where: { takmicenjeId: Number(takmicenjeId) } }),
+]);
+
   await prisma.takmicenje.delete({
     where: { takmicenjeId: Number(takmicenjeId) },
   });
@@ -180,7 +190,19 @@ async function obrisiLigu(takmicenjeId, korisnikId, korisnikUloga) {
   return { takmicenjeId: Number(takmicenjeId) };
 }
 
-async function dodajTimULigu(takmicenjeId, timId) {
+async function dodajTimULigu(takmicenjeId, timId, korisnikId) {
+  //  Dohvati ligu i tim pa provjeri sport
+  const [liga, tim] = await Promise.all([
+    prisma.takmicenje.findUnique({ where: { takmicenjeId: Number(takmicenjeId) } }),
+    prisma.tim.findUnique({ where: { timId: Number(timId) } }),
+  ]);
+
+  if (liga.sportId !== tim.sportId) {
+    const error = new Error('Tim ne pripada sportu ove lige.');
+    error.status = 400;
+    throw error;
+  }
+
   const postojeci = await prisma.ucesceUTakmicenju.findFirst({
     where: {
       takmicenjeId: Number(takmicenjeId),
@@ -196,8 +218,9 @@ async function dodajTimULigu(takmicenjeId, timId) {
 
   return await prisma.ucesceUTakmicenju.create({
     data: {
-      takmicenjeId: Number(takmicenjeId),
-      timId: Number(timId),
+      takmicenje: { connect: { takmicenjeId: Number(takmicenjeId) } },
+      tim: { connect: { timId: Number(timId) } },
+      prijavioKorisnik: { connect: { korisnikId: Number(korisnikId) } },
     },
     include: {
       tim: { select: { timId: true, naziv: true } },
@@ -220,7 +243,7 @@ async function ukloniTimIzLige(takmicenjeId, timId) {
   }
 
   return await prisma.ucesceUTakmicenju.delete({
-    where: { ucesceId: postojeci.ucesceId },
+   where: { ucesceUTakmicenjuId: postojeci.ucesceUTakmicenjuId },
   });
 }
 

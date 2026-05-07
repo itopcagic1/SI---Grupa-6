@@ -49,6 +49,18 @@ exports.createNewTeam = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+exports.getPlayers = async (req, res) => {
+  try {
+    const players = await teamService.getAllPlayers();
+    const formatted = players.map(p => ({
+      id: p.korisnikId,
+      ime: p.punoIme,
+    }));
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: "Greška pri dobavljanju igrača." });
+  }
+};
 
 exports.updateTeam = async (req, res) => {
   try {

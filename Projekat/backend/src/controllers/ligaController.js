@@ -91,7 +91,7 @@ async function obrisiLigu(req, res) {
 
 async function dodajTimULigu(req, res) {
   try {
-    const rezultat = await ligaService.dodajTimULigu(req.params.id, req.body.timId);
+    const rezultat = await ligaService.dodajTimULigu(req.params.id, req.body.timId, req.user.korisnikId);
     return res.status(201).json({ uspjeh: true, poruka: 'Tim uspješno dodan u ligu.', rezultat });
   } catch (error) {
     return res.status(error.status || 500).json({ poruka: error.message });

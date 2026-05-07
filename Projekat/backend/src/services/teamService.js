@@ -4,7 +4,19 @@ const prisma = new PrismaClient();
 // US-08: Get all teams with their sport info
 const getAllTeams = async () => {
   return await prisma.tim.findMany({
-    include: { sport: true }
+    include: {
+      sport: true,
+      clanstvaUcesnika: {
+  select: { 
+    korisnikId: true,
+    ulogaUTimu: true,
+    status: true,
+    korisnik: {
+      select: { punoIme: true }
+    }
+  }
+}
+    }
   });
 };
 
@@ -210,6 +222,12 @@ const getAllCoaches = async () => {
     
   });
 };
+const getAllPlayers = async () => {
+  return await prisma.korisnik.findMany({
+    where: { uloga: 'IGRAC' },
+    select: { korisnikId: true, punoIme: true }
+  });
+};
 
 module.exports = {
   getAllTeams,
@@ -220,5 +238,6 @@ module.exports = {
   addMemberToTeam,
   removeMemberFromTeam,
   isUserCoachOfTeam,
-  getAllCoaches
+  getAllCoaches,
+  getAllPlayers
 };
