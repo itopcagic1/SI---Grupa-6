@@ -1,6 +1,5 @@
 const teamService = require('../services/teamService');
 
-// Pomoćna funkcija za vađenje ID-a (sigurnosna mreža)
 const getUserIdFromToken = (req) => req.user.id || req.user.korisnikId || req.user.userId;
 
 exports.getTeams = async (req, res) => {

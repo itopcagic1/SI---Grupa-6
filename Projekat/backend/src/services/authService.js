@@ -131,12 +131,17 @@ async function logoutUser(korisnikId) {
 async function getUserProfile(korisnikId) {
   const user = await prisma.korisnik.findUnique({
     where: { korisnikId },
+    include: {
+      clanstvaUTimovima: { include: { tim: true } }, // za igrace/trenere
+      vlasnikSportskihObjekata: true,               // za vlasnike
+      organizovanaTakmicenja: true,                 // za organizatore 
+      omiljeniTimovi: { include: { tim: true } }    // za navijače
+    },
   });
 
   if (!user) {
     const error = new Error('Korisnik nije pronadjen');
     error.status = 404;
-    error.code = 'KORISNIK_NIJE_PRONADJEN';
     throw error;
   }
 
@@ -144,9 +149,44 @@ async function getUserProfile(korisnikId) {
   return userWithoutSensitiveData;
 }
 
+async function changePassword(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
+  if (novaLozinka !== potvrda) {
+    const error = new Error('Nova lozinka i potvrda se ne poklapaju.');
+    error.status = 400;
+    error.code = 'LOZINKE_SE_NE_POKLAPAJU';
+    throw error;
+  }
+
+  const user = await prisma.korisnik.findUnique({ where: { korisnikId } });
+  if (!user) {
+    const error = new Error('Korisnik nije pronađen.');
+    error.status = 404;
+    error.code = 'KORISNIK_NIJE_PRONADJEN';
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(trenutnaLozinka, user.lozinkaHash);
+  if (!isMatch) {
+    const error = new Error('Trenutna lozinka nije ispravna.');
+    error.status = 401; 
+    error.code = 'NEISPRAVNA_LOZINKA';
+    throw error;
+  }
+
+  const hashed = await bcrypt.hash(novaLozinka, SALT_ROUNDS);
+
+  await prisma.korisnik.update({
+    where: { korisnikId },
+    data: { lozinkaHash: hashed }
+  });
+
+  return { uspjeh: true };
+}
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   getUserProfile,
+  changePassword
 };

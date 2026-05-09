@@ -30,7 +30,7 @@ function Lige() {
     const [deleteConfirmTimId, setDeleteConfirmTimId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [mojTim, setMojTim] = useState(null);
-const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji se prijavljuje
+    const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji se prijavljuje
     // Form data
     const [formData, setFormData] = useState({
         naziv: '',
@@ -230,7 +230,7 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
             setError(err.response?.data?.poruka || 'Greška pri brisanju.');
             setDeleteConfirmLigaId(null);
         } finally {
-            setDeletingId(null); // ✅zaustavi loading
+            setDeletingId(null);
         }
     };
 
@@ -241,9 +241,9 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
     });
 
     const timoviULigi = ligaDetalji?.ucesniciTakmicenja?.map(u => u.timId) || [];
-    const dostupniTimovi = sviTimovi.filter(t => 
-  !timoviULigi.includes(t.timId) && t.sportId === aktivnaLiga?.sportId
-);
+    const dostupniTimovi = sviTimovi.filter(t =>
+        !timoviULigi.includes(t.timId) && t.sportId === aktivnaLiga?.sportId
+    );
     return (
         <div className="min-h-screen bg-amber-50 font-sans">
             <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm">
@@ -254,6 +254,9 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
                     <div className="hidden md:flex gap-4 ml-6">
                         <Link to="/lige" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Lige</Link>
                         <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
+                        <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
+                            Profil
+                        </Link>
                         {isAdmin && (
                             <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
                         )}
