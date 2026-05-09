@@ -7,9 +7,9 @@ const { authenticateToken, authorizeRole } = require('../middleware/authMiddlewa
 router.get('/', sportController.getAllSports); 
 
 // ZAŠTIĆENE RUTE (Samo administrator smije da mijenja)
-router.post('/', authenticateToken, sportController.createSport);          
-router.patch('/:id', authenticateToken, sportController.updateSport);      
-router.delete('/:id', authenticateToken, sportController.deleteSport);   
+router.post('/', authenticateToken, requireRole('ADMINISTRATOR'), sportController.createSport);
+router.patch('/:id', authenticateToken, requireRole('ADMINISTRATOR'), sportController.updateSport);
+router.delete('/:id', authenticateToken, requireRole('ADMINISTRATOR'), sportController.deleteSport);
 router.get('/:id', sportController.getSportById);
 
 
