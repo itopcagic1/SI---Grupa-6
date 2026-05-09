@@ -1,6 +1,30 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const sanitizeTeamUsers = (team) => {
+  if (!team?.clanstvaUcesnika) return team;
+
+  return {
+    ...team,
+    clanstvaUcesnika: team.clanstvaUcesnika.map((clanstvo) => {
+      if (!clanstvo.korisnik) return clanstvo;
+
+      const {
+        lozinkaHash,
+        refreshToken,
+        password,
+        hash,
+        ...safeKorisnik
+      } = clanstvo.korisnik;
+
+      return {
+        ...clanstvo,
+        korisnik: safeKorisnik,
+      };
+    }),
+  };
+};
+
 // US-08: Get all teams with their sport info
 const getAllTeams = async () => {
   return await prisma.tim.findMany({
@@ -22,14 +46,21 @@ const getAllTeams = async () => {
 
 // US-08: Get full team details 
 const getTeamById = async (id) => {
-  return await prisma.tim.findUnique({
+  const team = await prisma.tim.findUnique({
     where: { timId: parseInt(id) },
     include: {
       sport: true,
       clanstvaUcesnika: {
         include: {
           korisnik: {
-            include: {
+            select: {
+              korisnikId: true,
+              punoIme: true,
+              email: true,
+              uloga: true,
+              trazenaUloga: true,
+              statusUloge: true,
+              statusPouzdanosti: true,
               statistikeIgraca: true
             }
           }
@@ -42,6 +73,8 @@ const getTeamById = async (id) => {
       }
     }
   });
+
+  return sanitizeTeamUsers(team);
 };
 
 // US-05.3.1: Create team with duplicate name check
