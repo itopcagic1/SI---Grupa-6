@@ -7,7 +7,6 @@ const { authenticateToken, authorizeRole } = require('../middleware/authMiddlewa
 router.get('/', sportController.getAllSports); 
 
 // ZAŠTIĆENE RUTE (Samo administrator smije da mijenja)
-// Pretpostavljam da imaš authorizeRole middleware, ako nemaš koristi samo authenticateToken
 router.post('/', authenticateToken, sportController.createSport);          
 router.patch('/:id', authenticateToken, sportController.updateSport);      
 router.delete('/:id', authenticateToken, sportController.deleteSport);   
