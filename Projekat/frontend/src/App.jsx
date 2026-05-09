@@ -8,7 +8,8 @@ import Blokiran from './pages/Blokiran';
 import Timovi from './pages/Timovi';
 import Sportovi from './pages/Sportovi';
 import Lige from './pages/Lige';
-
+import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 function App() {
   return (
     <Router>
@@ -25,6 +26,7 @@ function App() {
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
         <Route path="/lige" element={<Lige />} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
