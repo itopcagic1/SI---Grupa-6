@@ -35,6 +35,8 @@ model Korisnik {
   razlogOdbijanja            String?
   refreshToken               String?
   documents                  String[]
+  resetToken         String?
+  resetTokenExpires  DateTime?
 
   // Relacije
   organizovanaTakmicenja     Takmicenje[]

@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
+const { posaljiResetEmail } = require('./emailService');
 
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
@@ -144,9 +145,53 @@ async function getUserProfile(korisnikId) {
   return userWithoutSensitiveData;
 }
 
+
+
+async function forgotPassword(email) {
+  const korisnik = await prisma.korisnik.findUnique({ where: { email } });
+
+  if (!korisnik) return; // tihо, ne otkrivamo da email ne postoji
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 30 * 60 * 1000);
+
+  await prisma.korisnik.update({
+    where: { email },
+    data: { resetToken: token, resetTokenExpires: expires },
+  });
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  await posaljiResetEmail(email, resetLink);
+}
+
+async function resetPassword(token, newPassword) {
+  const korisnik = await prisma.korisnik.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpires: { gt: new Date() },
+    },
+  });
+
+  if (!korisnik) {
+    const error = new Error('Token je nevažeći ili je istekao.');
+    error.status = 400;
+    error.code = 'NEVAZECI_TOKEN';
+    throw error;
+  }
+
+  const lozinkaHash = await bcrypt.hash(newPassword, 10);
+
+  await prisma.korisnik.update({
+    where: { korisnikId: korisnik.korisnikId },
+    data: { lozinkaHash, resetToken: null, resetTokenExpires: null },
+  });
+}
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   getUserProfile,
+  forgotPassword,
+  resetPassword
 };

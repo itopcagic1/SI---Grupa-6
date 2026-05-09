@@ -70,9 +70,9 @@ function Login() {
                 <label className="text-xs font-black uppercase tracking-widest text-amber-900/60">
                   Lozinka
                 </label>
-                <a href="#" className="text-[10px] font-bold text-orange-600 hover:underline uppercase tracking-tighter">
+                <Link to="/forgot-password" className="text-[10px] font-bold text-orange-600 hover:underline uppercase tracking-tighter">
                   Zaboravili ste lozinku?
-                </a>
+                </Link>
               </div>
               <input
                 {...register('lozinka', { required: 'Lozinka je obavezna' })}

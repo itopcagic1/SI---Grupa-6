@@ -18,4 +18,10 @@ router.post('/logout', authenticateToken, authController.logout);
 // profile (zaštićena ruta)
 router.get('/profile', authenticateToken, authController.profile);
 
+// forgot password (javna ruta)
+router.post('/forgot-password', authController.forgotPassword);
+
+// reset password (javna ruta)
+router.post('/reset-password', authController.resetPassword);
+
 module.exports = router;
