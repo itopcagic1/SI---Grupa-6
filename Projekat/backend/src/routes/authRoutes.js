@@ -17,6 +17,6 @@ router.post('/logout', authenticateToken, authController.logout);
 // profile (zaštićena ruta)
 router.get('/profile', authenticateToken, authController.profile);
 
-router.patch('/change-password', authenticateToken, authController.changePassword);
+router.patch('/change-password', authenticateToken, validate(changePasswordSchema), authController.changePassword);
 
 module.exports = router;

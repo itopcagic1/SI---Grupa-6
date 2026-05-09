@@ -38,7 +38,22 @@ const loginSchema = z.object({
     .regex(/[@#$%^&*!]/, "Lozinka mora sadržavati specijalni znak"),
 });
 
+const changePasswordSchema = z.object({
+  trenutnaLozinka: z.string().min(1, "Morate unijeti trenutnu lozinku"),
+  novaLozinka: z.string()
+    .min(8, "Lozinka mora imati najmanje 8 znakova")
+    .regex(/[A-Z]/, "Lozinka mora sadržavati veliko slovo")
+    .regex(/[a-z]/, "Lozinka mora sadržavati malo slovo")
+    .regex(/[0-9]/, "Lozinka mora sadržavati broj")
+    .regex(/[@#$%^&*!]/, "Lozinka mora sadržavati specijalni znak"),
+  potvrda: z.string().min(1, "Potvrda je obavezna")
+}).refine((data) => data.novaLozinka === data.potvrda, {
+  message: "Nove lozinke se ne podudaraju",
+  path: ["potvrda"],
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
+  changePasswordSchema
 };
