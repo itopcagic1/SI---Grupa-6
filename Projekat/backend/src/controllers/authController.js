@@ -129,6 +129,22 @@ async function resetPassword(req, res) {
   }
 }
 
+async function changePassword(req, res) {
+  try {
+    await authService.changePassword(req.user.korisnikId, req.body);
+    return res.status(200).json({
+      uspjeh: true,
+      poruka: 'Lozinka uspješno promijenjena.'
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_PROMJENE_LOZINKE',
+      poruka: error.message || 'Greška pri promjeni lozinke.'
+    });
+  }
+}
+
+
 module.exports = {
   register,
   login,
@@ -136,4 +152,5 @@ module.exports = {
   profile,
   forgotPassword,
   resetPassword
+  changePassword
 };

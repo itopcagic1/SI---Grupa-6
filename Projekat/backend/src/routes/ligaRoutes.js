@@ -5,13 +5,11 @@ const { authenticateToken, validate } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 const { kreirajLiguSchema, izmijeniLiguSchema } = require('../utils/ligaValidators');
 
-// GET /api/lige — lista svih liga (javno dostupno)
+
 router.get('/', ligaController.dohvatiSveLige);
 
-// GET /api/lige/:id — detalji jedne lige (javno dostupno)
 router.get('/:id', ligaController.dohvatiLiguPoId);
 
-// POST /api/lige — kreiranje lige (samo ORGANIZATOR i ADMINISTRATOR)
 router.post(
   '/',
   authenticateToken,
@@ -20,8 +18,7 @@ router.post(
   ligaController.kreirajLigu
 );
 
-// PATCH /api/lige/:id — izmjena lige (samo ORGANIZATOR i ADMINISTRATOR)
-// Napomena: servis dodatno provjerava da li je korisnik vlasnik te lige
+
 router.patch(
   '/:id',
   authenticateToken,
@@ -30,8 +27,6 @@ router.patch(
   ligaController.izmijeniLigu
 );
 
-// DELETE /api/lige/:id — brisanje lige (samo ORGANIZATOR i ADMINISTRATOR)
-// Napomena: servis dodatno provjerava da li je korisnik vlasnik te lige
 router.delete(
   '/:id',
   authenticateToken,

@@ -11,6 +11,8 @@ import Lige from './pages/Lige';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
+import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 function App() {
   return (
     <Router>
@@ -29,6 +31,7 @@ function App() {
         <Route path="/lige" element={<Lige />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

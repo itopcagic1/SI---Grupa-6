@@ -5,9 +5,8 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 
 // 1. JAVNE RUTE
-// 1. JAVNE RUTE
 router.get('/coaches', teamController.getCoaches);
-router.get('/players', teamController.getPlayers); // ← OVDJE, gore
+router.get('/players', teamController.getPlayers);
 router.get('/', teamController.getTeams);
 router.get('/:id', teamController.getTeamDetails);
 // 2. ZAŠTIĆENE RUTE
