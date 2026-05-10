@@ -270,6 +270,6 @@ module.exports = {
   logoutUser,
   getUserProfile,
   forgotPassword,
-  resetPassword
+  resetPassword,
   changePassword
 };

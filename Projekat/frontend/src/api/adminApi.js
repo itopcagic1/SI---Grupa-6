@@ -17,6 +17,16 @@ export const getKorisnici = async (token, status = '', pretraga = '') => {
   return response.data;
 };
 
+export const getBlokiraniKorisnici = async (token, pretraga = '') => {
+  const params = {};
+  if (pretraga) params.pretraga = pretraga;
+  const response = await api.get('/admin/korisnici/blokirani', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
 export const obradiZahtjevUloge = async (token, korisnikId, akcija, razlog = '') => {
   const response = await api.patch(
     `/admin/korisnici/${korisnikId}/uloga`,
@@ -33,10 +43,10 @@ export const obrisiKorisnika = async (token, korisnikId) => {
   return response.data;
 };
 
-export const blokirajKorisnika = async (token, korisnikId, akcija) => {
+export const blokirajKorisnika = async (token, korisnikId, akcija, razlog = '') => {
   const response = await api.patch(
     `/admin/korisnici/${korisnikId}/blokiranje`,
-    { akcija },
+    { akcija, ...(razlog && { razlog }) },
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return response.data;

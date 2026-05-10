@@ -3,13 +3,16 @@ const router = express.Router();
 
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
-const { getKorisnici, getKorisnikDetalji, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika,promijeniUlogu } = require('../controllers/adminController');
+const { getKorisnici, getBlokiraniKorisnici,getKorisnikDetalji, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika,promijeniUlogu } = require('../controllers/adminController');
 
 router.use(authenticateToken);
 router.use(requireRole('ADMINISTRATOR'));
 
 // GET /api/admin/korisnici?status=PENDING&pretraga=ime
 router.get('/korisnici', getKorisnici);
+
+// GET /api/admin/korisnici/blokirani?pretraga=ime
+router.get('/korisnici/blokirani', getBlokiraniKorisnici);
 
 // GET /api/admin/korisnici/:id  
 router.get('/korisnici/:id', getKorisnikDetalji);

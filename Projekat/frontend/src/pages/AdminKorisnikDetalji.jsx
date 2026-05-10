@@ -17,7 +17,9 @@ export default function AdminKorisnikDetalji() {
   const [greska, setGreska] = useState('');
   const [poruka, setPoruka] = useState('');
   const [brisanjePotvrda, setBrisanjePotvrda] = useState(false);
-  const [razlog, setRazlog] = useState('');
+  const [razlogOdbijanja, setRazlogOdbijanja] = useState('');
+  const [razlogBlokiranja, setRazlogBlokiranja] = useState('');
+  const [pokaziRazlog, setPokaziRazlog] = useState(false);
   const [odabranaUloga, setOdabranaUloga] = useState('');
   const [mijenjamUlogu, setMijenjamUlogu] = useState(false);
 
@@ -51,10 +53,17 @@ export default function AdminKorisnikDetalji() {
 
   const handleBlokiranje = async () => {
     const akcija = korisnik.statusPouzdanosti === 'BLOKIRAN' ? 'ODBLOKIRAJ' : 'BLOKIRAJ';
+    if (akcija === 'BLOKIRAJ' && !razlogBlokiranja.trim()) {
+      setGreska('Unesite razlog blokiranja.');
+      return;
+    }
+    setGreska('');
     try {
-      await blokirajKorisnika(token, korisnik.korisnikId, akcija);
+      await blokirajKorisnika(token, korisnik.korisnikId, akcija, razlogBlokiranja);
       prikaziPoruku(akcija === 'BLOKIRAJ' ? 'Korisnik uspješno blokiran.' : 'Korisnik uspješno odblokiran.');
-      setKorisnik(prev => ({ ...prev, statusPouzdanosti: akcija === 'BLOKIRAJ' ? 'BLOKIRAN' : 'AKTIVAN' }));
+      setRazlogBlokiranja('');
+      setPokaziRazlog(false);
+      ucitajKorisnika();
     } catch {
       setGreska('Greška pri blokiranju korisnika.');
     }
@@ -71,15 +80,15 @@ export default function AdminKorisnikDetalji() {
   };
 
   const handleObradiZahtjev = async (akcija) => {
-    if (akcija === 'ODBIJ' && !razlog.trim()) {
+    if (akcija === 'ODBIJ' && !razlogOdbijanja.trim()) {
       setGreska('Unesite razlog odbijanja.');
       return;
     }
     setGreska('');
     try {
-      await obradiZahtjevUloge(token, korisnik.korisnikId, akcija, razlog);
+      await obradiZahtjevUloge(token, korisnik.korisnikId, akcija, razlogOdbijanja);
       prikaziPoruku(akcija === 'ODOBRI' ? 'Uloga odobrena!' : 'Zahtjev odbijen.');
-      setRazlog('');
+      setRazlogOdbijanja('');
       ucitajKorisnika();
     } catch {
       setGreska('Greška pri obradi zahtjeva za ulogu.');
@@ -154,8 +163,8 @@ export default function AdminKorisnikDetalji() {
       <div className="max-w-5xl mx-auto px-6 py-10">
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
-          <Link to="/admin/korisnici" className="hover:text-orange-600 font-medium transition-colors">
+        <div className="mb-6">
+          <Link to="/admin/korisnici" className="text-sm text-slate-500 hover:text-orange-600 font-medium transition-colors">
             ← Nazad na listu korisnika
           </Link>
         </div>
@@ -228,14 +237,27 @@ export default function AdminKorisnikDetalji() {
                       {korisnik.statusPouzdanosti || 'AKTIVAN'}
                     </span>
                   </div>
-                  {korisnik.korisnikId && (
-                    <div className="bg-amber-50 rounded-2xl px-4 py-3">
-                      <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-1">ID</div>
-                      <div className="font-mono text-xs text-slate-600 truncate">{korisnik.korisnikId}</div>
+                  <div className={`rounded-2xl px-4 py-3 ${korisnik.brojPreksrenihRezervacija > 0 ? 'bg-red-50' : 'bg-amber-50'}`}>
+                    <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-1">Prekinute rezervacije</div>
+                    <div className={`font-bold ${korisnik.brojPreksrenihRezervacija > 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                      {korisnik.brojPreksrenihRezervacija ?? 0}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
+
+              {/* Razlog blokiranja — prikaži samo ako je blokiran */}
+              {korisnik.statusPouzdanosti === 'BLOKIRAN' && (
+                <div className="bg-red-50 rounded-[32px] border border-red-100 shadow-sm p-8">
+                  <h2 className="text-base font-black text-red-800 uppercase tracking-widest mb-3">
+                    🔒 Nalog je blokiran
+                  </h2>
+                  <div className="text-xs font-black uppercase tracking-widest text-red-900/50 mb-1">Razlog blokiranja</div>
+                  <p className="text-sm text-red-700 font-medium">
+                    {korisnik.razlogBlokiranja || <span className="italic text-red-400">Razlog nije naveden.</span>}
+                  </p>
+                </div>
+              )}
 
               {/* Zahtjev za ulogu — samo ako je PENDING */}
               {korisnik.statusUloge === 'PENDING' && (
@@ -246,13 +268,9 @@ export default function AdminKorisnikDetalji() {
                   <p className="text-sm text-slate-600 mb-4">
                     Korisnik traži ulogu <span className="font-black text-orange-600">{korisnik.trazenaUloga}</span>.
                   </p>
-                  <input
-                    type="text"
-                    placeholder="Razlog odbijanja (obavezno ako odbijate)..."
-                    value={razlog}
-                    onChange={(e) => setRazlog(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none text-sm font-medium text-slate-700 mb-3"
-                  />
+                  <input type="text" placeholder="Razlog odbijanja (obavezno ako odbijate)..."
+                    value={razlogOdbijanja} onChange={(e) => setRazlogOdbijanja(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none text-sm font-medium text-slate-700 mb-3" />
                   <div className="flex gap-3">
                     <button onClick={() => handleObradiZahtjev('ODOBRI')}
                       className="flex-1 py-3 bg-green-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-green-700 transition-colors">
@@ -301,23 +319,16 @@ export default function AdminKorisnikDetalji() {
 
                   {/* Promjena uloge */}
                   <div className="mb-4">
-                    <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-2">
-                      Promijeni ulogu
-                    </div>
-                    <select
-                      value={odabranaUloga}
-                      onChange={(e) => setOdabranaUloga(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none font-bold text-slate-700 text-sm mb-2"
-                    >
+                    <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-2">Promijeni ulogu</div>
+                    <select value={odabranaUloga} onChange={(e) => setOdabranaUloga(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none font-bold text-slate-700 text-sm mb-2">
                       {SVE_ULOGE.map(u => (
                         <option key={u} value={u}>{u}</option>
                       ))}
                     </select>
-                    <button
-                      onClick={handlePromijeniUlogu}
+                    <button onClick={handlePromijeniUlogu}
                       disabled={mijenjamUlogu || odabranaUloga === korisnik.uloga}
-                      className="w-full py-2.5 bg-orange-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
+                      className="w-full py-2.5 bg-orange-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                       {mijenjamUlogu ? 'Mijenjam...' : 'Sačuvaj ulogu'}
                     </button>
                   </div>
@@ -325,19 +336,42 @@ export default function AdminKorisnikDetalji() {
                   <div className="border-t border-amber-100 my-4" />
 
                   {/* Blokiranje */}
-                  <button
-                    onClick={handleBlokiranje}
-                    className={`w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm transition-colors mb-3
-                      ${korisnik.statusPouzdanosti === 'BLOKIRAN'
-                        ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>
-                    {korisnik.statusPouzdanosti === 'BLOKIRAN' ? '🔓 Odblokiraj korisnika' : '🔒 Blokiraj korisnika'}
-                  </button>
+                  {korisnik.statusPouzdanosti === 'BLOKIRAN' ? (
+                    <button onClick={handleBlokiranje}
+                      className="w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mb-3">
+                      🔓 Odblokiraj korisnika
+                    </button>
+                  ) : !pokaziRazlog ? (
+                    <button onClick={() => setPokaziRazlog(true)}
+                      className="w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors mb-3">
+                      🔒 Blokiraj korisnika
+                    </button>
+                  ) : (
+                    <div className="mb-3">
+                      <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-2">Razlog blokiranja</div>
+                      <textarea
+                        placeholder="Unesite razlog blokiranja..."
+                        value={razlogBlokiranja}
+                        onChange={(e) => setRazlogBlokiranja(e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-3 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none text-sm font-medium text-slate-700 resize-none mb-2"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={() => { setPokaziRazlog(false); setRazlogBlokiranja(''); }}
+                          className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors">
+                          Odustani
+                        </button>
+                        <button onClick={handleBlokiranje}
+                          className="flex-1 py-2.5 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-700 transition-colors">
+                          Potvrdi
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Brisanje */}
                   {!brisanjePotvrda ? (
-                    <button
-                      onClick={() => setBrisanjePotvrda(true)}
+                    <button onClick={() => setBrisanjePotvrda(true)}
                       className="w-full py-3 bg-red-50 text-red-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-red-100 transition-colors">
                       🗑 Obriši korisnika
                     </button>
@@ -358,7 +392,6 @@ export default function AdminKorisnikDetalji() {
                   )}
                 </div>
 
-                {/* Info kartica */}
                 <div className="bg-amber-50 rounded-[32px] border border-amber-100 p-6">
                   <p className="text-xs text-amber-900/60 font-medium leading-relaxed">
                     Brisanje korisnika je permanentna akcija i ne može biti poništena. Blokirani korisnik ne može pristupiti aplikaciji.

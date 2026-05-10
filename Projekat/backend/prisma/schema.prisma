@@ -27,12 +27,13 @@ model Korisnik {
   datumKreiranja             DateTime  @default(now())
   brojPreksrenihRezervacija  Int       @default(0)
   statusPouzdanosti          String?
-  razlogBlokiranja    String? 
+  razlogBlokiranja           String?
   uloga          Uloga    @default(NAVIJAC)
   trazenaUloga               Uloga?
   statusUloge                String?
   datumZahtjeva              DateTime?
   datumObrade                DateTime?
+  razlogOdbijanja            String?
   refreshToken               String?
   documents                  String[]
   resetToken         String?
