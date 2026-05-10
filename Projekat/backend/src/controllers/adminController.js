@@ -47,6 +47,45 @@ const getKorisnici = async (req, res) => {
   }
 };
 
+// GET /api/admin/korisnici/:id
+const getKorisnikDetalji = async (req, res) => {
+  try {
+    const korisnikId = parseInt(req.params.id);
+ 
+    const korisnik = await prisma.korisnik.findUnique({
+      where: { korisnikId },
+      select: {
+        korisnikId: true,
+        punoIme: true,
+        email: true,
+        uloga: true,
+        trazenaUloga: true,
+        statusUloge: true,
+        statusPouzdanosti: true,
+        razlogOdbijanja: true,
+        datumZahtjeva: true,
+        datumObrade: true,
+        datumKreiranja: true,
+      },
+    });
+ 
+    if (!korisnik) {
+      return res.status(404).json({
+        greska: 'KORISNIK_NIJE_PRONADJEN',
+        poruka: 'Korisnik sa tim ID-em ne postoji.',
+      });
+    }
+ 
+    return res.status(200).json({ korisnik });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      greska: 'GRESKA_SERVERA',
+      poruka: 'Greška pri dohvatanju detalja korisnika.',
+    });
+  }
+};
+
 // PATCH /api/admin/korisnici/:id/uloga
 const obradiZahtjevUloge = async (req, res) => {
   try {
@@ -204,4 +243,64 @@ const blokirajKorisnika = async (req, res) => {
   }
 };
 
-module.exports = { getKorisnici, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika };
+// PATCH /api/admin/korisnici/:id/promijeni-ulogu
+const promijeniUlogu = async (req, res) => {
+  try {
+    const korisnikId = parseInt(req.params.id);
+    const { novaUloga } = req.body;
+ 
+    const dozvoljenUloge = ['ADMINISTRATOR', 'ORGANIZATOR', 'TRENER', 'IGRAC', 'VLASNIK', 'NAVIJAC'];
+ 
+    if (!dozvoljenUloge.includes(novaUloga)) {
+      return res.status(400).json({
+        greska: 'NEISPRAVNA_ULOGA',
+        poruka: 'Neispravna uloga.',
+      });
+    }
+ 
+    const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
+ 
+    if (!korisnik) {
+      return res.status(404).json({
+        greska: 'KORISNIK_NIJE_PRONADJEN',
+        poruka: 'Korisnik sa tim ID-em ne postoji.',
+      });
+    }
+ 
+    if (korisnik.uloga === 'ADMINISTRATOR') {
+      return res.status(400).json({
+        greska: 'NIJE_DOZVOLJENO',
+        poruka: 'Ne možete mijenjati ulogu administratora.',
+      });
+    }
+ 
+    const azuriran = await prisma.korisnik.update({
+      where: { korisnikId },
+      data: {
+        uloga: novaUloga,
+        statusUloge: 'ODOBREN',
+        datumObrade: new Date(),
+      },
+      select: {
+        korisnikId: true,
+        punoIme: true,
+        email: true,
+        uloga: true,
+        statusUloge: true,
+      },
+    });
+ 
+    return res.status(200).json({
+      poruka: `Uloga uspješno promijenjena u ${novaUloga}.`,
+      korisnik: azuriran,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      greska: 'GRESKA_SERVERA',
+      poruka: 'Greška pri promjeni uloge.',
+    });
+  }
+};
+
+module.exports = { getKorisnici, getKorisnikDetalji, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika, promijeniUlogu };
