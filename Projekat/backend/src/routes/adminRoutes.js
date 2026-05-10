@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
-const { getKorisnici, getBlokiraniKorisnici,getKorisnikDetalji, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika,promijeniUlogu } = require('../controllers/adminController');
+const { getKorisnici, getBlokiraniKorisnici, getKorisnikDetalji, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika, promijeniUlogu } = require('../controllers/adminController');
 
 router.use(authenticateToken);
 router.use(requireRole('ADMINISTRATOR'));

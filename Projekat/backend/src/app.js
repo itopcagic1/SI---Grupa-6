@@ -10,6 +10,7 @@ const competitionRoutes = require('./routes/competitionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const sportRoutes = require('./routes/sportRoutes');
 const ligaRoutes = require('./routes/ligaRoutes');
+const homepageRoutes = require('./routes/homepageRoutes');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/competitions', competitionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sports', sportRoutes);
 app.use('/api/lige', ligaRoutes);
+app.use('/api/homepage', homepageRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');

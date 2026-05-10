@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { getKorisnici, getBlokiraniKorisnici, obradiZahtjevUloge, blokirajKorisnika } from '../api/adminApi';
 import { logoutUser } from '../api/authApi';
+import Navbar from '../components/Navbar';
 
 export default function AdminKorisnici() {
   const [tab, setTab] = useState('pending');
@@ -35,7 +36,7 @@ export default function AdminKorisnici() {
     try { if (token) await logoutUser(token); } catch { }
     localStorage.removeItem('token');
     localStorage.removeItem('korisnik');
-    navigate('/login');
+    navigate('/');
   };
 
   const ucitajKorisnike = async (status = '', pretragaVal = '') => {
@@ -132,34 +133,7 @@ export default function AdminKorisnici() {
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
-
-      {/* Navbar */}
-      <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-6">
-          <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
-            sport<span className="text-orange-600">.ba</span>
-          </Link>
-          <div className="hidden md:flex gap-4 ml-6">
-            <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">Lige</Link>
-            <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">Timovi</Link>
-            <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">Profil</Link>
-            <span className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Admin Panel</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
-            {korisnik ? (korisnik.punoIme?.charAt(0) || korisnik.email.charAt(0)).toUpperCase() : '?'}
-          </div>
-          <span className="text-sm font-semibold text-slate-700 hidden sm:block">
-            {korisnik ? korisnik.punoIme || korisnik.email : 'Gost'}
-          </span>
-          {korisnik && (
-            <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
-              Odjava
-            </button>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-10">
         <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-8">Admin Panel</h1>
