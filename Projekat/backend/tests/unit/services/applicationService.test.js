@@ -25,8 +25,17 @@ describe('applicationService', () => {
         takmicenje: {
           takmicenjeId: 3,
           naziv: 'Premijer liga',
-          lokacija: 'Arena Centar',
-          lokacijaOpis: 'Rezervna lokacija',
+          utakmice: [
+            {
+              utakmicaId: 4,
+              lokacijaOpis: 'Rezervna lokacija',
+              sportskiObjekat: {
+                objekatId: 5,
+                naziv: 'Arena Centar',
+                adresa: 'Zmaja od Bosne 1',
+              },
+            },
+          ],
           sport: { sportId: 4, naziv: 'Fudbal' },
         },
       },
@@ -56,7 +65,7 @@ describe('applicationService', () => {
         takmicenje: 'Premijer liga',
         sport: 'Fudbal',
         status: 'ODOBRENO',
-        defaultnaLokacija: 'Arena Centar',
+        defaultnaLokacija: 'Arena Centar - Zmaja od Bosne 1',
       }),
     ]);
   });
@@ -106,7 +115,7 @@ describe('applicationService', () => {
     expect(result.map((prijava) => prijava.status)).toEqual(['ODBIJENO', 'PENDING']);
   });
 
-  test('fallback lokacija koristi lokacijaOpis pa defaultni tekst', async () => {
+  test('fallback lokacija koristi utakmica.lokacijaOpis pa defaultni tekst', async () => {
     mockPrisma.ucesceUTakmicenju.findMany.mockResolvedValue([
       {
         ucesceUTakmicenjuId: 1,
@@ -115,8 +124,12 @@ describe('applicationService', () => {
         tim: { naziv: 'Tim A' },
         takmicenje: {
           naziv: 'Liga A',
-          lokacija: '',
-          lokacijaOpis: 'Gradski teren',
+          utakmice: [
+            {
+              lokacijaOpis: 'Gradski teren',
+              sportskiObjekat: null,
+            },
+          ],
           sport: { naziv: 'Fudbal' },
         },
       },
@@ -127,8 +140,12 @@ describe('applicationService', () => {
         tim: { naziv: 'Tim B' },
         takmicenje: {
           naziv: 'Liga B',
-          lokacija: null,
-          lokacijaOpis: null,
+          utakmice: [
+            {
+              lokacijaOpis: null,
+              sportskiObjekat: null,
+            },
+          ],
           sport: { naziv: 'Odbojka' },
         },
       },

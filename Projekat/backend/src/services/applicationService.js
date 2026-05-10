@@ -28,12 +28,27 @@ async function dohvatiMojePrijave(korisnikId) {
         select: {
           takmicenjeId: true,
           naziv: true,
-          lokacija: true,
-          lokacijaOpis: true,
           sport: {
             select: {
               sportId: true,
               naziv: true,
+            },
+          },
+          utakmice: {
+            select: {
+              utakmicaId: true,
+              vrijemePocetka: true,
+              lokacijaOpis: true,
+              sportskiObjekat: {
+                select: {
+                  objekatId: true,
+                  naziv: true,
+                  adresa: true,
+                },
+              },
+            },
+            orderBy: {
+              vrijemePocetka: 'asc',
             },
           },
         },

@@ -1,11 +1,22 @@
 const DEFAULT_LOCATION = 'Lokacija nije definisana';
 
 function resolveDefaultLocation(takmicenje = {}) {
-  const lokacija = takmicenje.lokacija?.trim();
-  if (lokacija) return lokacija;
+  const utakmice = takmicenje.utakmice || [];
 
-  const lokacijaOpis = takmicenje.lokacijaOpis?.trim();
-  if (lokacijaOpis) return lokacijaOpis;
+  const utakmicaSaObjektom = utakmice.find((utakmica) => {
+    const objekat = utakmica.sportskiObjekat;
+    return objekat?.adresa?.trim() || objekat?.naziv?.trim();
+  });
+
+  if (utakmicaSaObjektom) {
+    const { naziv, adresa } = utakmicaSaObjektom.sportskiObjekat;
+    if (naziv?.trim() && adresa?.trim()) return `${naziv.trim()} - ${adresa.trim()}`;
+    if (adresa?.trim()) return adresa.trim();
+    return naziv.trim();
+  }
+
+  const utakmicaSaOpisom = utakmice.find((utakmica) => utakmica.lokacijaOpis?.trim());
+  if (utakmicaSaOpisom) return utakmicaSaOpisom.lokacijaOpis.trim();
 
   return DEFAULT_LOCATION;
 }

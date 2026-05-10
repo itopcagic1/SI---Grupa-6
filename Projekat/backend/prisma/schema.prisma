@@ -128,8 +128,6 @@ model Takmicenje {
   organizator       Korisnik  @relation(fields: [organizatorId], references: [korisnikId])
   status            String?
   opis              String?
-  lokacija          String?
-  lokacijaOpis      String?
   datumPocetka      DateTime?
   datumZavrsetka    DateTime?
   tipTakmicenja     String?
