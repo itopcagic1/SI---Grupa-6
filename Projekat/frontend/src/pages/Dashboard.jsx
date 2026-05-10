@@ -45,6 +45,14 @@ function Dashboard() {
             >
               Lige
             </Link>
+            {(korisnik?.trenutnaUloga === 'ADMINISTRATOR' || korisnik?.trenutnaUloga === 'ORGANIZATOR') && (
+              <Link
+                to="/generate-schedule"
+                className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
+              >
+                Generiši raspored
+              </Link>
+            )}
             {korisnik?.trenutnaUloga === 'ADMINISTRATOR' && (
               <Link
                 to="/admin/korisnici"
