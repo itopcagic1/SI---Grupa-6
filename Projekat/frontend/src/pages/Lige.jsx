@@ -49,6 +49,7 @@ function Lige() {
     const korisnik = korisnikStr ? JSON.parse(korisnikStr) : null;
     const isAdminOrOrganizer = korisnik && ['ADMINISTRATOR', 'ORGANIZATOR'].includes(korisnik.trenutnaUloga);
     const isAdmin = korisnik?.trenutnaUloga === 'ADMINISTRATOR';
+    const isTrainer = korisnik?.trenutnaUloga === 'TRENER';
 
     useEffect(() => {
         loadLige();
@@ -254,6 +255,11 @@ function Lige() {
                     <div className="hidden md:flex gap-4 ml-6">
                         <Link to="/lige" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Lige</Link>
                         <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
+                        {isTrainer && (
+                            <Link to="/moje-prijave" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
+                                Moje prijave
+                            </Link>
+                        )}
                         <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
                             Profil
                         </Link>

@@ -15,6 +15,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
     const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
+    const isTrainer = korisnikData?.trenutnaUloga === 'TRENER';
 
     useEffect(() => {
         fetchProfile();
@@ -77,6 +78,11 @@ const Profile = () => {
                     <div className="hidden md:flex gap-4 ml-6">
                         <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">Lige</Link>
                         <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">Timovi</Link>
+                        {isTrainer && (
+                            <Link to="/moje-prijave" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 text-sm transition-colors">
+                                Moje prijave
+                            </Link>
+                        )}
                         <Link to="/profile" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">
                             Profil
                         </Link>
