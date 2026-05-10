@@ -41,3 +41,19 @@ export const blokirajKorisnika = async (token, korisnikId, akcija) => {
   );
   return response.data;
 };
+
+export const getKorisnikDetalji = async (token, korisnikId) => {
+  const response = await api.get(`/admin/korisnici/${korisnikId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const promijeniUlogu = async (token, korisnikId, novaUloga) => {
+  const response = await api.patch(
+    `/admin/korisnici/${korisnikId}/promijeni-ulogu`,
+    { novaUloga },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};

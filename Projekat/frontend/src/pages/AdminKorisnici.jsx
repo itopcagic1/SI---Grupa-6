@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { getKorisnici, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika } from '../api/adminApi';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { getKorisnici, obradiZahtjevUloge } from '../api/adminApi';
 import { logoutUser } from '../api/authApi';
 
 export default function AdminKorisnici() {
@@ -13,12 +13,20 @@ export default function AdminKorisnici() {
   const [greska, setGreska] = useState('');
   const [razlogMap, setRazlogMap] = useState({});
   const [poruka, setPoruka] = useState('');
-  const [odabraniKorisnik, setOdabraniKorisnik] = useState(null);
-  const [brisanjePotvrda, setBrisanjePotvrda] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem('token');
   const korisnik = JSON.parse(localStorage.getItem('korisnik'));
+
+  // Prikaži poruku ako dolazimo s detalji stranice (npr. nakon brisanja)
+  useEffect(() => {
+    if (location.state?.poruka) {
+      setPoruka(location.state.poruka);
+      setTimeout(() => setPoruka(''), 3000);
+      window.history.replaceState({}, '');
+    }
+  }, []);
 
   const handleLogout = async () => {
     try { if (token) await logoutUser(token); } catch { }
@@ -80,32 +88,6 @@ export default function AdminKorisnici() {
     }
   };
 
-  const handleObrisi = async () => {
-    try {
-      await obrisiKorisnika(token, odabraniKorisnik.korisnikId);
-      setBrisanjePotvrda(false);
-      setOdabraniKorisnik(null);
-      prikaziPoruku('Korisnik uspješno obrisan.');
-      ucitajPendingBroj();
-      tab === 'pending' ? ucitajKorisnike('PENDING', pretraga) : ucitajKorisnike(filterStatus, pretraga);
-    } catch {
-      setGreska('Greška pri brisanju korisnika.');
-      setBrisanjePotvrda(false);
-    }
-  };
-
-  const handleBlokiranje = async () => {
-    const akcija = odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? 'ODBLOKIRAJ' : 'BLOKIRAJ';
-    try {
-      await blokirajKorisnika(token, odabraniKorisnik.korisnikId, akcija);
-      prikaziPoruku(akcija === 'BLOKIRAJ' ? 'Korisnik blokiran.' : 'Korisnik odblokiran.');
-      setOdabraniKorisnik(prev => ({ ...prev, statusPouzdanosti: akcija === 'BLOKIRAJ' ? 'BLOKIRAN' : 'AKTIVAN' }));
-      tab === 'pending' ? ucitajKorisnike('PENDING', pretraga) : ucitajKorisnike(filterStatus, pretraga);
-    } catch {
-      setGreska('Greška pri blokiranju korisnika.');
-    }
-  };
-
   const setRazlog = (korisnikId, vrijednost) => {
     setRazlogMap((prev) => ({ ...prev, [korisnikId]: vrijednost }));
   };
@@ -113,7 +95,7 @@ export default function AdminKorisnici() {
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
 
-      {/* Navbar — isti stil kao Lige.jsx */}
+      {/* Navbar */}
       <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-6">
           <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
@@ -122,9 +104,7 @@ export default function AdminKorisnici() {
           <div className="hidden md:flex gap-4 ml-6">
             <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
             <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
-            <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
-    Profil
-  </Link>
+            <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Profil</Link>
             <span className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Admin Panel</span>
           </div>
         </div>
@@ -225,9 +205,14 @@ export default function AdminKorisnici() {
               </thead>
               <tbody>
                 {korisnici.map((k) => (
-                  <tr key={k.korisnikId} onClick={() => setOdabraniKorisnik(k)}
-                    className="border-t border-amber-50 cursor-pointer hover:bg-amber-50 transition-colors">
-                    <td className="px-5 py-4 font-medium text-slate-800">{k.punoIme || '—'}</td>
+                  <tr
+                    key={k.korisnikId}
+                    onClick={() => navigate(`/admin/korisnici/${k.korisnikId}`)}
+                    className="border-t border-amber-50 cursor-pointer hover:bg-amber-50 transition-colors group"
+                  >
+                    <td className="px-5 py-4 font-medium text-slate-800 group-hover:text-orange-600 transition-colors">
+                      {k.punoIme || '—'}
+                    </td>
                     <td className="px-5 py-4 text-slate-600">{k.email}</td>
                     <td className="px-5 py-4 text-slate-800 font-semibold">{k.uloga}</td>
                     <td className="px-5 py-4 text-slate-600">{k.trazenaUloga || '—'}</td>
@@ -274,76 +259,6 @@ export default function AdminKorisnici() {
           </div>
         )}
       </div>
-
-      {/* Popup detalji korisnika */}
-      {odabraniKorisnik && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
-          onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }}>
-          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}>
-
-            <div className="px-8 py-6 border-b border-amber-50 flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-black text-slate-800">{odabraniKorisnik.punoIme || '—'}</h2>
-                <p className="text-sm text-slate-500 mt-1">{odabraniKorisnik.email}</p>
-              </div>
-              <button onClick={() => { setOdabraniKorisnik(null); setBrisanjePotvrda(false); }}
-                className="text-slate-400 hover:text-slate-600 p-2 bg-slate-50 rounded-full transition-colors text-sm">✕</button>
-            </div>
-
-            <div className="px-8 py-6">
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {[
-                  ['Uloga', odabraniKorisnik.uloga],
-                  ['Tražena uloga', odabraniKorisnik.trazenaUloga || '—'],
-                  ['Status zahtjeva', odabraniKorisnik.statusUloge || '—'],
-                  ['Status naloga', odabraniKorisnik.statusPouzdanosti || 'AKTIVAN'],
-                ].map(([label, value]) => (
-                  <div key={label} className="bg-amber-50 rounded-2xl px-4 py-3">
-                    <div className="text-xs font-black uppercase tracking-widest text-amber-900/50 mb-1">{label}</div>
-                    <div className="font-bold text-slate-800 text-sm">{value}</div>
-                  </div>
-                ))}
-              </div>
-
-              {odabraniKorisnik.uloga !== 'ADMINISTRATOR' ? (
-                <div className="flex flex-col gap-3">
-                  <button onClick={handleBlokiranje}
-                    className={`w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm transition-colors
-                      ${odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN'
-                        ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>
-                    {odabraniKorisnik.statusPouzdanosti === 'BLOKIRAN' ? 'Odblokiraj korisnika' : 'Blokiraj korisnika'}
-                  </button>
-
-                  {!brisanjePotvrda ? (
-                    <button onClick={() => setBrisanjePotvrda(true)}
-                      className="w-full py-3 bg-red-50 text-red-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-red-100 transition-colors">
-                      Obriši korisnika
-                    </button>
-                  ) : (
-                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
-                      <p className="text-sm text-red-700 font-bold mb-3">Sigurno želiš obrisati ovog korisnika?</p>
-                      <div className="flex gap-2 justify-center">
-                        <button onClick={() => setBrisanjePotvrda(false)}
-                          className="px-4 py-2 bg-white border border-amber-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors">
-                          Odustani
-                        </button>
-                        <button onClick={handleObrisi}
-                          className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
-                          Da, obriši
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-center text-sm text-slate-400">Administrator nalog ne može biti blokiran ili obrisan.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
