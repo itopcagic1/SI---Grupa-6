@@ -347,11 +347,14 @@ function Timovi() {
             sport<span className="text-orange-600">.ba</span>
           </Link>
           <div className="hidden md:flex gap-4 ml-6">
+            <Link to="/" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Početna</Link>
             <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
             <Link to="/teams" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Timovi</Link>
-            <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
-              Profil
-            </Link>
+            {korisnikData && (
+                <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
+                  Profil
+                </Link>
+            )}
             {isAdmin && (
               <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
             )}

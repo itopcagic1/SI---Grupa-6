@@ -11,11 +11,11 @@ function Dashboard() {
       if (token) await logoutUser(token);
       localStorage.removeItem('token');
       localStorage.removeItem('korisnik');
-      navigate('/login');
+      navigate('/');
     } catch (err) {
       localStorage.removeItem('token');
       localStorage.removeItem('korisnik');
-      navigate('/login');
+      navigate('/');
     }
   };
 

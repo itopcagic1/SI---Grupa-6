@@ -24,7 +24,7 @@ export default function AdminKorisnici() {
     try { if (token) await logoutUser(token); } catch { }
     localStorage.removeItem('token');
     localStorage.removeItem('korisnik');
-    navigate('/login');
+    navigate('/');
   };
 
   const ucitajKorisnike = async (status = '', pretragaVal = '') => {
@@ -120,11 +120,12 @@ export default function AdminKorisnici() {
             sport<span className="text-orange-600">.ba</span>
           </Link>
           <div className="hidden md:flex gap-4 ml-6">
+            <Link to="/" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Početna</Link>
             <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
             <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
             <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
-    Profil
-  </Link>
+                Profil
+            </Link>
             <span className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Admin Panel</span>
           </div>
         </div>

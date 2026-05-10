@@ -63,7 +63,7 @@ function Lige() {
         }
         localStorage.removeItem('token');
         localStorage.removeItem('korisnik');
-        navigate('/login');
+        navigate('/');
     };
 
     const loadSportovi = async () => {
@@ -252,11 +252,14 @@ function Lige() {
                         sport<span className="text-orange-600">.ba</span>
                     </Link>
                     <div className="hidden md:flex gap-4 ml-6">
+                        <Link to="/" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Početna</Link>
                         <Link to="/lige" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Lige</Link>
                         <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
-                        <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
-                            Profil
-                        </Link>
+                        {korisnik && (
+                            <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
+                                Profil
+                            </Link>
+                        )}
                         {isAdmin && (
                             <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
                         )}
@@ -387,14 +390,6 @@ function Lige() {
 
                                 {isAdminOrOrganizer && (
                                     <div className="pt-4 border-t border-amber-50 flex flex-col gap-2">
-                                        {isAdmin && (
-                                            <button
-                                                onClick={() => openTimoviModal(liga)}
-                                                className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors"
-                                            >
-                                                Upravljaj timovima
-                                            </button>
-                                        )}
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => handleOpenModal('edit', liga)}
@@ -412,6 +407,14 @@ function Lige() {
                                         </div>
                                     </div>
                                 )}
+                                <div className="pt-2">
+                                    <button
+                                        onClick={() => openTimoviModal(liga)}
+                                        className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors mt-2"
+                                    >
+                                        {isAdmin ? 'Upravljaj timovima' : 'Pregledaj timove'}
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -435,26 +438,27 @@ function Lige() {
                             {timoviError && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm font-bold">{timoviError}</div>}
                             {timoviPoruka && <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-2xl text-sm font-bold">{timoviPoruka}</div>}
 
-                            {/* Dodaj tim */}
-                            <div className="flex gap-3 mb-6">
-                                <select
-                                    value={odabraniTimId}
-                                    onChange={(e) => setOdabraniTimId(e.target.value)}
-                                    className="flex-1 border-2 border-amber-100 rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-orange-500"
-                                >
-                                    <option value="">Odaberi tim za dodavanje...</option>
-                                    {dostupniTimovi.map((tim) => (
-                                        <option key={tim.timId} value={tim.timId}>{tim.naziv}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={handleDodajTim}
-                                    disabled={!odabraniTimId}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-5 py-2.5 rounded-2xl transition disabled:opacity-50"
-                                >
-                                    Dodaj
-                                </button>
-                            </div>
+                            {isAdmin && (
+                                <div className="flex gap-3 mb-6">
+                                    <select
+                                        value={odabraniTimId}
+                                        onChange={(e) => setOdabraniTimId(e.target.value)}
+                                        className="flex-1 border-2 border-amber-100 rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-orange-500"
+                                    >
+                                        <option value="">Odaberi tim za dodavanje...</option>
+                                        {dostupniTimovi.map((tim) => (
+                                            <option key={tim.timId} value={tim.timId}>{tim.naziv}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={handleDodajTim}
+                                        disabled={!odabraniTimId}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-5 py-2.5 rounded-2xl transition disabled:opacity-50"
+                                    >
+                                        Dodaj
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Lista timova */}
                             <h3 className="font-black text-slate-700 uppercase tracking-widest text-xs mb-3">
@@ -467,16 +471,18 @@ function Lige() {
                                     {ligaDetalji.ucesniciTakmicenja.map((ucesnik) => (
                                         <div key={ucesnik.ucesceId} className="bg-slate-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between">
                                             <span className="font-bold text-slate-800">{ucesnik.tim?.naziv}</span>
-                                            {deleteConfirmTimId === ucesnik.timId ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-red-600">Sigurni ste?</span>
-                                                    <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline">DA</button>
-                                                    <button onClick={() => setDeleteConfirmTimId(null)} className="text-xs text-slate-500 font-bold hover:underline">NE</button>
-                                                </div>
-                                            ) : (
-                                                <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline uppercase tracking-wider">
-                                                    Ukloni
-                                                </button>
+                                            {isAdmin && (
+                                                deleteConfirmTimId === ucesnik.timId ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-red-600">Sigurni ste?</span>
+                                                        <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline">DA</button>
+                                                        <button onClick={() => setDeleteConfirmTimId(null)} className="text-xs text-slate-500 font-bold hover:underline">NE</button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline uppercase tracking-wider">
+                                                        Ukloni
+                                                    </button>
+                                                )
                                             )}
                                         </div>
                                     ))}

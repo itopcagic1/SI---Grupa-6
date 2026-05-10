@@ -6,7 +6,7 @@ export default function Blokiran() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('korisnik');
-    navigate('/login');
+    navigate('/');
   };
 
   return (
