@@ -5,20 +5,14 @@ const prisma = new PrismaClient();
 const getKorisnici = async (req, res) => {
   try {
     const { status, pretraga } = req.query;
-
     const where = {};
-
-    if (status) {
-      where.statusUloge = status;
-    }
-
+    if (status) where.statusUloge = status;
     if (pretraga) {
       where.OR = [
         { punoIme: { contains: pretraga, mode: 'insensitive' } },
         { email: { contains: pretraga, mode: 'insensitive' } },
       ];
     }
-
     const korisnici = await prisma.korisnik.findMany({
       where,
       select: {
@@ -33,17 +27,78 @@ const getKorisnici = async (req, res) => {
         datumObrade: true,
         razlogOdbijanja: true,
         datumKreiranja: true,
+        brojPreksrenihRezervacija: true,
       },
       orderBy: { datumKreiranja: 'desc' },
     });
-
     return res.status(200).json({ korisnici });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      greska: 'GRESKA_SERVERA',
-      poruka: 'Greška pri dohvatanju korisnika.',
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri dohvatanju korisnika.' });
+  }
+};
+
+// GET /api/admin/korisnici/blokirani?pretraga=ime
+const getBlokiraniKorisnici = async (req, res) => {
+  try {
+    const { pretraga } = req.query;
+    const where = { statusPouzdanosti: 'BLOKIRAN' };
+    if (pretraga) {
+      where.OR = [
+        { punoIme: { contains: pretraga, mode: 'insensitive' } },
+        { email: { contains: pretraga, mode: 'insensitive' } },
+      ];
+    }
+    const korisnici = await prisma.korisnik.findMany({
+      where,
+      select: {
+        korisnikId: true,
+        punoIme: true,
+        email: true,
+        uloga: true,
+        statusPouzdanosti: true,
+        razlogBlokiranja: true,
+        brojPreksrenihRezervacija: true,
+        datumKreiranja: true,
+      },
+      orderBy: { datumKreiranja: 'desc' },
     });
+    return res.status(200).json({ korisnici });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri dohvatanju blokiranih korisnika.' });
+  }
+};
+
+// GET /api/admin/korisnici/:id
+const getKorisnikDetalji = async (req, res) => {
+  try {
+    const korisnikId = parseInt(req.params.id);
+    const korisnik = await prisma.korisnik.findUnique({
+      where: { korisnikId },
+      select: {
+        korisnikId: true,
+        punoIme: true,
+        email: true,
+        uloga: true,
+        trazenaUloga: true,
+        statusUloge: true,
+        statusPouzdanosti: true,
+        razlogOdbijanja: true,
+        razlogBlokiranja: true,
+        brojPreksrenihRezervacija: true,
+        datumZahtjeva: true,
+        datumObrade: true,
+        datumKreiranja: true,
+      },
+    });
+    if (!korisnik) {
+      return res.status(404).json({ greska: 'KORISNIK_NIJE_PRONADJEN', poruka: 'Korisnik sa tim ID-em ne postoji.' });
+    }
+    return res.status(200).json({ korisnik });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri dohvatanju detalja korisnika.' });
   }
 };
 
@@ -52,32 +107,17 @@ const obradiZahtjevUloge = async (req, res) => {
   try {
     const korisnikId = parseInt(req.params.id);
     const { akcija, razlog } = req.body;
-
     if (!['ODOBRI', 'ODBIJ'].includes(akcija)) {
-      return res.status(400).json({
-        greska: 'NEISPRAVNA_AKCIJA',
-        poruka: 'Akcija mora biti ODOBRI ili ODBIJ.',
-      });
+      return res.status(400).json({ greska: 'NEISPRAVNA_AKCIJA', poruka: 'Akcija mora biti ODOBRI ili ODBIJ.' });
     }
-
     const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
-
     if (!korisnik) {
-      return res.status(404).json({
-        greska: 'KORISNIK_NIJE_PRONADJEN',
-        poruka: 'Korisnik sa tim ID-em ne postoji.',
-      });
+      return res.status(404).json({ greska: 'KORISNIK_NIJE_PRONADJEN', poruka: 'Korisnik sa tim ID-em ne postoji.' });
     }
-
     if (!korisnik.trazenaUloga || korisnik.statusUloge !== 'PENDING') {
-      return res.status(400).json({
-        greska: 'NEMA_AKTIVNOG_ZAHTJEVA',
-        poruka: 'Ovaj korisnik nema aktivan zahtjev za promjenu uloge.',
-      });
+      return res.status(400).json({ greska: 'NEMA_AKTIVNOG_ZAHTJEVA', poruka: 'Ovaj korisnik nema aktivan zahtjev za promjenu uloge.' });
     }
-
     let updateData = { datumObrade: new Date() };
-
     if (akcija === 'ODOBRI') {
       updateData.uloga = korisnik.trazenaUloga;
       updateData.statusUloge = 'ODOBREN';
@@ -86,32 +126,22 @@ const obradiZahtjevUloge = async (req, res) => {
       updateData.statusUloge = 'ODBIJEN';
       updateData.razlogOdbijanja = razlog || 'Zahtjev odbijen od strane administratora.';
     }
-
     const azuriran = await prisma.korisnik.update({
       where: { korisnikId },
       data: updateData,
       select: {
-        korisnikId: true,
-        punoIme: true,
-        email: true,
-        uloga: true,
-        trazenaUloga: true,
-        statusUloge: true,
-        razlogOdbijanja: true,
-        datumObrade: true,
+        korisnikId: true, punoIme: true, email: true,
+        uloga: true, trazenaUloga: true, statusUloge: true,
+        razlogOdbijanja: true, datumObrade: true,
       },
     });
-
     return res.status(200).json({
       poruka: akcija === 'ODOBRI' ? 'Uloga uspješno odobrena.' : 'Zahtjev odbijen.',
       korisnik: azuriran,
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      greska: 'GRESKA_SERVERA',
-      poruka: 'Greška pri obradi zahtjeva.',
-    });
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri obradi zahtjeva.' });
   }
 };
 
@@ -119,32 +149,18 @@ const obradiZahtjevUloge = async (req, res) => {
 const obrisiKorisnika = async (req, res) => {
   try {
     const korisnikId = parseInt(req.params.id);
-
     const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
-
     if (!korisnik) {
-      return res.status(404).json({
-        greska: 'KORISNIK_NIJE_PRONADJEN',
-        poruka: 'Korisnik sa tim ID-em ne postoji.',
-      });
+      return res.status(404).json({ greska: 'KORISNIK_NIJE_PRONADJEN', poruka: 'Korisnik sa tim ID-em ne postoji.' });
     }
-
     if (korisnik.uloga === 'ADMINISTRATOR') {
-      return res.status(400).json({
-        greska: 'NIJE_DOZVOLJENO',
-        poruka: 'Ne možete obrisati administratora.',
-      });
+      return res.status(400).json({ greska: 'NIJE_DOZVOLJENO', poruka: 'Ne možete obrisati administratora.' });
     }
-
     await prisma.korisnik.delete({ where: { korisnikId } });
-
     return res.status(200).json({ poruka: 'Korisnik uspješno obrisan.' });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      greska: 'GRESKA_SERVERA',
-      poruka: 'Greška pri brisanju korisnika.',
-    });
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri brisanju korisnika.' });
   }
 };
 
@@ -152,56 +168,82 @@ const obrisiKorisnika = async (req, res) => {
 const blokirajKorisnika = async (req, res) => {
   try {
     const korisnikId = parseInt(req.params.id);
-    const { akcija } = req.body; // "BLOKIRAJ" | "ODBLOKIRAJ"
-
+    const { akcija, razlog } = req.body;
     if (!['BLOKIRAJ', 'ODBLOKIRAJ'].includes(akcija)) {
-      return res.status(400).json({
-        greska: 'NEISPRAVNA_AKCIJA',
-        poruka: 'Akcija mora biti BLOKIRAJ ili ODBLOKIRAJ.',
-      });
+      return res.status(400).json({ greska: 'NEISPRAVNA_AKCIJA', poruka: 'Akcija mora biti BLOKIRAJ ili ODBLOKIRAJ.' });
     }
-
     const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
-
     if (!korisnik) {
-      return res.status(404).json({
-        greska: 'KORISNIK_NIJE_PRONADJEN',
-        poruka: 'Korisnik sa tim ID-em ne postoji.',
-      });
+      return res.status(404).json({ greska: 'KORISNIK_NIJE_PRONADJEN', poruka: 'Korisnik sa tim ID-em ne postoji.' });
     }
-
     if (korisnik.uloga === 'ADMINISTRATOR') {
-      return res.status(400).json({
-        greska: 'NIJE_DOZVOLJENO',
-        poruka: 'Ne možete blokirati administratora.',
-      });
+      return res.status(400).json({ greska: 'NIJE_DOZVOLJENO', poruka: 'Ne možete blokirati administratora.' });
     }
-
     const noviStatus = akcija === 'BLOKIRAJ' ? 'BLOKIRAN' : 'AKTIVAN';
-
+    const updateData = { statusPouzdanosti: noviStatus };
+    if (akcija === 'BLOKIRAJ') {
+      updateData.razlogBlokiranja = razlog || null;
+    } else {
+      updateData.razlogBlokiranja = null; // briše razlog pri odblokiravanju
+    }
     const azuriran = await prisma.korisnik.update({
       where: { korisnikId },
-      data: { statusPouzdanosti: noviStatus },
+      data: updateData,
       select: {
-        korisnikId: true,
-        punoIme: true,
-        email: true,
-        uloga: true,
-        statusPouzdanosti: true,
+        korisnikId: true, punoIme: true, email: true,
+        uloga: true, statusPouzdanosti: true, razlogBlokiranja: true,
       },
     });
-
     return res.status(200).json({
       poruka: akcija === 'BLOKIRAJ' ? 'Korisnik blokiran.' : 'Korisnik odblokiran.',
       korisnik: azuriran,
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      greska: 'GRESKA_SERVERA',
-      poruka: 'Greška pri blokiranju korisnika.',
-    });
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri blokiranju korisnika.' });
   }
 };
 
-module.exports = { getKorisnici, obradiZahtjevUloge, obrisiKorisnika, blokirajKorisnika };
+// PATCH /api/admin/korisnici/:id/promijeni-ulogu
+const promijeniUlogu = async (req, res) => {
+  try {
+    const korisnikId = parseInt(req.params.id);
+    const { novaUloga } = req.body;
+    const dozvoljenUloge = ['ADMINISTRATOR', 'ORGANIZATOR', 'TRENER', 'IGRAC', 'VLASNIK', 'NAVIJAC'];
+    if (!dozvoljenUloge.includes(novaUloga)) {
+      return res.status(400).json({ greska: 'NEISPRAVNA_ULOGA', poruka: 'Neispravna uloga.' });
+    }
+    const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
+    if (!korisnik) {
+      return res.status(404).json({ greska: 'KORISNIK_NIJE_PRONADJEN', poruka: 'Korisnik sa tim ID-em ne postoji.' });
+    }
+    if (korisnik.uloga === 'ADMINISTRATOR') {
+      return res.status(400).json({ greska: 'NIJE_DOZVOLJENO', poruka: 'Ne možete mijenjati ulogu administratora.' });
+    }
+    const azuriran = await prisma.korisnik.update({
+      where: { korisnikId },
+      data: { uloga: novaUloga, statusUloge: 'ODOBREN', datumObrade: new Date() },
+      select: {
+        korisnikId: true, punoIme: true, email: true,
+        uloga: true, statusUloge: true,
+      },
+    });
+    return res.status(200).json({
+      poruka: `Uloga uspješno promijenjena u ${novaUloga}.`,
+      korisnik: azuriran,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ greska: 'GRESKA_SERVERA', poruka: 'Greška pri promjeni uloge.' });
+  }
+};
+
+module.exports = {
+  getKorisnici,
+  getBlokiraniKorisnici,
+  getKorisnikDetalji,
+  obradiZahtjevUloge,
+  obrisiKorisnika,
+  blokirajKorisnika,
+  promijeniUlogu,
+};

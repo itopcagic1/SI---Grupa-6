@@ -4,9 +4,12 @@ const jwt = require('jsonwebtoken');
 
 jest.mock('../../src/controllers/adminController', () => ({
   getKorisnici: jest.fn((req, res) => res.status(200).json({ korisnici: [] })),
+  getBlokiraniKorisnici: jest.fn((req, res) => res.status(200).json({ korisnici: [] })),
+  getKorisnikDetalji: jest.fn((req, res) => res.status(200).json({ korisnik: {} })),
   obradiZahtjevUloge: jest.fn((req, res) => res.status(200).json({ poruka: 'OK' })),
   obrisiKorisnika: jest.fn((req, res) => res.status(200).json({ poruka: 'OK' })),
   blokirajKorisnika: jest.fn((req, res) => res.status(200).json({ poruka: 'OK' })),
+  promijeniUlogu: jest.fn((req, res) => res.status(200).json({ poruka: 'OK' })),
 }));
 
 jest.mock('../../src/services/authService', () => ({

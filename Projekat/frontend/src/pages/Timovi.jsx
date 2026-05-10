@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import {
   fetchTeams,
   fetchSports,
@@ -341,41 +342,7 @@ function Timovi() {
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
       {/* Navbar */}
-      <nav className="bg-white border-b border-amber-100 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
-            sport<span className="text-orange-600">.ba</span>
-          </Link>
-          <div className="hidden md:flex gap-4 ml-6">
-            <Link to="/" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Početna</Link>
-            <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
-            <Link to="/teams" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Timovi</Link>
-            {korisnikData && (
-                <Link to="/profile" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">
-                  Profil
-                </Link>
-            )}
-            {isAdmin && (
-              <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
-            {korisnikData ? (korisnikData.punoIme?.charAt(0) || korisnikData.ime?.charAt(0) || korisnikData.email?.charAt(0) || '?').toUpperCase() : '?'}
-          </div>
-          <span className="text-sm font-semibold text-slate-700 hidden sm:block">
-            {korisnikData?.ime && korisnikData?.prezime
-              ? `${korisnikData.ime} ${korisnikData.prezime}`
-              : korisnikData?.punoIme || korisnikData?.ime || korisnikData?.email || 'Gost'}
-          </span>
-          {korisnikData && (
-            <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
-              Odjava
-            </button>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-start justify-between mb-6">

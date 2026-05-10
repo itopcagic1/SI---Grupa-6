@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
 
 // SVG Ikone za UI
 const CalendarIcon = () => (
@@ -83,50 +84,7 @@ const Homepage = () => {
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
-      {/* Navbar matching Lige.jsx style */}
-      <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
-            sport<span className="text-orange-600">.ba</span>
-          </Link>
-          <div className="hidden md:flex gap-4 ml-6">
-            <Link to="/" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm transition-colors">Početna</Link>
-            <a href="#raspored" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Raspored</a>
-            <Link to="/lige" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Lige</Link>
-            <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
-            <a href="#rezultati" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Rezultati</a>
-            {isAuthenticated && (
-                <Link to="/dashboard" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Dashboard</Link>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <>
-              <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
-                {korisnik ? (korisnik.punoIme?.charAt(0) || korisnik.ime?.charAt(0) || korisnik.email?.charAt(0) || '?').toUpperCase() : '?'}
-              </div>
-              <span className="text-sm font-semibold text-slate-700 hidden sm:block">
-                {korisnik?.ime && korisnik?.prezime
-                  ? `${korisnik.ime} ${korisnik.prezime}`
-                  : korisnik?.punoIme || korisnik?.ime || korisnik?.email || 'Gost'}
-              </span>
-              <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
-                Odjava
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="px-4 py-2 text-slate-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-widest">
-                Login
-              </Link>
-              <Link to="/register" className="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all text-sm uppercase tracking-widest shadow-md shadow-orange-600/20 active:scale-95">
-                Registracija
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section 

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../api/authApi';
+import Navbar from '../components/Navbar';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -20,7 +21,9 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-amber-50 font-sans">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="mx-auto max-w-4xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex flex-col gap-6">
           <div>
@@ -67,6 +70,7 @@ function Dashboard() {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
