@@ -129,17 +129,27 @@ const Profile = () => {
                         <div className="bg-white rounded-3xl border border-amber-100 p-6 shadow-sm">
                             <h3 className="text-sm font-black uppercase text-amber-950 mb-4 tracking-tighter">Aktivni angažmani</h3>
                             <div className="space-y-3">
-                                {user.uloga === 'IGRAC' && user.timovi?.length > 0 ? (
-                                    user.timovi.map(t => (
-                                        <div key={t.timId} className="bg-amber-50 rounded-xl px-4 py-3 border border-amber-100 flex items-center gap-3">
-                                            <span className="text-xl">⚽</span>
-                                            <span className="text-sm font-bold text-amber-900">{t.naziv}</span>
+                                {user.clanstvaUTimovima && user.clanstvaUTimovima.length > 0 ? (
+                                    user.clanstvaUTimovima.map((clanstvo) => (
+                                        <div key={clanstvo.clanstvoTimaId} className="bg-amber-50 rounded-xl px-4 py-3 border border-amber-100 flex items-center gap-3">
+                                           
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">
+                                                    {clanstvo.ulogaUTimu || user.uloga}
+                                                </span>
+                                                <span className="text-sm font-bold text-amber-900">
+                                                    {clanstvo.tim.naziv}
+                                                </span>
+                                            </div>
                                         </div>
                                     ))
-                                ) : user.uloga === 'TRENER' || user.uloga === 'ORGANIZATOR' ? (
-                                    <p className="text-sm text-amber-500 italic">Pregledajte liste timova/liga za upravljanje.</p>
                                 ) : (
-                                    <p className="text-xs text-amber-400 italic text-center py-4">Trenutno nema povezanih sportskih subjekata.</p>
+                                    <div className="text-center py-4">
+                                        <p className="text-xs text-amber-400 italic">Trenutno nema aktivnih angažmana.</p>
+                                        {user.uloga === 'NAVIJAC' && (
+                                            <p className="text-[10px] text-slate-400 mt-1">Zapratite neki tim da biste vidjeli novosti!</p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -206,8 +216,8 @@ const Profile = () => {
 
                             {message.text && (
                                 <div className={`mt-6 p-4 rounded-2xl border text-sm font-bold text-center ${message.type === 'error'
-                                        ? 'bg-red-50 border-red-100 text-red-600'
-                                        : 'bg-green-50 border-green-100 text-green-600'
+                                    ? 'bg-red-50 border-red-100 text-red-600'
+                                    : 'bg-green-50 border-green-100 text-green-600'
                                     }`}>
                                     {message.text}
                                 </div>
