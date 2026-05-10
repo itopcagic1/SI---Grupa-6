@@ -128,26 +128,31 @@ async function logoutUser(korisnikId) {
   return { korisnikId };
 }
 
-async function getUserProfile(korisnikId) {
-  const user = await prisma.korisnik.findUnique({
-    where: { korisnikId },
-    include: {
-      clanstvaUTimovima: { include: { tim: true } }, // za igrace/trenere
-      vlasnikSportskihObjekata: true,               // za vlasnike
-      organizovanaTakmicenja: true,                 // za organizatore 
-      omiljeniTimovi: { include: { tim: true } }    // za navijače
-    },
+
+const getUserProfile = async (korisnikId) => {
+  return await prisma.korisnik.findUnique({
+    where: { korisnikId: parseInt(korisnikId) },
+    select: {
+      korisnikId: true,
+      punoIme: true,
+      email: true,
+      uloga: true,
+      statusPouzdanosti: true,
+      
+      clanstvaUTimovima: {
+        where: { status: 'ACTIVE' }, // uzimamo samo aktivne angažmane
+        include: {
+          tim: {
+            select: {
+              naziv: true,
+              logoUrl: true
+            }
+          }
+        }
+      }
+    }
   });
-
-  if (!user) {
-    const error = new Error('Korisnik nije pronadjen');
-    error.status = 404;
-    throw error;
-  }
-
-  const { lozinkaHash: _, refreshToken: __, ...userWithoutSensitiveData } = user;
-  return userWithoutSensitiveData;
-}
+};
 
 async function changePassword(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
   if (novaLozinka !== potvrda) {
