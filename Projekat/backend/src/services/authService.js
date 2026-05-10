@@ -150,7 +150,7 @@ async function getUserProfile(korisnikId) {
 async function forgotPassword(email) {
   const korisnik = await prisma.korisnik.findUnique({ where: { email } });
 
-  if (!korisnik) return; // tihо, ne otkrivamo da email ne postoji
+  if (!korisnik) return;
 
   const token = crypto.randomBytes(32).toString('hex');
   const expires = new Date(Date.now() + 30 * 60 * 1000);

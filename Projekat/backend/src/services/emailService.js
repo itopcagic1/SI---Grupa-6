@@ -8,7 +8,7 @@ async function posaljiResetEmail(email, resetLink) {
     html: `
       <p>Zatražen je reset lozinke za vaš nalog.</p>
       <p><a href="${resetLink}">Kliknite ovdje da resetujete lozinku</a></p>
-      <p>Link je validan 30 minuta. Ako niste vi zatražili reset, ignorišite ovaj mail.</p>
+      <p>Link je validan 30 minuta. Ako Vi niste zatražili reset, ignorišite ovaj mail.</p>
     `,
   });
 }
