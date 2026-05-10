@@ -103,6 +103,32 @@ async function profile(req, res) {
   }
 }
 
+const crypto = require('crypto');
+
+async function forgotPassword(req, res) {
+  try {
+    await authService.forgotPassword(req.body.email);
+    return res.status(200).json({ poruka: 'Ako email postoji, poslan je link za reset.' });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_RESET',
+      poruka: error.message || 'Greska pri resetovanju lozinke',
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    await authService.resetPassword(req.body.token, req.body.newPassword);
+    return res.status(200).json({ poruka: 'Lozinka uspješno promijenjena.' });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_RESET',
+      poruka: error.message || 'Greska pri promjeni lozinke',
+    });
+  }
+}
+
 async function changePassword(req, res) {
   try {
     await authService.changePassword(req.user.korisnikId, req.body);
@@ -124,5 +150,7 @@ module.exports = {
   login,
   logout,
   profile,
+  forgotPassword,
+  resetPassword
   changePassword
 };

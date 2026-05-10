@@ -35,6 +35,8 @@ model Korisnik {
   datumObrade                DateTime?
   refreshToken               String?
   documents                  String[]
+  resetToken         String?
+  resetTokenExpires  DateTime?
 
   // Relacije
   organizovanaTakmicenja     Takmicenje[]
