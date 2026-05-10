@@ -151,6 +151,6 @@ module.exports = {
   logout,
   profile,
   forgotPassword,
-  resetPassword
+  resetPassword,
   changePassword
 };

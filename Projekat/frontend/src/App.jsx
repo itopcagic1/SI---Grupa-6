@@ -3,6 +3,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminKorisnici from './pages/AdminKorisnici';
+import AdminKorisnikDetalji from './pages/AdminKorisnikDetalji';
 import AdminRoute from './pages/AdminRoute';
 import Blokiran from './pages/Blokiran';
 import Timovi from './pages/Timovi';
@@ -13,6 +14,7 @@ import ResetPassword from './pages/ResetPassword';
 
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+
 function App() {
   return (
     <Router>
@@ -25,6 +27,10 @@ function App() {
         <Route path="/admin/korisnici" element={
           <AdminRoute>
             <AdminKorisnici />
+          </AdminRoute>} />
+        <Route path="/admin/korisnici/:id" element={
+          <AdminRoute>
+            <AdminKorisnikDetalji />
           </AdminRoute>} />
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
