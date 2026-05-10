@@ -82,7 +82,7 @@ const Homepage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-amber-50 font-sans">
       {/* Navbar matching Lige.jsx style */}
       <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-6">
