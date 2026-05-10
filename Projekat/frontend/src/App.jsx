@@ -3,14 +3,19 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminKorisnici from './pages/AdminKorisnici';
+import AdminKorisnikDetalji from './pages/AdminKorisnikDetalji';
 import AdminRoute from './pages/AdminRoute';
 import Blokiran from './pages/Blokiran';
 import Timovi from './pages/Timovi';
 import Sportovi from './pages/Sportovi';
 import Lige from './pages/Lige';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 import Profile from './pages/Profile';
 import MojePrijave from './pages/MojePrijave';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+
 function App() {
   return (
     <Router>
@@ -24,10 +29,16 @@ function App() {
           <AdminRoute>
             <AdminKorisnici />
           </AdminRoute>} />
+        <Route path="/admin/korisnici/:id" element={
+          <AdminRoute>
+            <AdminKorisnikDetalji />
+          </AdminRoute>} />
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
         <Route path="/lige" element={<Lige />} />
         <Route path="/moje-prijave" element={<ProtectedRoute><MojePrijave /></ProtectedRoute>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </Router>
