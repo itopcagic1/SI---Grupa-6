@@ -8,6 +8,9 @@ import Blokiran from './pages/Blokiran';
 import Timovi from './pages/Timovi';
 import Sportovi from './pages/Sportovi';
 import Lige from './pages/Lige';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 function App() {
@@ -26,6 +29,8 @@ function App() {
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
         <Route path="/lige" element={<Lige />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </Router>
