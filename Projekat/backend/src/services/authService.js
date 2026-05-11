@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
+const { posaljiResetEmail } = require('./emailService');
 
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
@@ -128,20 +129,139 @@ async function logoutUser(korisnikId) {
   return { korisnikId };
 }
 
-async function getUserProfile(korisnikId) {
-  const user = await prisma.korisnik.findUnique({
+
+const getUserProfile = async (korisnikId) => {
+  return await prisma.korisnik.findUnique({
+    where: { korisnikId: parseInt(korisnikId) },
+    select: {
+      korisnikId: true,
+      punoIme: true,
+      email: true,
+      uloga: true,
+      statusPouzdanosti: true,
+      
+      clanstvaUTimovima: {
+        where: { status: 'ACTIVE' }, // uzimamo samo aktivne angažmane
+        include: {
+          tim: {
+            select: {
+              naziv: true,
+              logoUrl: true
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+async function changePassword(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
+  if (novaLozinka !== potvrda) {
+    const error = new Error('Nova lozinka i potvrda se ne poklapaju.');
+    error.status = 400;
+    error.code = 'LOZINKE_SE_NE_POKLAPAJU';
+    throw error;
+  }
+
+  const user = await prisma.korisnik.findUnique({ where: { korisnikId } });
+  if (!user) {
+    const error = new Error('Korisnik nije pronađen.');
+    error.status = 404;
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(trenutnaLozinka, user.lozinkaHash);
+  if (!isMatch) {
+    const error = new Error('Trenutna lozinka nije ispravna.');
+    error.status = 401; 
+    error.code = 'NEISPRAVNA_LOZINKA';
+    throw error;
+  }
+
+  const hashed = await bcrypt.hash(novaLozinka, SALT_ROUNDS);
+
+  await prisma.korisnik.update({
     where: { korisnikId },
+    data: { lozinkaHash: hashed }
   });
 
+  return { uspjeh: true };
+}
+
+async function changePassword(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
+  if (novaLozinka !== potvrda) {
+    const error = new Error('Nova lozinka i potvrda se ne poklapaju.');
+    error.status = 400;
+    error.code = 'LOZINKE_SE_NE_POKLAPAJU';
+    throw error;
+  }
+
+  const user = await prisma.korisnik.findUnique({ where: { korisnikId } });
   if (!user) {
-    const error = new Error('Korisnik nije pronadjen');
+    const error = new Error('Korisnik nije pronađen.');
     error.status = 404;
     error.code = 'KORISNIK_NIJE_PRONADJEN';
     throw error;
   }
 
-  const { lozinkaHash: _, refreshToken: __, ...userWithoutSensitiveData } = user;
-  return userWithoutSensitiveData;
+  const isMatch = await bcrypt.compare(trenutnaLozinka, user.lozinkaHash);
+  if (!isMatch) {
+    const error = new Error('Trenutna lozinka nije ispravna.');
+    error.status = 401; 
+    error.code = 'NEISPRAVNA_LOZINKA';
+    throw error;
+  }
+
+  const hashed = await bcrypt.hash(novaLozinka, SALT_ROUNDS);
+
+  await prisma.korisnik.update({
+    where: { korisnikId },
+    data: { lozinkaHash: hashed }
+  });
+
+  return { uspjeh: true };
+}
+
+
+
+async function forgotPassword(email) {
+  const korisnik = await prisma.korisnik.findUnique({ where: { email } });
+
+  if (!korisnik) return;
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 30 * 60 * 1000);
+
+  await prisma.korisnik.update({
+    where: { email },
+    data: { resetToken: token, resetTokenExpires: expires },
+  });
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  await posaljiResetEmail(email, resetLink);
+}
+
+async function resetPassword(token, newPassword) {
+  const korisnik = await prisma.korisnik.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpires: { gt: new Date() },
+    },
+  });
+
+  if (!korisnik) {
+    const error = new Error('Token je nevažeći ili je istekao.');
+    error.status = 400;
+    error.code = 'NEVAZECI_TOKEN';
+    throw error;
+  }
+
+  const lozinkaHash = await bcrypt.hash(newPassword, 10);
+
+  await prisma.korisnik.update({
+    where: { korisnikId: korisnik.korisnikId },
+    data: { lozinkaHash, resetToken: null, resetTokenExpires: null },
+  });
 }
 
 module.exports = {
@@ -149,4 +269,7 @@ module.exports = {
   loginUser,
   logoutUser,
   getUserProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword
 };

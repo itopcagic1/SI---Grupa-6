@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion'; 
 
 function Register() {
-  // DODANO: mode: "onChange" omogućava provjeru dok kucaš
+  
   const { register, handleSubmit, getValues, trigger, watch, formState: { errors } } = useForm({
     mode: "onChange"
   });

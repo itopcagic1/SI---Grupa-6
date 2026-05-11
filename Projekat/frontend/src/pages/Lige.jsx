@@ -3,6 +3,7 @@ import { fetchLige, createLiga, updateLiga, deleteLiga, fetchSportovi, dodajTimU
 import { fetchTeams } from '../api/teamApi';
 import { Link, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../api/authApi';
+import Navbar from '../components/Navbar';
 
 function Lige() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ function Lige() {
     const [deleteConfirmTimId, setDeleteConfirmTimId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [mojTim, setMojTim] = useState(null);
-const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji se prijavljuje
+    const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji se prijavljuje
     // Form data
     const [formData, setFormData] = useState({
         naziv: '',
@@ -63,7 +64,7 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
         }
         localStorage.removeItem('token');
         localStorage.removeItem('korisnik');
-        navigate('/login');
+        navigate('/');
     };
 
     const loadSportovi = async () => {
@@ -230,7 +231,7 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
             setError(err.response?.data?.poruka || 'Greška pri brisanju.');
             setDeleteConfirmLigaId(null);
         } finally {
-            setDeletingId(null); // ✅zaustavi loading
+            setDeletingId(null);
         }
     };
 
@@ -241,38 +242,12 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
     });
 
     const timoviULigi = ligaDetalji?.ucesniciTakmicenja?.map(u => u.timId) || [];
-    const dostupniTimovi = sviTimovi.filter(t => 
-  !timoviULigi.includes(t.timId) && t.sportId === aktivnaLiga?.sportId
-);
+    const dostupniTimovi = sviTimovi.filter(t =>
+        !timoviULigi.includes(t.timId) && t.sportId === aktivnaLiga?.sportId
+    );
     return (
         <div className="min-h-screen bg-amber-50 font-sans">
-            <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-6">
-                    <Link to="/dashboard" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
-                        sport<span className="text-orange-600">.ba</span>
-                    </Link>
-                    <div className="hidden md:flex gap-4 ml-6">
-                        <Link to="/lige" className="px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm">Lige</Link>
-                        <Link to="/teams" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Timovi</Link>
-                        {isAdmin && (
-                            <Link to="/admin/korisnici" className="px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors">Admin Panel</Link>
-                        )}
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
-                        {korisnik ? (korisnik.punoIme?.charAt(0) || korisnik.email.charAt(0)).toUpperCase() : '?'}
-                    </div>
-                    <span className="text-sm font-semibold text-slate-700 hidden sm:block">
-                        {korisnik ? korisnik.punoIme || korisnik.email : 'Gost'}
-                    </span>
-                    {korisnik && (
-                        <button onClick={handleLogout} className="ml-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors">
-                            Odjava
-                        </button>
-                    )}
-                </div>
-            </nav>
+            <Navbar />
 
             <main className="max-w-7xl mx-auto px-6 py-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -384,14 +359,6 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
 
                                 {isAdminOrOrganizer && (
                                     <div className="pt-4 border-t border-amber-50 flex flex-col gap-2">
-                                        {isAdmin && (
-                                            <button
-                                                onClick={() => openTimoviModal(liga)}
-                                                className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors"
-                                            >
-                                                Upravljaj timovima
-                                            </button>
-                                        )}
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => handleOpenModal('edit', liga)}
@@ -409,6 +376,14 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
                                         </div>
                                     </div>
                                 )}
+                                <div className="pt-2">
+                                    <button
+                                        onClick={() => openTimoviModal(liga)}
+                                        className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors mt-2"
+                                    >
+                                        {isAdmin ? 'Upravljaj timovima' : 'Pregledaj timove'}
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -432,26 +407,27 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
                             {timoviError && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm font-bold">{timoviError}</div>}
                             {timoviPoruka && <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-2xl text-sm font-bold">{timoviPoruka}</div>}
 
-                            {/* Dodaj tim */}
-                            <div className="flex gap-3 mb-6">
-                                <select
-                                    value={odabraniTimId}
-                                    onChange={(e) => setOdabraniTimId(e.target.value)}
-                                    className="flex-1 border-2 border-amber-100 rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-orange-500"
-                                >
-                                    <option value="">Odaberi tim za dodavanje...</option>
-                                    {dostupniTimovi.map((tim) => (
-                                        <option key={tim.timId} value={tim.timId}>{tim.naziv}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={handleDodajTim}
-                                    disabled={!odabraniTimId}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-5 py-2.5 rounded-2xl transition disabled:opacity-50"
-                                >
-                                    Dodaj
-                                </button>
-                            </div>
+                            {isAdmin && (
+                                <div className="flex gap-3 mb-6">
+                                    <select
+                                        value={odabraniTimId}
+                                        onChange={(e) => setOdabraniTimId(e.target.value)}
+                                        className="flex-1 border-2 border-amber-100 rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-orange-500"
+                                    >
+                                        <option value="">Odaberi tim za dodavanje...</option>
+                                        {dostupniTimovi.map((tim) => (
+                                            <option key={tim.timId} value={tim.timId}>{tim.naziv}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={handleDodajTim}
+                                        disabled={!odabraniTimId}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-5 py-2.5 rounded-2xl transition disabled:opacity-50"
+                                    >
+                                        Dodaj
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Lista timova */}
                             <h3 className="font-black text-slate-700 uppercase tracking-widest text-xs mb-3">
@@ -464,16 +440,18 @@ const [prijavaLoading, setPrijavaLoading] = useState(null); // takmicenjeId koji
                                     {ligaDetalji.ucesniciTakmicenja.map((ucesnik) => (
                                         <div key={ucesnik.ucesceId} className="bg-slate-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between">
                                             <span className="font-bold text-slate-800">{ucesnik.tim?.naziv}</span>
-                                            {deleteConfirmTimId === ucesnik.timId ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-red-600">Sigurni ste?</span>
-                                                    <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline">DA</button>
-                                                    <button onClick={() => setDeleteConfirmTimId(null)} className="text-xs text-slate-500 font-bold hover:underline">NE</button>
-                                                </div>
-                                            ) : (
-                                                <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline uppercase tracking-wider">
-                                                    Ukloni
-                                                </button>
+                                            {isAdmin && (
+                                                deleteConfirmTimId === ucesnik.timId ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-red-600">Sigurni ste?</span>
+                                                        <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline">DA</button>
+                                                        <button onClick={() => setDeleteConfirmTimId(null)} className="text-xs text-slate-500 font-bold hover:underline">NE</button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => handleUkloniTim(ucesnik.timId)} className="text-xs text-red-600 font-bold hover:underline uppercase tracking-wider">
+                                                        Ukloni
+                                                    </button>
+                                                )
                                             )}
                                         </div>
                                     ))}

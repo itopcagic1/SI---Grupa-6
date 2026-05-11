@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../api/authApi';
+import Navbar from '../components/Navbar';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -11,16 +12,18 @@ function Dashboard() {
       if (token) await logoutUser(token);
       localStorage.removeItem('token');
       localStorage.removeItem('korisnik');
-      navigate('/login');
+      navigate('/');
     } catch (err) {
       localStorage.removeItem('token');
       localStorage.removeItem('korisnik');
-      navigate('/login');
+      navigate('/');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-amber-50 font-sans">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="mx-auto max-w-4xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex flex-col gap-6">
           <div>
@@ -53,6 +56,12 @@ function Dashboard() {
                 Generiši raspored
               </Link>
             )}
+            <Link
+              to="/profile"
+              className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
+            >
+             Moj Profil
+            </Link>
             {korisnik?.trenutnaUloga === 'ADMINISTRATOR' && (
               <Link
                 to="/admin/korisnici"
@@ -69,6 +78,7 @@ function Dashboard() {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

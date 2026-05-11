@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 import { fetchSports, createSport, updateSport, deleteSport } from '../api/teamApi';
 
@@ -74,7 +75,9 @@ function Sportovi() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto min-h-screen bg-amber-50/30">
+    <div className="min-h-screen bg-amber-50 font-sans">
+      <Navbar />
+      <div className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-amber-700 hover:text-amber-900 transition flex items-center gap-1 bg-white border border-amber-200 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm">
@@ -150,6 +153,7 @@ function Sportovi() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
