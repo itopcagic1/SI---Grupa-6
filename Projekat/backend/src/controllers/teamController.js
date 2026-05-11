@@ -40,9 +40,16 @@ exports.getTeamDetails = async (req, res) => {
 exports.createNewTeam = async (req, res) => {
   try {
     const { name, sportId } = req.body;
-    if (!name || !sportId) return res.status(400).json({ message: "Ime i ID sporta su obavezni." });
-    
-    const team = await teamService.createTeam(req.body);
+
+    if (!name || !sportId) {
+      return res.status(400).json({ message: "Ime i ID sporta su obavezni." });
+    }
+
+    const currentUserId = getUserIdFromToken(req);
+    const currentUserRole = req.user.uloga;
+
+    const team = await teamService.createTeam(req.body, currentUserId, currentUserRole);
+
     res.status(201).json(team);
   } catch (error) {
     res.status(400).json({ message: error.message });

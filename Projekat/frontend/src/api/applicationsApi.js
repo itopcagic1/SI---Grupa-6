@@ -6,6 +6,7 @@ const api = axios.create({
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
+
   return {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -15,5 +16,15 @@ const getAuthHeaders = () => {
 
 export const fetchMojePrijave = async () => {
   const response = await api.get('/applications/my', getAuthHeaders());
+  return response.data;
+};
+
+export const createApplication = async ({ timId, takmicenjeId }) => {
+  const response = await api.post(
+    '/applications',
+    { timId, takmicenjeId },
+    getAuthHeaders()
+  );
+
   return response.data;
 };

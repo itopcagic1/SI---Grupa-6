@@ -39,26 +39,39 @@ function Dashboard() {
             >
               Timovi
             </Link>
+
             <Link
               to="/lige"
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
               Lige
             </Link>
+
             <Link
               to="/profile"
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
             >
-             Moj Profil
+              Moj Profil
             </Link>
+
             {korisnik?.trenutnaUloga === 'TRENER' && (
-              <Link
-                to="/moje-prijave"
-                className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
-              >
-                Moje prijave
-              </Link>
+              <>
+                <Link
+                  to="/prijava-ekipe"
+                  className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
+                >
+                  Prijava ekipe
+                </Link>
+
+                <Link
+                  to="/moje-prijave"
+                  className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"
+                >
+                  Moje prijave
+                </Link>
+              </>
             )}
+
             {korisnik?.trenutnaUloga === 'ADMINISTRATOR' && (
               <Link
                 to="/admin/korisnici"
@@ -67,6 +80,7 @@ function Dashboard() {
                 Korisnici
               </Link>
             )}
+
             <button
               onClick={handleLogout}
               className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-orange-700"

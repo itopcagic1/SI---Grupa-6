@@ -17,6 +17,27 @@ async function dohvatiMojePrijave(req, res) {
   }
 }
 
+async function kreirajPrijavu(req, res) {
+  try {
+    const prijava = await applicationService.kreirajPrijavu(
+      req.body,
+      req.user.korisnikId
+    );
+
+    return res.status(201).json({
+      uspjeh: true,
+      poruka: 'Tim je uspješno prijavljen na takmičenje.',
+      prijava,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_PRIJAVE_TIMA',
+      poruka: error.message || 'Greška pri prijavi tima na takmičenje.',
+    });
+  }
+}
+
 module.exports = {
   dohvatiMojePrijave,
+  kreirajPrijavu,
 };

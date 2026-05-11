@@ -5,6 +5,13 @@ const { requireRole } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
+router.post(
+  '/',
+  authenticateToken,
+  requireRole('TRENER'),
+  applicationController.kreirajPrijavu
+);
+
 router.get(
   '/my',
   authenticateToken,

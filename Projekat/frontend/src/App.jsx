@@ -16,6 +16,8 @@ import Profile from './pages/Profile';
 import MojePrijave from './pages/MojePrijave';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
+import PrijavaEkipe from './pages/PrijavaEkipe';
+
 function App() {
   return (
     <Router>
@@ -40,6 +42,34 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/prijava-ekipe"
+          element={
+            <ProtectedRoute>
+              <PrijavaEkipe />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/moje-prijave"
+          element={
+            <ProtectedRoute>
+              <MojePrijave />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
