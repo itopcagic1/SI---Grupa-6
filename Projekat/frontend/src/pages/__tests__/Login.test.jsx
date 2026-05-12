@@ -80,7 +80,7 @@ describe('Login Component', () => {
       });
       expect(window.localStorage.getItem('token')).toBe('fake-token');
       expect(window.localStorage.getItem('korisnik')).toBe(JSON.stringify(mockResponse.korisnik));
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 

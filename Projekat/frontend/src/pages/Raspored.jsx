@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
@@ -49,7 +50,13 @@ function getResultLabel(utakmica) {
 }
 
 function Raspored() {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const takmicenjeIdFromUrl = searchParams.get('takmicenjeId');
+
+  const [filters, setFilters] = useState({
+    ...initialFilters,
+    takmicenjeId: takmicenjeIdFromUrl || ''
+  });
   const [reloadKey, setReloadKey] = useState(0);
   const [utakmice, setUtakmice] = useState([]);
   const [sportovi, setSportovi] = useState([]);
