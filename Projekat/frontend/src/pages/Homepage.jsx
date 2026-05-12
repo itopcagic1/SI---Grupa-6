@@ -124,6 +124,9 @@ const Homepage = () => {
           <h2 className="text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
             <span className="text-orange-600"><CalendarIcon /></span> NADOLAZEĆE UTAKMICE
           </h2>
+          <Link to="/raspored" className="text-orange-600 font-bold hover:underline text-sm uppercase tracking-wider hidden sm:block">
+            POGLEDAJ VIŠE &rarr;
+          </Link>
         </div>
 
         {loading ? (
@@ -168,6 +171,11 @@ const Homepage = () => {
             )}
           </div>
         )}
+        <div className="mt-6 text-center sm:hidden">
+            <Link to="/raspored" className="text-orange-600 font-bold hover:underline text-sm uppercase tracking-wider">
+              POGLEDAJ VIŠE &rarr;
+            </Link>
+        </div>
       </section>
 
       {/* Aktivne Lige */}

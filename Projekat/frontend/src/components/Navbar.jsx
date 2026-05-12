@@ -39,6 +39,8 @@ const Navbar = () => {
           <Link to="/" className={navLinkClass('/')}>Početna</Link>
           <Link to="/lige" className={navLinkClass('/lige')}>Lige</Link>
           <Link to="/teams" className={navLinkClass('/teams')}>Timovi</Link>
+          <Link to="/raspored" className={navLinkClass('/raspored')}>Raspored</Link>
+          <Link to="/rezultati" className={navLinkClass('/rezultati')}>Rezultati</Link>
           {isAuthenticated && (
             <>
               <Link to="/dashboard" className={navLinkClass('/dashboard')}>Dashboard</Link>
