@@ -1,6 +1,66 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo } = {}) {
+  const where = {};
+
+  if (takmicenjeId) {
+    where.takmicenjeId = takmicenjeId;
+  }
+
+  if (sportId) {
+    where.takmicenje = {
+      sportId
+    };
+  }
+
+  if (timId) {
+    where.OR = [
+      { domaciTimId: timId },
+      { gostujuciTimId: timId }
+    ];
+  }
+
+  if (datumOd && datumDo) {
+    where.vrijemePocetka = {
+      gte: datumOd,
+      lt: datumDo
+    };
+  }
+
+  return prisma.utakmica.findMany({
+    where,
+    include: {
+      domaciTim: { select: { timId: true, naziv: true, logoUrl: true } },
+      gostujuciTim: { select: { timId: true, naziv: true, logoUrl: true } },
+      takmicenje: {
+        select: {
+          takmicenjeId: true,
+          naziv: true,
+          sportId: true,
+          sport: { select: { sportId: true, naziv: true } }
+        }
+      },
+      sportskiObjekat: {
+        select: {
+          objekatId: true,
+          naziv: true,
+          adresa: true
+        }
+      },
+      rezultatUtakmice: {
+        select: {
+          rezultatUtakmiceId: true,
+          rezultatDomacin: true,
+          rezultatGost: true,
+          datumUnosa: true
+        }
+      }
+    },
+    orderBy: { vrijemePocetka: 'asc' }
+  });
+}
+
 async function generisiRaspored({ takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija }, korisnik) {
   // Provjeri da li takmičenje postoji i da li je korisnik organizator ili administrator
   const takmicenje = await prisma.takmicenje.findUnique({
@@ -119,5 +179,6 @@ function generisiRoundRobinUtakmice(timovi, pocetniDatum, defaultnoVrijeme, takm
 }
 
 module.exports = {
+  getPublicMatches,
   generisiRaspored
 };

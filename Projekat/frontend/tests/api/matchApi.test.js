@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { generateSchedule } from '../../src/api/matchApi';
+import { fetchPublicMatches, generateSchedule } from '../../src/api/matchApi';
 
 vi.mock('axios', () => {
   const mockApi = {
@@ -51,6 +51,23 @@ describe('matchApi', () => {
         Authorization: 'Bearer token'
       }
     });
+    expect(result).toEqual(mockResponse.data);
+  });
+
+  it('fetchPublicMatches poziva public endpoint samo sa popunjenim filterima', async () => {
+    const mockResponse = {
+      data: [{ utakmicaId: 1 }]
+    };
+    mockApi.get.mockResolvedValue(mockResponse);
+
+    const result = await fetchPublicMatches({
+      sportId: '1',
+      takmicenjeId: '',
+      timId: '5',
+      datum: '2026-05-18'
+    });
+
+    expect(mockApi.get).toHaveBeenCalledWith('/matches/public?sportId=1&timId=5&datum=2026-05-18');
     expect(result).toEqual(mockResponse.data);
   });
 });
