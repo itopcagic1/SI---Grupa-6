@@ -17,7 +17,7 @@ function Login() {
       localStorage.setItem('token', res.access_token);
       localStorage.setItem('korisnik', JSON.stringify(res.korisnik));
 
-   navigate('/dashboard');
+    navigate('/');
     } catch (err) {
       const kod = err.response?.data?.greska; 
     if (kod === 'KORISNIK_BLOKIRAN') {

@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Homepage from './pages/Homepage';
 import Register from './pages/Register';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+
 import AdminKorisnici from './pages/AdminKorisnici';
 import AdminKorisnikDetalji from './pages/AdminKorisnikDetalji';
 import AdminRoute from './pages/AdminRoute';
@@ -26,7 +26,7 @@ function App() {
         <Route path="/" element={<Homepage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/blokiran" element={<Blokiran />} />
         <Route path="/admin/korisnici" element={
           <AdminRoute>
