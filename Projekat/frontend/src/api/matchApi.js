@@ -18,3 +18,17 @@ export const generateSchedule = async (scheduleData) => {
   const response = await api.post('/matches/generate-schedule', scheduleData, getAuthHeaders());
   return response.data;
 };
+
+export const fetchPublicMatches = async (filters = {}) => {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(key, value);
+    }
+  });
+
+  const queryString = params.toString();
+  const response = await api.get(`/matches/public${queryString ? `?${queryString}` : ''}`);
+  return response.data;
+};

@@ -27,6 +27,56 @@ describe('matchService', () => {
     jest.clearAllMocks();
   });
 
+  describe('getPublicMatches', () => {
+    test('dohvata utakmice bez filtera sa javnim relacijama', async () => {
+      mockPrisma.utakmica.findMany.mockResolvedValue([{ utakmicaId: 1 }]);
+
+      const result = await matchService.getPublicMatches();
+
+      expect(result).toEqual([{ utakmicaId: 1 }]);
+      expect(mockPrisma.utakmica.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: {},
+        orderBy: { vrijemePocetka: 'asc' },
+        include: expect.objectContaining({
+          domaciTim: expect.any(Object),
+          gostujuciTim: expect.any(Object),
+          takmicenje: expect.any(Object),
+          sportskiObjekat: expect.any(Object),
+          rezultatUtakmice: expect.any(Object),
+        }),
+      }));
+    });
+
+    test('kombinuje filtere u Prisma where uslove', async () => {
+      const datumOd = new Date('2026-05-18T00:00:00.000Z');
+      const datumDo = new Date('2026-05-19T00:00:00.000Z');
+      mockPrisma.utakmica.findMany.mockResolvedValue([]);
+
+      await matchService.getPublicMatches({
+        sportId: 1,
+        takmicenjeId: 2,
+        timId: 5,
+        datumOd,
+        datumDo,
+      });
+
+      expect(mockPrisma.utakmica.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+          takmicenjeId: 2,
+          takmicenje: { sportId: 1 },
+          OR: [
+            { domaciTimId: 5 },
+            { gostujuciTimId: 5 },
+          ],
+          vrijemePocetka: {
+            gte: datumOd,
+            lt: datumDo,
+          },
+        },
+      }));
+    });
+  });
+
   describe('generisiRaspored', () => {
     test('uspješno generiše raspored za 2 tima', async () => {
       const takmicenje = {

@@ -3,6 +3,7 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
 jest.mock('../../src/services/matchService', () => ({
+  getPublicMatches: jest.fn(),
   generisiRaspored: jest.fn(),
 }));
 
@@ -43,6 +44,107 @@ describe('Match routes', () => {
 
   afterAll(() => {
     process.env = OLD_ENV;
+  });
+
+  describe('GET /api/matches/public', () => {
+    test('vraca utakmice bez filtera i ne trazi autentikaciju', async () => {
+      const utakmice = [
+        { utakmicaId: 1, takmicenje: { naziv: 'Liga' }, domaciTim: { naziv: 'A' }, gostujuciTim: { naziv: 'B' } },
+      ];
+      matchService.getPublicMatches.mockResolvedValue(utakmice);
+
+      const response = await request(app).get('/api/matches/public');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(utakmice);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith({
+        sportId: undefined,
+        takmicenjeId: undefined,
+        timId: undefined,
+        datumOd: undefined,
+        datumDo: undefined,
+      });
+    });
+
+    test('filtrira po sportu', async () => {
+      matchService.getPublicMatches.mockResolvedValue([{ utakmicaId: 1 }]);
+
+      const response = await request(app).get('/api/matches/public?sportId=1');
+
+      expect(response.status).toBe(200);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith(expect.objectContaining({ sportId: 1 }));
+    });
+
+    test('filtrira po ligi/takmicenju', async () => {
+      matchService.getPublicMatches.mockResolvedValue([{ utakmicaId: 2 }]);
+
+      const response = await request(app).get('/api/matches/public?takmicenjeId=2');
+
+      expect(response.status).toBe(200);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith(expect.objectContaining({ takmicenjeId: 2 }));
+    });
+
+    test('filtrira po timu', async () => {
+      matchService.getPublicMatches.mockResolvedValue([{ utakmicaId: 3 }]);
+
+      const response = await request(app).get('/api/matches/public?timId=5');
+
+      expect(response.status).toBe(200);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith(expect.objectContaining({ timId: 5 }));
+    });
+
+    test('filtrira po datumu kao cijelom danu', async () => {
+      matchService.getPublicMatches.mockResolvedValue([{ utakmicaId: 4 }]);
+
+      const response = await request(app).get('/api/matches/public?datum=2026-05-18');
+
+      expect(response.status).toBe(200);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith(expect.objectContaining({
+        datumOd: new Date('2026-05-18T00:00:00.000Z'),
+        datumDo: new Date('2026-05-19T00:00:00.000Z'),
+      }));
+    });
+
+    test('podrzava kombinovane filtere', async () => {
+      matchService.getPublicMatches.mockResolvedValue([{ utakmicaId: 5 }]);
+
+      const response = await request(app)
+        .get('/api/matches/public?sportId=1&takmicenjeId=2&timId=5&datum=2026-05-18');
+
+      expect(response.status).toBe(200);
+      expect(matchService.getPublicMatches).toHaveBeenCalledWith({
+        sportId: 1,
+        takmicenjeId: 2,
+        timId: 5,
+        datumOd: new Date('2026-05-18T00:00:00.000Z'),
+        datumDo: new Date('2026-05-19T00:00:00.000Z'),
+      });
+    });
+
+    test('prazan rezultat vraca prazan niz', async () => {
+      matchService.getPublicMatches.mockResolvedValue([]);
+
+      const response = await request(app).get('/api/matches/public?sportId=99');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    test.each(['sportId', 'takmicenjeId', 'timId'])('vraca 400 za nevalidan %s', async (param) => {
+      const response = await request(app).get(`/api/matches/public?${param}=abc`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.greska).toBe('INVALID_QUERY_PARAM');
+      expect(matchService.getPublicMatches).not.toHaveBeenCalled();
+    });
+
+    test('vraca 400 za nevalidan datum', async () => {
+      const response = await request(app).get('/api/matches/public?datum=2026-02-31');
+
+      expect(response.status).toBe(400);
+      expect(response.body.greska).toBe('INVALID_DATE');
+      expect(matchService.getPublicMatches).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /api/matches/generate-schedule', () => {

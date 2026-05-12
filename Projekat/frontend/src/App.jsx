@@ -13,6 +13,8 @@ import Lige from './pages/Lige';
 import GenerateSchedule from './pages/GenerateSchedule';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Rezultati from './pages/Rezultati';
+import Raspored from './pages/Raspored';
 
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -37,6 +39,8 @@ function App() {
         <Route path="/teams" element={<Timovi />} />
         <Route path="/sports" element={<Sportovi />} />
         <Route path="/lige" element={<Lige />} />
+        <Route path="/raspored" element={<Raspored />} />
+        <Route path="/rezultati" element={<Rezultati />} />
         <Route path="/generate-schedule" element={<GenerateSchedule />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
