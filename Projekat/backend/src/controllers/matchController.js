@@ -1,5 +1,81 @@
 const matchService = require('../services/matchService');
 
+function parsePositiveInteger(value, fieldName) {
+  if (value === undefined) return undefined;
+
+  if (Array.isArray(value)) {
+    const error = new Error(`${fieldName} mora biti poslan samo jednom`);
+    error.status = 400;
+    error.code = 'INVALID_QUERY_PARAM';
+    throw error;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    const error = new Error(`${fieldName} mora biti pozitivan cijeli broj`);
+    error.status = 400;
+    error.code = 'INVALID_QUERY_PARAM';
+    throw error;
+  }
+
+  return parsed;
+}
+
+function parseDateRange(value) {
+  if (value === undefined) return undefined;
+
+  if (Array.isArray(value)) {
+    const error = new Error('datum mora biti poslan samo jednom');
+    error.status = 400;
+    error.code = 'INVALID_DATE';
+    throw error;
+  }
+
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!datePattern.test(value)) {
+    const error = new Error('datum mora biti u formatu YYYY-MM-DD');
+    error.status = 400;
+    error.code = 'INVALID_DATE';
+    throw error;
+  }
+
+  const start = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(start.getTime()) || start.toISOString().slice(0, 10) !== value) {
+    const error = new Error('Nevažeći datum');
+    error.status = 400;
+    error.code = 'INVALID_DATE';
+    throw error;
+  }
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return { start, end };
+}
+
+async function getPublicMatches(req, res) {
+  try {
+    const { sportId, takmicenjeId, timId, datum } = req.query;
+    const dateRange = parseDateRange(datum);
+
+    const filters = {
+      sportId: parsePositiveInteger(sportId, 'sportId'),
+      takmicenjeId: parsePositiveInteger(takmicenjeId, 'takmicenjeId'),
+      timId: parsePositiveInteger(timId, 'timId'),
+      datumOd: dateRange?.start,
+      datumDo: dateRange?.end
+    };
+
+    const utakmice = await matchService.getPublicMatches(filters);
+    return res.status(200).json(utakmice);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_DOHVATANJA_UTAKMICA',
+      poruka: error.message || 'Greška pri dohvatanju utakmica'
+    });
+  }
+}
+
 async function generisiRaspored(req, res) {
   try {
     const { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija } = req.body;
@@ -68,5 +144,6 @@ async function generisiRaspored(req, res) {
 }
 
 module.exports = {
+  getPublicMatches,
   generisiRaspored
 };
