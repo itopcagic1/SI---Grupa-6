@@ -100,17 +100,65 @@ async function generisiRaspored({ takmicenjeId, pocetniDatum, defaultnoVrijeme, 
     throw error;
   }
 
-  // Provjeri da li već postoje utakmice za ovo takmičenje
-  const postojeceUtakmice = await prisma.utakmica.findMany({
-    where: { takmicenjeId: Number(takmicenjeId) }
-  });
 
-  if (postojeceUtakmice.length > 0) {
-    const error = new Error('Raspored je već generisan za ovo takmičenje');
-    error.status = 409;
-    error.code = 'RASPORED_VEC_POSTOJI';
-    throw error;
-  }
+  await prisma.$transaction(async (tx) => {
+    // 1. Dohvati ID-eve svih utakmica koje treba obrisati
+    const utakmiceZaBrisanje = await tx.utakmica.findMany({
+      where: { takmicenjeId: Number(takmicenjeId) },
+      select: { utakmicaId: true }
+    });
+
+    if (utakmiceZaBrisanje.length === 0) return;
+
+    const utakmicaIds = utakmiceZaBrisanje.map(u => u.utakmicaId);
+
+    // 2. Dohvati ID-eve StatistikaTimaNaUtakmici za ove utakmice
+    const statistikeTimova = await tx.statistikaTimaNaUtakmici.findMany({
+      where: { utakmicaId: { in: utakmicaIds } },
+      select: { statistikaTimaId: true }
+    });
+    const statistikaTimaIds = statistikeTimova.map(s => s.statistikaTimaId);
+
+    // 3. Dohvati ID-eve StatistikaIgracaNaUtakmici za ove utakmice
+    const statistikeIgraca = await tx.statistikaIgracaNaUtakmici.findMany({
+      where: { utakmicaId: { in: utakmicaIds } },
+      select: { statistikaIgracaId: true }
+    });
+    const statistikaIgracaIds = statistikeIgraca.map(s => s.statistikaIgracaId);
+
+    // 4. Briši leaf tabele — moraju biti prve
+    if (statistikaTimaIds.length > 0) {
+      await tx.vrijednostStatistikeTima.deleteMany({
+        where: { statistikaTimaId: { in: statistikaTimaIds } }
+      });
+    }
+    if (statistikaIgracaIds.length > 0) {
+      await tx.vrijednostStatistikeIgraca.deleteMany({
+        where: { statistikaIgracaId: { in: statistikaIgracaIds } }
+      });
+    }
+
+    // 5. Briši parent statistike
+    await tx.statistikaTimaNaUtakmici.deleteMany({
+      where: { utakmicaId: { in: utakmicaIds } }
+    });
+    await tx.statistikaIgracaNaUtakmici.deleteMany({
+      where: { utakmicaId: { in: utakmicaIds } }
+    });
+
+    // 6. Briši rezultate 
+    await tx.rezultatUtakmice.deleteMany({
+      where: { utakmicaId: { in: utakmicaIds } }
+    });
+    await tx.aIPredikcija.deleteMany({
+      where: { utakmicaId: { in: utakmicaIds } }
+    });
+
+    // 7. Na kraju briši same utakmice
+    await tx.utakmica.deleteMany({
+      where: { utakmicaId: { in: utakmicaIds } }
+    });
+  });
 
   // Lokacija: koristi uneseni tekst, ili podrazumijevanu vrijednost
   const lokacija = defaultnaLokacija?.trim() || 'Stadion Grbavica';
@@ -140,22 +188,36 @@ async function generisiRaspored({ takmicenjeId, pocetniDatum, defaultnoVrijeme, 
 
 function generisiRoundRobinUtakmice(timovi, pocetniDatum, defaultnoVrijeme, takmicenjeId, lokacija) {
   const utakmice = [];
-  const n = timovi.length;
-  const kola = n - 1; // Broj kola
-
-  const datumPocetka = new Date(pocetniDatum);
   const [sati, minuti] = defaultnoVrijeme.split(':').map(Number);
+  const datumPocetka = new Date(pocetniDatum);
 
-  let timoviKopija = [...timovi];
+
+  let slots = [...timovi];
+  const neparanBroj = slots.length % 2 !== 0;
+  if (neparanBroj) {
+    slots.push(null); // bye slot
+  }
+
+  const n = slots.length;         // uvijek paran
+  const kola = n - 1;             // svaki tim igra n-1 kola
+  const fiksni = slots[0];        // slot[0] je fiksan, rotiraju slot[1..n-1]
+  let rotirajuci = slots.slice(1);
 
   for (let kolo = 0; kolo < kola; kolo++) {
-    const datumKola = new Date(datumPocetka);
-    datumKola.setDate(datumPocetka.getDate() + kolo * 7); // Svako kolo nedjeljno
+    const trenutniSlots = [fiksni, ...rotirajuci];
 
-    // Parovi: tim[0] vs tim[n-1], tim[1] vs tim[n-2], itd.
-    for (let i = 0; i < Math.floor(n / 2); i++) {
-      const domaciTim = timoviKopija[i];
-      const gostTim = timoviKopija[n - 1 - i];
+    const datumKola = new Date(datumPocetka);
+    datumKola.setDate(datumPocetka.getDate() + kolo * 7);
+
+    for (let i = 0; i < n / 2; i++) {
+      const domaciTim = trenutniSlots[i];
+      const gostTim = trenutniSlots[n - 1 - i];
+
+      // Preskoči utakmice gdje je jedan od timova "bye" (null)
+      if (!domaciTim || !gostTim) continue;
+
+      // Sigurnosna provjera — tim ne smije igrati protiv sebe
+      if (domaciTim.timId === gostTim.timId) continue;
 
       const vrijemePocetka = new Date(datumKola);
       vrijemePocetka.setHours(sati, minuti, 0, 0);
@@ -170,9 +232,8 @@ function generisiRoundRobinUtakmice(timovi, pocetniDatum, defaultnoVrijeme, takm
       });
     }
 
-    // Rotacija: pomjeri poslednji tim na poziciju 1
-    const poslednji = timoviKopija.pop();
-    timoviKopija.splice(1, 0, poslednji);
+    // Rotacija: zadnji element rotirajućeg niza ide na početak
+    rotirajuci = [rotirajuci[rotirajuci.length - 1], ...rotirajuci.slice(0, rotirajuci.length - 1)];
   }
 
   return utakmice;
