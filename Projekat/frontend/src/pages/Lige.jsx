@@ -330,7 +330,12 @@ function Lige() {
                         {filteredLige.map((liga) => (
                             <div key={liga.takmicenjeId} className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-orange-600 transition-colors">{liga.naziv}</h3>
+                                    <h3 
+                                        onClick={() => navigate(`/raspored?takmicenjeId=${liga.takmicenjeId}`)}
+                                        className="text-xl font-bold text-slate-800 mb-3 group-hover:text-orange-600 transition-colors cursor-pointer"
+                                    >
+                                        {liga.naziv}
+                                    </h3>
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         <span className="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-black uppercase tracking-widest rounded-lg">
                                             {sportovi.find(s => s.sportId === liga.sportId)?.naziv || `Sport ID: ${liga.sportId}`}

@@ -41,11 +41,11 @@ const Navbar = () => {
           <Link to="/teams" className={navLinkClass('/teams')}>Timovi</Link>
           <Link to="/raspored" className={navLinkClass('/raspored')}>Raspored</Link>
           <Link to="/rezultati" className={navLinkClass('/rezultati')}>Rezultati</Link>
+          {(isAdmin || korisnik?.trenutnaUloga === 'ORGANIZATOR') && (
+            <Link to="/generate-schedule" className={navLinkClass('/generate-schedule')}>Generiši raspored</Link>
+          )}
           {isAuthenticated && (
-            <>
-              <Link to="/dashboard" className={navLinkClass('/dashboard')}>Dashboard</Link>
-              <Link to="/profile" className={navLinkClass('/profile')}>Profil</Link>
-            </>
+            <Link to="/profile" className={navLinkClass('/profile')}>Profil</Link>
           )}
           {isAdmin && (
             <Link to="/admin/korisnici" className={location.pathname.startsWith('/admin') 
