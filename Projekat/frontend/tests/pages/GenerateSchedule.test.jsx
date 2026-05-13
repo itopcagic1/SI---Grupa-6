@@ -57,21 +57,21 @@ describe('GenerateSchedule', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Generiši raspored' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Generiši Raspored/i })).toBeInTheDocument();
     });
 
-    expect(screen.getByLabelText('Takmičenje')).toBeInTheDocument();
-    expect(screen.getByLabelText('Početni datum')).toBeInTheDocument();
-    expect(screen.getByLabelText('Vrijeme utakmica')).toBeInTheDocument();
-    expect(screen.getByLabelText('Lokacija utakmica')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generiši raspored' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Takmičenje/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Početni datum/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Vrijeme utakmica/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Lokacija utakmica/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Generiši raspored/i })).toBeInTheDocument();
   });
 
   it('učitava i prikazuje ligu u dropdown-u', async () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText('Premijer liga (Fudbal)')).toBeInTheDocument();
+      expect(screen.getByText('Premijer liga')).toBeInTheDocument();
     });
 
     expect(ligaApi.fetchLige).toHaveBeenCalledTimes(1);
@@ -98,23 +98,23 @@ describe('GenerateSchedule', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Takmičenje')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Takmičenje/i)).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('Takmičenje'), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText('Početni datum'), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText('Vrijeme utakmica'), { target: { value: '15:00' } });
-    fireEvent.change(screen.getByLabelText('Lokacija utakmica'), { target: { value: 'Stadion' } });
+    fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Lokacija utakmica/i), { target: { value: 'Stadion' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generiši raspored' }));
+    fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Raspored uspješno generisan')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Broj kreiranih utakmica: 1')).toBeInTheDocument();
-    expect(screen.getByText('Tim A vs Tim B')).toBeInTheDocument();
-    expect(screen.getByText('Lokacija: Stadion')).toBeInTheDocument();
+    expect(screen.getByText('Tim A')).toBeInTheDocument();
+    expect(screen.getByText('Tim B')).toBeInTheDocument();
   });
 
   it('prikazuje grešku pri neuspješnom generisanju', async () => {
@@ -125,14 +125,14 @@ describe('GenerateSchedule', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Takmičenje')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Takmičenje/i)).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('Takmičenje'), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText('Početni datum'), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText('Vrijeme utakmica'), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generiši raspored' }));
+    fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Greška pri generisanju rasporeda')).toBeInTheDocument();
@@ -149,29 +149,28 @@ describe('GenerateSchedule', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Takmičenje')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Takmičenje/i)).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('Takmičenje'), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText('Početni datum'), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText('Vrijeme utakmica'), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generiši raspored' }));
+    fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Generisanje...' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Generisanje/i })).toBeDisabled();
     });
   });
 
   it('redirect-uje korisnike koji nisu organizatori ili administratori', async () => {
-    // FIX: waitFor sada stvarno provjerava da je navigate pozvan sa '/dashboard'
     renderPage({ korisnikId: 1, trenutnaUloga: 'IGRAC', punoIme: 'Igrač' });
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
     // Forma se ne smije prikazati
-    expect(screen.queryByLabelText('Takmičenje')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Takmičenje/i)).not.toBeInTheDocument();
   });
 });

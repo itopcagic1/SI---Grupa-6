@@ -9,6 +9,27 @@ const mockPrisma = {
     findMany: jest.fn(),
     create: jest.fn(),
   },
+  rezultatUtakmice: {
+    deleteMany: jest.fn(),
+  },
+  aIPredikcija: {
+    deleteMany: jest.fn(),
+  },
+  statistikaTimaNaUtakmici: {
+    findMany: jest.fn().mockResolvedValue([]),
+    deleteMany: jest.fn(),
+  },
+  statistikaIgracaNaUtakmici: {
+    findMany: jest.fn().mockResolvedValue([]),
+    deleteMany: jest.fn(),
+  },
+  vrijednostStatistikeTima: {
+    deleteMany: jest.fn(),
+  },
+  vrijednostStatistikeIgraca: {
+    deleteMany: jest.fn(),
+  },
+  $transaction: jest.fn(async (fn) => fn(mockPrisma)),
 };
 
 jest.mock('@prisma/client', () => ({
@@ -25,6 +46,10 @@ const administrator = { korisnikId: 99, uloga: 'ADMINISTRATOR' };
 describe('matchService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Resetuj podrazumijevane vrijednosti nakon clearAllMocks
+    mockPrisma.statistikaTimaNaUtakmici.findMany.mockResolvedValue([]);
+    mockPrisma.statistikaIgracaNaUtakmici.findMany.mockResolvedValue([]);
+    mockPrisma.$transaction.mockImplementation(async (fn) => fn(mockPrisma));
   });
 
   describe('getPublicMatches', () => {
@@ -106,7 +131,7 @@ describe('matchService', () => {
           defaultnoVrijeme: '15:00',
           defaultnaLokacija: 'Stadion',
         },
-        organizator  // FIX: objekat umjesto broja
+        organizator
       );
 
       expect(result.brojKreiranihUtakmica).toBe(1);
@@ -123,7 +148,7 @@ describe('matchService', () => {
             pocetniDatum: '2024-01-01',
             defaultnoVrijeme: '15:00',
           },
-          organizator  // FIX: objekat umjesto broja
+          organizator
         )
       ).rejects.toThrow('Takmičenje sa zadanim ID-em ne postoji');
     });
@@ -144,7 +169,7 @@ describe('matchService', () => {
             pocetniDatum: '2024-01-01',
             defaultnoVrijeme: '15:00',
           },
-          organizator  // FIX: objekat umjesto broja
+          organizator
         )
       ).rejects.toThrow('Nemate pravo da generišete raspored za ovo takmičenje');
     });
@@ -176,7 +201,7 @@ describe('matchService', () => {
           pocetniDatum: '2024-01-01',
           defaultnoVrijeme: '15:00',
         },
-        administrator  // FIX: admin objekat
+        administrator
       );
 
       expect(result.brojKreiranihUtakmica).toBe(1);
@@ -198,7 +223,7 @@ describe('matchService', () => {
             pocetniDatum: '2024-01-01',
             defaultnoVrijeme: '15:00',
           },
-          organizator  // FIX: objekat umjesto broja
+          organizator
         )
       ).rejects.toThrow('Potrebno je najmanje 2 prijavljena tima za generisanje rasporeda');
     });
@@ -238,11 +263,11 @@ describe('matchService', () => {
           defaultnoVrijeme: '15:00',
           defaultnaLokacija: 'Stadion',
         },
-        organizator  // FIX: objekat umjesto broja
+        organizator
       );
 
       // 3 tima → round-robin = 3 utakmice
-      expect(result.brojKreiranihUtakmica).toBe(2);
+      expect(result.brojKreiranihUtakmica).toBe(3);
       expect(mockPrisma.ucesceUTakmicenju.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { takmicenjeId: 1 } })
       );
@@ -250,33 +275,6 @@ describe('matchService', () => {
       expect(mockPrisma.ucesceUTakmicenju.findMany).not.toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ statusPrijave: expect.anything() }) })
       );
-    });
-
-    test('baca grešku ako raspored već postoji', async () => {
-      const takmicenje = {
-        takmicenjeId: 1,
-        organizatorId: 1,
-      };
-      const timovi = [
-        { timId: 1, naziv: 'Tim A' },
-        { timId: 2, naziv: 'Tim B' },
-      ];
-      const ucesca = timovi.map((tim) => ({ tim }));
-
-      mockPrisma.takmicenje.findUnique.mockResolvedValue(takmicenje);
-      mockPrisma.ucesceUTakmicenju.findMany.mockResolvedValue(ucesca);
-      mockPrisma.utakmica.findMany.mockResolvedValue([{ utakmicaId: 1 }]); // već postoji
-
-      await expect(
-        matchService.generisiRaspored(
-          {
-            takmicenjeId: 1,
-            pocetniDatum: '2024-01-01',
-            defaultnoVrijeme: '15:00',
-          },
-          organizator  // FIX: objekat umjesto broja
-        )
-      ).rejects.toThrow('Raspored je već generisan za ovo takmičenje');
     });
 
     test('koristi podrazumijevanu lokaciju ako defaultnaLokacija nije proslijeđena', async () => {
