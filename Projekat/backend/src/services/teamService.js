@@ -78,20 +78,56 @@ const getTeamById = async (id) => {
 };
 
 // US-05.3.1: Create team with duplicate name check
-const createTeam = async (data) => {
+const createTeam = async (data, currentUserId, currentUserRole) => {
   const existingTeam = await prisma.tim.findFirst({
     where: { naziv: data.name }
   });
 
   if (existingTeam) throw new Error("Tim sa ovim nazivom već postoji.");
 
-  return await prisma.tim.create({
+  let trenerId = null;
+
+  if (currentUserRole === 'TRENER') {
+    trenerId = Number(currentUserId);
+  } else if (data.trenerId) {
+    trenerId = Number(data.trenerId);
+  }
+
+  const noviTim = await prisma.tim.create({
     data: {
       naziv: data.name,
       sportId: parseInt(data.sportId),
       opis: data.description || null,
       logoUrl: data.logoUrl || null,
       status: "ACTIVE"
+    }
+  });
+
+  if (trenerId) {
+    await prisma.clanstvoTima.create({
+      data: {
+        timId: noviTim.timId,
+        korisnikId: trenerId,
+        ulogaUTimu: 'TRENER',
+        status: 'ACTIVE'
+      }
+    });
+  }
+
+  return await prisma.tim.findUnique({
+    where: { timId: noviTim.timId },
+    include: {
+      sport: true,
+      clanstvaUcesnika: {
+        select: {
+          korisnikId: true,
+          ulogaUTimu: true,
+          status: true,
+          korisnik: {
+            select: { punoIme: true }
+          }
+        }
+      }
     }
   });
 };

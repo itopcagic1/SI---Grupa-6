@@ -106,7 +106,6 @@ function CoachModal({ isOpen, onClose, team, onRefresh }) {
         <h2 className="text-xl font-bold text-amber-950 mb-1">Uredi tim</h2>
         <p className="text-sm text-amber-700 mb-5">{team.sport?.naziv || '—'} · {team.status === 'ACTIVE' ? 'Aktivan' : 'Neaktivan'}</p>
 
-        {/* Naziv i opis — trener može mijenjati */}
         <div className="space-y-3 mb-4">
           <div>
             <label className="block text-sm font-medium text-amber-900 mb-1.5">Naziv tima</label>
@@ -157,7 +156,7 @@ function CoachModal({ isOpen, onClose, team, onRefresh }) {
 function Timovi() {
   const [teams, setTeams] = useState([]);
   const [sports, setSports] = useState([]);
-  const [coaches, setCoaches] = useState([]); // 2. DODANO: State za trenere
+  const [coaches, setCoaches] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -176,6 +175,9 @@ function Timovi() {
   const isAuthenticated = Boolean(token);
 
   const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
+  const isTrainer = korisnikData?.trenutnaUloga === 'TRENER';
+  const isAdminOrTrainer = isAdmin || isTrainer;
+
   const navigate = useNavigate();
 
   const getInitials = (ime, prezime) => {
@@ -208,12 +210,10 @@ function Timovi() {
         fetchCoaches()
       ]);
 
-      // Provjera: ako podaci nisu niz, postavi prazan niz da map() ne pukne
       setTeams(Array.isArray(teamsData) ? teamsData : []);
       setSports(Array.isArray(sportsData) ? sportsData : []);
       setCoaches(Array.isArray(coachesData) ? coachesData : []);
     } catch (err) {
-      // KLJUČNO: Ne ispisuj cijeli 'err', nego samo poruku
       const errorMsg = err.response?.data?.message || "Došlo je do greške pri učitavanju.";
       setError(errorMsg);
     } finally {
@@ -263,13 +263,11 @@ function Timovi() {
     }
 
     try {
-      // Priprema podataka za backend (da se poklapaju sa teamController.js)
       const payload = {
         name: data.name,
         sportId: Number(data.sportId),
         description: data.description,
         status: data.status,
-        // Backend prima trenerId i dodaje ga u tim (ako imaš tu logiku)
         trenerId: data.trenerId ? Number(data.trenerId) : null,
       };
 
@@ -282,7 +280,7 @@ function Timovi() {
       }
 
       closeModal();
-      loadData(); // Osvježi listu
+      loadData();
     } catch (err) {
       const message = err.response?.data?.message || 'Greška pri spremanju tima.';
       setError(message);
@@ -350,11 +348,15 @@ function Timovi() {
             <h1 className="text-4xl font-black text-slate-800 tracking-tight">Timovi</h1>
             <p className="text-slate-500 mt-2 text-lg">Sportski timovi</p>
           </div>
-          {isAdmin && (
+
+          {isAdminOrTrainer && (
             <div className="flex gap-3">
-              <button onClick={() => navigate('/sports')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
-                Upravljaj sportovima
-              </button>
+              {isAdmin && (
+                <button onClick={() => navigate('/sports')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+                  Upravljaj sportovima
+                </button>
+              )}
+
               <button onClick={openCreateModal} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -364,8 +366,6 @@ function Timovi() {
             </div>
           )}
         </div>
-
-
 
         {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         {submissionMessage && <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{submissionMessage}</div>}
@@ -452,7 +452,6 @@ function Timovi() {
         )}
       </div>
 
-      {/* Modal */}
       <Modal isOpen={modalOpen} onClose={closeModal}>
         <button onClick={closeModal} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-amber-50 text-amber-400 transition">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -474,7 +473,6 @@ function Timovi() {
             </select>
           </div>
 
-          {/* 4. POPRAVLJENO: Mapiranje trenera */}
           <div>
             <label className="block text-sm font-medium text-amber-900 mb-1.5">Trener tima</label>
             <select

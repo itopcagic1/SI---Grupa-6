@@ -50,6 +50,7 @@ function Lige() {
     const korisnik = korisnikStr ? JSON.parse(korisnikStr) : null;
     const isAdminOrOrganizer = korisnik && ['ADMINISTRATOR', 'ORGANIZATOR'].includes(korisnik.trenutnaUloga);
     const isAdmin = korisnik?.trenutnaUloga === 'ADMINISTRATOR';
+    const isTrainer = korisnik?.trenutnaUloga === 'TRENER';
 
     useEffect(() => {
         loadLige();

@@ -155,7 +155,7 @@ const getUserProfile = async (korisnikId) => {
   });
 };
 
-async function changePassword(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
+async function changePasswordLegacy(korisnikId, { trenutnaLozinka, novaLozinka, potvrda }) {
   if (novaLozinka !== potvrda) {
     const error = new Error('Nova lozinka i potvrda se ne poklapaju.');
     error.status = 400;
