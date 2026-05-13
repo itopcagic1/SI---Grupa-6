@@ -16,6 +16,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
     const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
+    const isTrainer = korisnikData?.trenutnaUloga === 'TRENER';
 
     useEffect(() => {
         fetchProfile();

@@ -6,9 +6,19 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('token');
-  const korisnik = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
+  const korisnik = localStorage.getItem('korisnik')
+    ? JSON.parse(localStorage.getItem('korisnik'))
+    : null;
+
   const isAuthenticated = Boolean(token);
-  const isAdmin = korisnik?.trenutnaUloga === 'ADMINISTRATOR' || korisnik?.uloga === 'ADMINISTRATOR';
+
+  const isAdmin =
+    korisnik?.trenutnaUloga === 'ADMINISTRATOR' ||
+    korisnik?.uloga === 'ADMINISTRATOR';
+
+  const isTrainer =
+    korisnik?.trenutnaUloga === 'TRENER' ||
+    korisnik?.uloga === 'TRENER';
 
   const handleLogout = async () => {
     try {
@@ -32,25 +42,76 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b border-amber-100 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
       <div className="flex items-center gap-6">
-        <Link to="/" className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter">
+        <Link
+          to="/"
+          className="text-2xl font-black text-amber-950 lowercase italic tracking-tighter"
+        >
           sport<span className="text-orange-600">.ba</span>
         </Link>
+
         <div className="hidden md:flex gap-2 ml-6">
-          <Link to="/" className={navLinkClass('/')}>Početna</Link>
-          <Link to="/lige" className={navLinkClass('/lige')}>Lige</Link>
-          <Link to="/teams" className={navLinkClass('/teams')}>Timovi</Link>
-          <Link to="/raspored" className={navLinkClass('/raspored')}>Raspored</Link>
-          <Link to="/rezultati" className={navLinkClass('/rezultati')}>Rezultati</Link>
+          <Link to="/" className={navLinkClass('/')}>
+            Početna
+          </Link>
+
+          <Link to="/lige" className={navLinkClass('/lige')}>
+            Lige
+          </Link>
+
+          <Link to="/teams" className={navLinkClass('/teams')}>
+            Timovi
+          </Link>
+
+          <Link to="/raspored" className={navLinkClass('/raspored')}>
+            Raspored
+          </Link>
+
+          <Link to="/rezultati" className={navLinkClass('/rezultati')}>
+            Rezultati
+          </Link>
+
           {(isAdmin || korisnik?.trenutnaUloga === 'ORGANIZATOR') && (
-            <Link to="/generate-schedule" className={navLinkClass('/generate-schedule')}>Generiši raspored</Link>
+            <Link
+              to="/generate-schedule"
+              className={navLinkClass('/generate-schedule')}
+            >
+              Generiši raspored
+            </Link>
           )}
+
+          {isTrainer && (
+            <>
+              <Link
+                to="/prijava-ekipe"
+                className={navLinkClass('/prijava-ekipe')}
+              >
+                Prijavi ekipu
+              </Link>
+
+              <Link
+                to="/moje-prijave"
+                className={navLinkClass('/moje-prijave')}
+              >
+                Moje prijave
+              </Link>
+            </>
+          )}
+
           {isAuthenticated && (
-            <Link to="/profile" className={navLinkClass('/profile')}>Profil</Link>
+            <Link to="/profile" className={navLinkClass('/profile')}>
+              Profil
+            </Link>
           )}
+
           {isAdmin && (
-            <Link to="/admin/korisnici" className={location.pathname.startsWith('/admin') 
-              ? "px-4 py-2 bg-orange-600 text-white font-bold rounded-xl text-sm transition-colors" 
-              : "px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm hover:bg-orange-200 transition-colors"}>
+            <Link
+              to="/admin/korisnici"
+              className={
+                location.pathname.startsWith('/admin')
+                  ? "px-4 py-2 bg-orange-600 text-white font-bold rounded-xl text-sm transition-colors"
+                  : "px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm hover:bg-orange-200 transition-colors"
+              }
+            >
               Admin Panel
             </Link>
           )}
