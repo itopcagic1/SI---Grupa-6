@@ -26,7 +26,7 @@ export default function AdminRoute({ children }) {
           Ova stranica je dostupna samo administratorima.
         </p>
         <a
-          href="/dashboard"
+          href="/"
           style={{
             marginTop: '0.5rem',
             padding: '0.5rem 1.2rem',
@@ -38,7 +38,7 @@ export default function AdminRoute({ children }) {
             fontSize: '0.9rem',
           }}
         >
-          Nazad na Dashboard
+          Nazad na početnu
         </a>
       </div>
     );

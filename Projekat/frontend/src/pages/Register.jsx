@@ -155,6 +155,8 @@ function Register() {
                     <option value="IGRAC">Igrač</option>
                     <option value="TRENER">Trener</option>
                     <option value="VLASNIK">Vlasnik sportskog objekta</option>
+                    <option value="ORGANIZATOR">Organizator</option>
+                    
                   </select>
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-orange-600 font-bold italic text-xl">
                     ↓

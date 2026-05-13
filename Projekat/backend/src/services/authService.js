@@ -31,11 +31,11 @@ async function registerUser({ punoIme, ime, email, lozinka, potvrdalozinke, traz
     throw error;
   }
 
-  const dozvoljeneUloge = ['NAVIJAC', 'IGRAC', 'TRENER', 'VLASNIK'];
+  const dozvoljeneUloge = ['NAVIJAC', 'IGRAC', 'TRENER', 'VLASNIK','ORGANIZATOR'];
   const trazenaUlogaUpper = trazenaUloga ? trazenaUloga.toUpperCase() : 'NAVIJAC';
 
   if (!dozvoljeneUloge.includes(trazenaUlogaUpper)) {
-    const error = new Error('Uloga mora biti: NAVIJAC, IGRAC, TRENER ili VLASNIK');
+    const error = new Error('Uloga mora biti: NAVIJAC, IGRAC, TRENER, VLASNIK ili ORGANIZATOR');
     error.status = 400;
     error.code = 'NEDOZVOLJENA_ULOGA';
     error.dozvoljene = dozvoljeneUloge;
