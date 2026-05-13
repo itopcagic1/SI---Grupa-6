@@ -4,9 +4,8 @@
 
 - Poboljšana komunikacija među članovima tima
 - Zadaci su bili relativno nezavisni jedan od drugog, što je omogućilo paralelni rad
-- Dobro analiziran product backlog i na osnovu toga jasno podijeljeni zadaci
-- Praćeni su user stories tokom razvoja
-- Ranije završeni taskovi u odnosu na prethodne sprintove
+- Praćeni su user stories tokom razvoja  na osnovu čega su jasno podijeljeni zadaci
+- Detaljno je analiran sprint backlog prije početka sprinta
 
 ## Šta nije išlo dobro
 
