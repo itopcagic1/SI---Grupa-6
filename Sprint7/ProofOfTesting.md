@@ -149,3 +149,56 @@
 |-------|-----------------------------|--------------------------------------------------------|-----------|
 | UI    | Homepage — Renderovanje    | renders correctly and fetches data                    | PASS      |
 | UI    | Homepage — Prazno stanje   | displays empty state messages when no data is returned | PASS      |
+
+
+
+## Profil korisnika i promjena lozinke
+
+### UNIT TESTOVI — AUTH SERVICE 
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Dohvat profila bez prikazivanja lozinke | `getUserProfile` treba vratiti korisnika bez lozinke (bez polja `lozinkaHash`) | PASS |
+| Unit | Validacija podudaranja lozinki prilikom promjene lozinke| `changePassword` baca Error ako se nova lozinka i potvrda ne poklapaju | PASS |
+
+### INTEGRACIJSKI TESTOVI — AUTH RUTE 
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | Uspješan dohvat profila | `GET /api/auth/profile` vraća status 200 i objekt korisnika | PASS |
+| Int. | Sigurnost i autorizacija | `GET /api/auth/profile` vraća 401 Unauthorized ako token nije poslan | PASS |
+
+### UI TESTOVI 
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikaz osnovnih informacija | Treba prikazati puno ime korisnika nakon uspješnog učitavanja profila | PASS |
+| UI | Validacija unosa lozinke | Prikazuje poruku "Lozinke se ne podudaraju!" ako polja nisu ista | PASS |
+---
+
+## Generisanje rasporeda takmičenja
+
+### UNIT TESTOVI — MATCH SERVICE 
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Uspješno generisanje rasporeda | `generisiRaspored` uspješno kreira utakmice za 2 tima | PASS |
+| Unit | Provjera autorizacije (Admin) | Administrator može generisati raspored čak i ako nije direktni organizator | PASS |
+| Unit | Minimalni broj timova | Baca grešku ako ima manje od 2 prijavljena tima za generisanje | PASS |
+| Unit | Podrazumijevana lokacija | Koristi "Stadion Grbavica" ako lokacija nije eksplicitno proslijeđena | PASS |
+
+### INTEGRACIJSKI TESTOVI — MATCH RUTE 
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | Uspješan API poziv | `POST /api/matches/generate-schedule` vraća 201 i broj kreiranih utakmica | PASS |
+| Int. | Validacija datuma i vremena | Vraća 400 za nevalidne formate datuma ili vremena u prošlosti | PASS |
+| Int. | Autorizacija rute | Vraća 401 za zahtjev bez validnog JWT tokena | PASS |
+
+### UI TESTOVI — GENERATE SCHEDULE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Renderovanje forme | Prikazuje dropdown za takmičenje, polja za datum, vrijeme i lokaciju | PASS |
+| UI | Dinamičko učitavanje liga | Uspješno učitava i prikazuje ligu (npr. "Premijer liga") u dropdown-u | PASS |
+| UI | Prikaz rezultata | Prikazuje poruku o uspjehu i listu generisanih timova nakon obrade | PASS |
+| UI | Zaštita stranice | Automatski preusmjerava korisnike koji nisu organizatori na početnu stranicu | PASS |
