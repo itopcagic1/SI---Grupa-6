@@ -17,9 +17,6 @@ import ResetPassword from './pages/ResetPassword';
 import Rezultati from './pages/Rezultati';
 import Raspored from './pages/Raspored';
 
-import Rezultati from './pages/Rezultati';
-import Raspored from './pages/Raspored';
-
 import Profile from './pages/Profile';
 import MojePrijave from './pages/MojePrijave';
 import PrijavaEkipe from './pages/PrijavaEkipe';
