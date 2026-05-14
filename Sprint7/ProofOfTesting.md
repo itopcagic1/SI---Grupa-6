@@ -2,7 +2,10 @@
 
 ## Ukupni rezultati
 
-
+| Nivo        | Tip testova                 | Broj testova | Rezultat        | Alat        |
+|-------------|----------------------------|--------------|-----------------|-------------|
+| Backend     | unit + integracijski | 290          | 0 failed        | Jest        |
+| Fronted       | UI | 104          | 0 failed        | Vitest + RTL |
 ---
 
 ## Prikaz detalja korisnika za administratora
