@@ -49,7 +49,7 @@ describe('login()', () => {
     expect(res.cookie).toHaveBeenCalledWith(
       'refreshToken',
       'mock-refresh-token',
-      expect.objectContaining({ httpOnly: true, sameSite: 'strict' })
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax' })
     );
   });
 

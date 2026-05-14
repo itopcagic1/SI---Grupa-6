@@ -41,12 +41,15 @@ describe('teamController', () => {
   test('controller uspjesno kreira tim', async () => {
     const team = { timId: 2, naziv: 'KK Test', sportId: 2, status: 'ACTIVE' };
     teamService.createTeam.mockResolvedValue(team);
-    const req = { body: { name: 'KK Test', sportId: 2, description: 'Opis' } };
+    const req = {
+      body: { name: 'KK Test', sportId: 2, description: 'Opis' },
+      user: { korisnikId: 1, uloga: 'ADMINISTRATOR' },
+    };
     const res = mockRes();
 
     await teamController.createNewTeam(req, res);
 
-    expect(teamService.createTeam).toHaveBeenCalledWith(req.body);
+    expect(teamService.createTeam).toHaveBeenCalledWith(req.body, 1, 'ADMINISTRATOR');
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(team);
   });
@@ -132,7 +135,10 @@ describe('teamController', () => {
 
   test('controller vraca error response kada service baci gresku', async () => {
     teamService.createTeam.mockRejectedValue(new Error('Tim sa ovim nazivom vec postoji.'));
-    const req = { body: { name: 'FK Test', sportId: 1 } };
+    const req = {
+      body: { name: 'FK Test', sportId: 1 },
+      user: { korisnikId: 1, uloga: 'ADMINISTRATOR' },
+    };
     const res = mockRes();
 
     await teamController.createNewTeam(req, res);

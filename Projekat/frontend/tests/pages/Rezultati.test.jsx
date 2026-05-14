@@ -22,12 +22,12 @@ vi.mock('../../src/api/teamApi', () => ({
 const utakmica = {
   utakmicaId: 1,
   vrijemePocetka: '2026-05-18T17:00:00.000Z',
-  status: 'ZAKAZANA',
+  status: 'ZAVRŠENA',
   lokacijaOpis: 'Stadion',
   takmicenje: { takmicenjeId: 2, naziv: 'Premijer liga', sportId: 1 },
   domaciTim: { timId: 5, naziv: 'FK Tempo' },
   gostujuciTim: { timId: 6, naziv: 'FC Arena' },
-  rezultatUtakmice: null,
+  rezultatUtakmice: { rezultatDomacin: 2, rezultatGost: 1 }, // ← ovo nedostaje
 };
 
 function renderPage() {
@@ -51,7 +51,7 @@ describe('Rezultati page', () => {
   it('renderuje filtere i listu utakmica', async () => {
     renderPage();
 
-    expect(screen.getByText('RASPORED I REZULTATI')).toBeInTheDocument();
+    expect(screen.getByText('REZULTATI')).toBeInTheDocument();
     expect(screen.getByLabelText('Sport')).toBeInTheDocument();
     expect(screen.getByLabelText('Liga')).toBeInTheDocument();
     expect(screen.getByLabelText('Tim')).toBeInTheDocument();
@@ -109,6 +109,6 @@ describe('Rezultati page', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Nema utakmica za odabrane filtere.')).toBeInTheDocument();
+    expect(await screen.findByText('Nema rezultata za odabrane filtere.')).toBeInTheDocument();
   });
 });

@@ -32,6 +32,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke:'Lozinka123!',
         trazenaUloga: 'NAVIJAC',
       },
     };
@@ -66,6 +67,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'IGRAC',
       },
     };
@@ -96,6 +98,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'TRENER',
       },
     };
@@ -126,6 +129,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'VLASNIK',
       },
     };
@@ -154,6 +158,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'NAVIJAC',
       },
     };
@@ -179,6 +184,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'ADMINISTRATOR', // nije dozvoljena
       },
     };
@@ -202,6 +208,7 @@ describe('register()', () => {
         punoIme: 'Test Korisnik',
         email: 'test@example.com',
         lozinka: 'Lozinka123!',
+        potvrdalozinke: 'Lozinka123!',
         trazenaUloga: 'NAVIJAC',
       },
     };
@@ -217,7 +224,7 @@ describe('register()', () => {
 
   test('neocekivana greska → 500 GRESKA_REGISTRACIJE', async () => {
     authService.registerUser.mockRejectedValue(new Error('DB pao'));
-    const req = { body: {} };
+    const req = { body: { potvrdalozinke: 'Lozinka123!' } };
     const res = mockRes();
 
     await register(req, res);
