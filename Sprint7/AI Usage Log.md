@@ -164,6 +164,45 @@ Semir Jamaković
 
 **Sprint broj:** 7
 
+**Alat koji je korišten:** Gemini 3 Flash
+
+**Svrha korištenja:**
+Finalizacija prikaza profila korisnika, implementacija promjene lozinke, refaktorisanje frontenda za timove i rješavanje kritičnih grešaka u testovima za generisanje rasporeda.
+
+**Kratak opis zadatka ili upita:**
+Pomoć pri implementaciji validacije lozinki na profilu, vizuelno poboljšanje UI-a za upravljanje timovima, te debugiranje testova za generisanje rasporeda koji nisu bili uspješni zbog neispravnog stanja (`loading`) i nedostatka validacije polja u testnom okruženju.
+
+**Šta je AI predložio ili generisao:**
+- **Logiku za real-time validaciju** podudaranja nove lozinke i potvrde unutar `Profile.jsx` komponente.
+- **Refaktorisanje komponente `GenerateSchedule.jsx`** uvođenjem specifičnog `generating` stanja (umjesto `loading`) radi precizne kontrole "disabled" stanja dugmeta.
+- **Kompletan set testova za autentifikaciju i profil:**
+    - **Unit testovi (`authService.test.js`):** Validacija poslovne logike promjene lozinke i osiguravanje da `lozinkaHash` nije izložena klijentu.
+    - **Integracijski testovi (`authRoutes.test.js`):** Testiranje API endpointa `/api/auth/profile` uz simulaciju JWT tokena i provjeru statusa 401 za neautorizovane zahtjeve.
+    - **Frontend testovi (`Profile.test.jsx`):** Provjera ispravnog renderovanja korisničkih podataka i prikazivanja grešaka na ekranu.
+**Šta je tim prihvatio:**
+- Unit i integracijske testove za auth servis i auth routes koji osiguravaju da se osjetljivi podaci ne šalju klijentu.
+- Rješenje za `generating` stanje u `GenerateSchedule` koje je omogućilo da automatizovani testovi pređu u "PASS" status.
+
+**Šta je tim izmijenio:**
+- AI prijedlozi za validaciju lozinke su dodatno prilagođeni specifičnim regex pravilima projekta.
+
+**Šta je tim odbacio:**
+- Prijedlog da se testovi za profil pišu unutar postojećih admin testova. Odlučeno je da se kreira poseban fajl `Profile.test.jsx` radi lakšeg održavanja.
+
+**Rizici, problemi ili greške koje su uočene:**
+- Inicijalno odbijanje push-a na main granu zbog aktiviranih pravila zaštite grana na GitHubu.
+
+**Ko je koristio alat:**
+Maida Biber
+
+---
+
+## Zapis 5
+
+**Datum:** 14.05.2026.
+
+**Sprint broj:** 7
+
 **Alat koji je korišten:** OpenAI Codex / ChatGPT
 
 **Svrha korištenja:**
