@@ -17,6 +17,7 @@ const Profile = () => {
     const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
     const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
     const isTrainer = korisnikData?.trenutnaUloga === 'TRENER';
+    const API_URL = 'https://si-grupa-6.onrender.com' || 'http://localhost:3000';
 
     useEffect(() => {
         fetchProfile();
@@ -25,7 +26,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:3000/api/auth/profile', {
+            const res = await axios.get(`${API_URL}/api/auth/profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(res.data.korisnik);
@@ -44,7 +45,7 @@ const Profile = () => {
         }
         try {
             const token = localStorage.getItem('token');
-            await axios.patch('http://localhost:3000/api/auth/change-password', passwordData, {
+            await axios.patch(`${API_URL}/api/auth/change-password`, passwordData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessage({ type: 'success', text: 'Lozinka uspješno promijenjena!' });
