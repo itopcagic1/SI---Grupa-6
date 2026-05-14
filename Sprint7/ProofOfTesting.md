@@ -1,0 +1,95 @@
+# Proof of Testing — Sprint 7
+
+## Ukupni rezultati
+
+
+---
+
+## Prikaz detalja korisnika za administratora
+
+### UNIT TESTOVI — ADMINCONTROLLER
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Dohvat detalja korisnika po ID-u | `getKorisnikDetalji` vraca detalje korisnika po ID-u | PASS |
+| Unit | Odgovor sadrži razlog blokiranja i broj prekinutih rezervacija | `getKorisnikDetalji` vraca `razlogBlokiranja` i `brojPreksrenihRezervacija` | PASS |
+| Unit | Nepostojeći korisnik vraća 404 | `getKorisnikDetalji` vraca 404 za nepostojeci ID | PASS |
+| Unit | Osjetljivi podaci nisu izloženi u odgovoru | `getKorisnikDetalji` ne vraca osjetljive podatke | PASS |
+| Unit | Greška baze podataka vraća 500 | `getKorisnikDetalji` obradjuje gresku iz baze i vraca 500 | PASS |
+| Unit | Lista blokiranih korisnika filtrirana po statusu | `getBlokiraniKorisnici` vraca samo blokirane korisnike | PASS |
+| Unit | Pretraga blokiranih po imenu ili email | `getBlokiraniKorisnici` podrzava pretragu po imenu ili emailu | PASS |
+| Unit | Blokirani endpoint ne vraća osjetljive podatke | `getBlokiraniKorisnici` ne vraca osjetljive podatke | PASS |
+| Unit | Greška baze na blokirani endpoint vraća 500 | `getBlokiraniKorisnici` obradjuje gresku iz baze i vraca 500 | PASS |
+| Unit | Blokiranje korisnika sprema razlog blokiranja | `blokirajKorisnika` sprema razlog blokiranja | PASS |
+| Unit | Odblokiravanje briše razlog blokiranja | `odblokiravanje` korisnika brise razlog blokiranja | PASS |
+| Unit | Blokiranje bez razloga postavlja null | `blokirajKorisnika` bez razloga postavlja `razlogBlokiranja` na null | PASS |
+| Unit | Promjena uloge ažurira ulogu i postavlja statusUloge na ODOBREN | `promijeniUlogu` mijenja ulogu i postavlja statusUloge na ODOBREN | PASS |
+| Unit | Neispravna uloga vraća 400 | `promijeniUlogu` vraca 400 za neispravnu ulogu | PASS |
+| Unit | Promjena uloge nepostojećeg korisnika vraća 404 | `promijeniUlogu` vraca 404 za nepostojeci korisnik | PASS |
+| Unit | Promjena uloge administratora nije dozvoljena | `promijeniUlogu` ne dozvoljava promjenu uloge administratora | PASS |
+| Unit | Greška baze na promjenu uloge vraća 500 | `promijeniUlogu` obradjuje gresku iz baze i vraca 500 | PASS |
+| Unit | Promjena uloge ne vraća osjetljive podatke | `promijeniUlogu` ne vraca osjetljive podatke | PASS |
+| Unit | Odgovor na listu korisnika ne sadrži lozinku/hash | `controller` ne vraca password/passwordHash u body response-a | PASS |
+| Unit | Greška baze na dohvat korisnika vraća 500 | `controller` ispravno obradjuje gresku iz baze i vraca error response | PASS |
+| Unit | Odobravanje posebne uloge ažurira status na ODOBREN | `odobravanje posebne uloge` vraca odgovarajuci response | PASS |
+| Unit | Odbijanje posebne uloge sprema razlog i postavlja ODBIJEN | `odbijanje posebne uloge` vraca odgovarajuci response | PASS |
+| Unit | Nevalidna akcija za obradu uloge vraća 400 | `nevalidni podaci za obradu uloge` vracaju validacijsku gresku iz controllera | PASS |
+
+### INTEGRACIJSKI TESTOVI — ADMIN RUTE (EXPRESS + SUPERTEST)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | Admin može dohvatiti listu korisnika | `admin moze dohvatiti listu korisnika` | PASS |
+| Int. | Ne-admin korisnik ne može pristupiti listi korisnika (403) | `ne-admin korisnik ne moze dohvatiti listu korisnika` | PASS |
+| Int. | Zahtjev bez tokena vraća 401 | `zahtjev bez tokena ne moze dohvatiti listu korisnika` | PASS |
+| Int. | Admin može dohvatiti listu blokiranih korisnika | `admin moze dohvatiti listu blokiranih korisnika` | PASS |
+| Int. | Odgovor za blokirane sadrži razlog i broj penala | `blokirani korisnici` odgovor sadrzi `razlogBlokiranja` i `brojPreksrenihRezervacija` | PASS |
+| Int. | Ne-admin ne može dohvatiti blokirane korisnike (403) | `ne-admin ne moze dohvatiti listu blokiranih korisnika` | PASS |
+| Int. | Bez tokena ne može dohvatiti blokirane korisnike (401) | `zahtjev bez tokena ne moze dohvatiti blokirane korisnike` | PASS |
+| Int. | Blokirani endpoint ne vraća osjetljive podatke | `blokirani endpoint ne vraca osjetljive podatke` | PASS |
+| Int. | Admin može dohvatiti detalje korisnika po ID-u | `admin moze dohvatiti detalje korisnika po ID-u` | PASS |
+| Int. | Detalji sadrže razlogBlokiranja i brojPreksrenihRezervacija | `detalji korisnika sadrze razlogBlokiranja i brojPreksrenihRezervacija` | PASS |
+| Int. | Dohvat nepostojećeg korisnika vraća 404 | `dohvat nepostojeceg korisnika vraca 404` | PASS |
+| Int. | Detalji endpoint ne vraća osjetljive podatke | `detalji endpoint ne vraca osjetljive podatke` | PASS |
+| Int. | Blokiranje sa razlogom vraća razlogBlokiranja u odgovoru | `blokiranje korisnika sa razlogom vraca razlogBlokiranja u odgovoru` | PASS |
+| Int. | Odblokiravanje postavlja razlogBlokiranja na null | `odblokiravanje korisnika postavlja razlogBlokiranja na null` | PASS |
+| Int. | Admin može promijeniti ulogu korisnika | `admin moze promijeniti ulogu korisnika` | PASS |
+| Int. | Promjena uloge vraća 400 za neispravnu ulogu | `promjena uloge vraca 400 za neispravnu ulogu` | PASS |
+| Int. | Ne-admin ne može promijeniti ulogu (403) | `ne-admin ne moze promijeniti ulogu korisnika` | PASS |
+| Int. | Bez tokena ne može promijeniti ulogu (401) | `zahtjev bez tokena ne moze promijeniti ulogu` | PASS |
+| Int. | Promjena uloge ne vraća osjetljive podatke | `promjena uloge ne vraca osjetljive podatke` | PASS |
+| Int. | Admin može blokirati korisnika | `admin moze blokirati korisnika ako endpoint postoji` | PASS |
+| Int. | Admin može obrisati korisnika | `admin moze obrisati korisnika ako endpoint postoji` | PASS |
+| Int. | Rad nad nepostojećim korisnikom vraća 404 | `pokusaj rada nad nepostojecim korisnikom vraca odgovarajuci error response` | PASS |
+| Int. | Nevalidni podaci vraćaju validacijsku grešku (400) | `pokusaj slanja nevalidnih podataka vraca validacijsku gresku` | PASS |
+
+### UI TESTOVI - DETALJI O KORISNICIMA - ADMIN
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | AdminKorisnici — Renderovanje | Prikazuje naslov "Admin Panel" i tabove navigacije | PASS |
+| UI | AdminKorisnici — Zahtjevi | Prikazuje korisnike u PENDING tabu sa akcijama Odobri/Odbij | PASS |
+| UI | AdminKorisnici — Validacija | Prikazuje grešku ako se odbije zahtjev bez unesenog razloga | PASS |
+| UI | AdminKorisnici — Blokirani | Prikazuje listu blokiranih korisnika i dugmetom za odblokiravanje | PASS |
+| UI | AdminKorisnici — Feedback | Prikazuje success poruku nakon uspješnog odobravanja uloge | PASS |
+| UI | AdminKorisnici — Navigacija | Pravilno prebacuje između tabova i osvježava podatke | PASS |
+| UI | KorisnikDetalji — Podaci | Prikazuje ime, email, ulogu i status naloga korisnika | PASS |
+| UI | KorisnikDetalji — Akcije | Prikazuje sekciju za obradu zahtjeva samo za PENDING korisnike | PASS |
+| UI | KorisnikDetalji — Blokiranje | Otvara textarea za razlog blokiranja i validira unos | PASS |
+| UI | KorisnikDetalji — Brisanje | Prikazuje potvrdni dijalog prije pozivanja API-ja za brisanje | PASS |
+| UI | KorisnikDetalji — Uloge | Onemogućava "Sačuvaj" ako uloga nije promijenjena u dropdownu | PASS |
+| UI | KorisnikDetalji — Sigurnost | Sakriva admin akcije (blokiraj/obriši) ako je korisnik Administrator | PASS |
+
+---
+
+## Promjena zaboravljene lozinke putem maila
+
+### UNIT TESTOVI — EMAILSERVICE
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Email se šalje sa ispravnim parametrima (primatelj, subject) | `posaljiResetEmail` poziva `sgMail.send` sa ispravnim parametrima | PASS |
+| Unit | HTML tijelo emaila sadrži reset link | `posaljiResetEmail` sadrzi reset link u html-u | PASS |
+| Unit | Email se šalje na ispravnu adresu primatelja | `posaljiResetEmail` salje na ispravan email | PASS |
+| Unit | Email se šalje sa ispravne adrese pošiljatelja | `posaljiResetEmail` salje od ispravne adrese | PASS |
+| Unit | Greška SendGrid servisa se propagira kao exception | `posaljiResetEmail` propagira gresku ako `sgMail.send` baci exception | PASS |
