@@ -7,7 +7,7 @@
 
 ## Prikaz detalja korisnika za administratora
 
-### UNIT TESTOVI — ADMINCONTROLLER
+### UNIT TESTOVI — ADMIN CONTROLLER
 
 | Nivo | AC / Opis | Test koji pokriva | Rezultat |
 | :--- | :--- | :--- | :--- |
@@ -137,8 +137,8 @@
 
 | Nivo          | Komponenta / Opis                  | Test koji pokriva                                                  | Rezultat |
 |----------------|------------------------------------|--------------------------------------------------------------------|-----------|
-| Integracijski | Homepage Routes — Dohvat podataka | treba vratiti podatke za homepage uspješno bez tokena (Javni API) | PASS      |
-| Integracijski | Homepage Routes — Greška servisa  | treba vratiti 500 error kada servis baci izuzetak                 | PASS      |
+| Int. | Homepage Routes — Dohvat podataka | treba vratiti podatke za homepage uspješno bez tokena (Javni API) | PASS      |
+| Int. | Homepage Routes — Greška servisa  | treba vratiti 500 error kada servis baci izuzetak                 | PASS      |
 
 ### UI TESTOVI
 
