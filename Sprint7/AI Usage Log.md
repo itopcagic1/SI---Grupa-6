@@ -194,3 +194,50 @@ Pomoć pri implementaciji validacije lozinki na profilu, vizuelno poboljšanje U
 
 **Ko je koristio alat:**
 Maida Biber
+
+---
+
+## Zapis 5
+
+**Datum:** 14.05.2026.
+
+**Sprint broj:** 7
+
+**Alat koji je korišten:** OpenAI Codex / ChatGPT
+
+**Svrha korištenja:**
+Implementacija funkcionalnosti “Moje prijave” (PB-26) za pregled prijava trenera na takmičenja.
+
+**Kratak opis zadatka ili upita:**
+Implementacija backend endpointa `GET /api/applications/my` i frontend stranice “Moje prijave”, uključujući prikaz statusa prijave, lokacije, empty state-a i testova za autorizaciju i filtriranje podataka po treneru.
+
+**Šta je AI predložio ili generisao:**
+- Backend implementaciju endpointa za dohvat prijava trenutno prijavljenog trenera
+- Service logiku za filtriranje prijava po korisniku i obradu fallback lokacije
+- Frontend stranicu “Moje prijave”
+- Status badge prikaz za `PENDING`, `ODOBRENO` i `ODBIJENO`
+- Loading, error i empty state prikaz
+- Unit, integration i frontend testove za PB-26
+- Prisma upite i povezivanje postojećih relacija između `UcesceUTakmicenju`, `Takmicenje`, `Utakmica` i `SportskiObjekat`
+
+**Šta je tim prihvatio:**
+- Strukturu endpointa i frontend prikaza
+- Predložene test scenarije
+- Korištenje postojeće tabele `UcesceUTakmicenju` za prijave
+
+**Šta je tim izmijenio:**
+- Uklonjena su dodatna Prisma polja `lokacija` i `lokacijaOpis` iz modela `Takmicenje`
+- Logika za lokaciju prebačena je na postojeće relacije preko `Utakmica.sportskiObjekat` i `Utakmica.lokacijaOpis`
+- Ispravljena test očekivanja nakon promjene logike lokacije
+
+**Šta je tim odbacio:**
+- Dodavanje novih kolona u tabelu `Takmicenje`, jer je ustanovljeno da projekat već koristi postojeće relacije za lokaciju utakmica i objekata
+
+**Rizici, problemi ili greške koje su uočene:**
+- Došlo je do greške zbog neusklađenosti Prisma sheme i postojeće baze (`Takmicenje.lokacija does not exist`)
+- Problem je riješen uklanjanjem nepotrebnih kolona iz Prisma sheme i regenerisanjem Prisma clienta
+
+**Ko je koristio alat:**
+Mehdi Zaimović
+
+---
