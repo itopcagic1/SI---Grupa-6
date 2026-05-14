@@ -93,3 +93,39 @@
 | Unit | Email se šalje na ispravnu adresu primatelja | `posaljiResetEmail` salje na ispravan email | PASS |
 | Unit | Email se šalje sa ispravne adrese pošiljatelja | `posaljiResetEmail` salje od ispravne adrese | PASS |
 | Unit | Greška SendGrid servisa se propagira kao exception | `posaljiResetEmail` propagira gresku ako `sgMail.send` baci exception | PASS |
+
+---
+
+## Pregled prijava za trenera
+
+### UNIT TESTOVI — APPLICATIONSERVICE
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Trener vidi samo svoje prijave | `trener vidi samo svoje prijave` | PASS |
+| Unit | Drugi trener ne vidi tuđe prijave | `drugi trener ne vidi tudje prijave` | PASS |
+| Unit | Prazna lista se vraća bez greške | `prazna lista se vraca bez greske` | PASS |
+| Unit | Status prijave se mapira ispravno | `status se mapira ispravno (PENDING, ODOBRENO, ODBIJENO)` | PASS |
+| Unit | Fallback lokacija koristi SportskiObjekat adresu | `fallback lokacija koristi sportski objekat adresu` | PASS |
+| Unit | Fallback koristi Utakmica.lokacijaOpis ako nema objekta | `fallback koristi utakmica.lokacijaOpis` | PASS |
+| Unit | Vraća "Lokacija nije definisana" ako nema podataka | `fallback vraca "Lokacija nije definisana"` | PASS |
+
+### INTEGRACIJSKI TESTOVI — APPLICATION RUTE (EXPRESS + SUPERTEST)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | TRENER može dohvatiti svoje prijave | `TRENER moze dohvatiti svoje prijave` | PASS |
+| Int. | Prazna lista vraća uspješan response | `prazna lista vraca uspjesan response` | PASS |
+| Int. | Zahtjev bez tokena vraća 401 | `korisnik bez tokena ne moze pristupiti endpointu` | PASS |
+| Int. | Korisnik koji nije TRENER ne može pristupiti endpointu | `korisnik koji nije TRENER ne moze pristupiti endpointu` | PASS |
+
+### UI TESTOVI — MOJE PRIJAVE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | MojePrijave — Renderovanje | Prikazuje listu prijava trenera | PASS |
+| UI | MojePrijave — Podaci | Prikazuje tim, takmičenje, sport i lokaciju | PASS |
+| UI | MojePrijave — Status | Prikazuje status badge (PENDING / ODOBRENO / ODBIJENO) | PASS |
+| UI | MojePrijave — Empty state | Prikazuje poruku "Jos nemate prijavljenih takmicenja." | PASS |
+| UI | MojePrijave — Error state | Prikazuje grešku ako API vrati error | PASS |
+| UI | MojePrijave — Refresh | Refresh dugme ponovo učitava podatke | PASS |
