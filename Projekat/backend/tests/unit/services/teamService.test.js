@@ -73,6 +73,7 @@ describe('teamService', () => {
     const created = { timId: 2, naziv: 'KK Test', sportId: 2, status: 'ACTIVE' };
     mockPrisma.tim.findFirst.mockResolvedValue(null);
     mockPrisma.tim.create.mockResolvedValue(created);
+    mockPrisma.tim.findUnique.mockResolvedValue(created);
 
     const result = await teamService.createTeam({
       name: 'KK Test',

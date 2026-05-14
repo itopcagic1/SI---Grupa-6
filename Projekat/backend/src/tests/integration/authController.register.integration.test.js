@@ -1,6 +1,5 @@
 require('dotenv').config({ path: '.env.test' });
 
-
 jest.mock('../../middleware/authMiddleware', () => {
   const original = jest.requireActual('../../middleware/authMiddleware');
   return {
@@ -18,18 +17,12 @@ const authRoutes = require('../../routes/authRoutes');
 
 const prisma = new PrismaClient();
 
-// ─── Test aplikacija ──────────────────────────────────────────────────────────
-
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 
-// ─── Test email ───────────────────────────────────────────────────────────────
-
 const testEmail = 'registracija@test.com';
-
-// ─── Setup / Teardown ─────────────────────────────────────────────────────────
 
 beforeEach(async () => {
   await prisma.korisnik.deleteMany({ where: { email: testEmail } });
@@ -40,13 +33,12 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-// ─── REGISTER — integracijski ─────────────────────────────────────────────────
-
 describe('POST /api/auth/register — integracijski', () => {
   const validniPodaci = {
     punoIme: 'Test Korisnik',
     email: testEmail,
     lozinka: 'Lozinka123!',
+    potvrdalozinke: 'Lozinka123!',
     trazenaUloga: 'NAVIJAC',
   };
 
@@ -72,7 +64,7 @@ describe('POST /api/auth/register — integracijski', () => {
 
     const korisnik = await prisma.korisnik.findUnique({ where: { email: testEmail } });
     expect(korisnik.lozinkaHash).not.toBe('Lozinka123!');
-    expect(korisnik.lozinkaHash).toMatch(/^\$2b\$/); // bcrypt hash format
+    expect(korisnik.lozinkaHash).toMatch(/^\$2b\$/);
   });
 
   test('registracija kao IGRAC → statusUloge PENDING u bazi', async () => {
@@ -120,7 +112,7 @@ describe('POST /api/auth/register — integracijski', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.greska).toBe('NEDOZVOLJENA_ULOGA');
-    expect(res.body.dozvoljene).toEqual(['NAVIJAC', 'IGRAC', 'TRENER', 'VLASNIK']);
+    expect(res.body.dozvoljene).toEqual(['NAVIJAC', 'IGRAC', 'TRENER', 'VLASNIK','ORGANIZATOR']);
   });
 
   test('prazni podaci → 400 GRESKA_VALIDACIJE', async () => {
@@ -144,7 +136,7 @@ describe('POST /api/auth/register — integracijski', () => {
   test('slaba lozinka bez specijalnog znaka → 400 GRESKA_VALIDACIJE', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send({ ...validniPodaci, lozinka: 'Lozinka123' });
+      .send({ ...validniPodaci, lozinka: 'Lozinka123', potvrdalozinke: 'Lozinka123' });
 
     expect(res.status).toBe(400);
     expect(res.body.greska).toBe('GRESKA_VALIDACIJE');
