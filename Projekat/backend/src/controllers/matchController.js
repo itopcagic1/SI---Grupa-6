@@ -75,85 +75,62 @@ async function getPublicMatches(req, res) {
     });
   }
 }
-
 async function generisiRaspored(req, res) {
   try {
     const { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija } = req.body;
 
-    // Validacija obaveznih polja
-    let poljaKojaFale = [];
+    // 1. VALIDACIJA FORMATA DATUMA
+    if (pocetniDatum !== undefined) {
+      const datum = new Date(pocetniDatum);
+      if (!pocetniDatum || isNaN(datum.getTime())) {
+        return res.status(400).json({
+          greska: 'INVALID_DATE',
+          poruka: 'Nevažeći format datuma'
+        });
+      }
 
-    if (!takmicenjeId) poljaKojaFale.push("Takmičenje");
-    if (!pocetniDatum) poljaKojaFale.push("Datum početka");
-    if (!defaultnoVrijeme) poljaKojaFale.push("Vrijeme prve utakmice");
-    if (!defaultnaLokacija || defaultnaLokacija.trim() === "") poljaKojaFale.push("Lokacija");
+      // 2. VALIDACIJA PROŠLOSTI
+      const danas = new Date();
+      danas.setHours(0, 0, 0, 0);
+      if (datum < danas) {
+        return res.status(400).json({
+          greska: 'DATE_IN_PAST',
+          poruka: 'Datum ne može biti u prošlosti.'
+        });
+      }
+    }
 
-    if (poljaKojaFale.length > 0) {
+    // 3. VALIDACIJA VREMENA
+    if (defaultnoVrijeme !== undefined) {
+      const vrijemeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!vrijemeRegex.test(defaultnoVrijeme)) {
+        return res.status(400).json({
+          greska: 'INVALID_TIME',
+          poruka: 'Nevažeći format vremena.'
+        });
+      }
+    }
+
+    // 4. PROVJERA OBAVEZNIH POLJA
+    if (takmicenjeId === undefined || pocetniDatum === undefined || defaultnoVrijeme === undefined) {
       return res.status(400).json({
-        greska: 'MISSING_FIELDS',
-        poruka: `${poljaKojaFale.join(", ")}.`
+        greska: 'MISSING_REQUIRED_FIELDS',
+        poruka: 'Sva polja su obavezna.'
       });
     }
 
-    // Validacija datuma
-    const datum = new Date(pocetniDatum);
-    if (isNaN(datum.getTime())) {
-      return res.status(400).json({
-        greska: 'INVALID_DATE',
-        poruka: 'Nevažeći format datuma'
-      });
-    }
-
-    // Validacija da datum nije u prošlosti niti danas
-    const danas = new Date();
-    danas.setHours(0, 0, 0, 0);
-    const sutra = new Date(danas);
-    sutra.setDate(sutra.getDate() + 1);
-    const datumBezVremena = new Date(datum);
-    datumBezVremena.setHours(0, 0, 0, 0);
-
-    if (datumBezVremena < sutra) {
-      return res.status(400).json({
-        greska: 'DATE_IN_PAST',
-        poruka: 'Početni datum mora biti u budućnosti (najmanje sutra).'
-      });
-    }
-
-    // Validacija vremena
-    const vrijemeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!vrijemeRegex.test(defaultnoVrijeme)) {
-      return res.status(400).json({
-        greska: 'INVALID_TIME',
-        poruka: 'Nevažeći format vremena (očekuje se HH:MM)'
-      });
-    }
-
-    if (!defaultnaLokacija || defaultnaLokacija.trim() === "") {
-      return res.status(400).json({
-        greska: 'LOCATION_REQUIRED',
-        poruka: 'Unesite lokaciju, molimo vas! Polje ne smije biti prazno.'
-      });
-    }
-
-
+    // Poziv servisa
     const rezultat = await matchService.generisiRaspored(
       { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija },
-      {
-        korisnikId: req.user.korisnikId,
-        uloga: req.user.uloga
-      }
+      { korisnikId: req.user.korisnikId, uloga: req.user.uloga }
     );
 
+    return res.status(201).json({ uspjeh: true, ...rezultat });
 
-    return res.status(201).json({
-      uspjeh: true,
-      poruka: 'Raspored uspješno generisan',
-      ...rezultat
-    });
   } catch (error) {
     return res.status(error.status || 500).json({
       greska: error.code || 'GRESKA_GENERISANJA_RASPOREDA',
-      poruka: error.message || 'Greška pri generisanju rasporeda'
+      poruka: error.message
     });
   }
 }

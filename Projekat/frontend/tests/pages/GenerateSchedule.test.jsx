@@ -61,8 +61,8 @@ describe('GenerateSchedule', () => {
     });
 
     expect(screen.getByLabelText(/Takmičenje/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Početni datum/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Vrijeme utakmica/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Datum početka takmičenja/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Vrijeme prve utakmice u danu/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Lokacija utakmica/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generiši raspored/i })).toBeInTheDocument();
   });
@@ -102,8 +102,8 @@ describe('GenerateSchedule', () => {
     });
 
     fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Datum početka takmičenja/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme prve utakmice u danu/i), { target: { value: '15:00' } });
     fireEvent.change(screen.getByLabelText(/Lokacija utakmica/i), { target: { value: 'Stadion' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
@@ -129,8 +129,8 @@ describe('GenerateSchedule', () => {
     });
 
     fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Datum početka takmičenja/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme prve utakmice u danu/i), { target: { value: '15:00' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
 
@@ -143,8 +143,7 @@ describe('GenerateSchedule', () => {
   });
 
   it('dugme je onemogućeno dok traje generisanje', async () => {
-    // Servis koji se nikad ne razriješi (simulira dugo čekanje)
-    matchApi.generateSchedule.mockImplementation(() => new Promise(() => {}));
+    matchApi.generateSchedule.mockImplementation(() => new Promise(() => { }));
 
     renderPage();
 
@@ -153,8 +152,9 @@ describe('GenerateSchedule', () => {
     });
 
     fireEvent.change(screen.getByLabelText(/Takmičenje/i), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText(/Početni datum/i), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText(/Vrijeme utakmica/i), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Datum početka takmičenja/i), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Vrijeme prve utakmice u danu/i), { target: { value: '15:00' } });
+    fireEvent.change(screen.getByLabelText(/Lokacija utakmica/i), { target: { value: 'Stadion Grbavica' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Generiši raspored/i }));
 
@@ -162,7 +162,6 @@ describe('GenerateSchedule', () => {
       expect(screen.getByRole('button', { name: /Generisanje/i })).toBeDisabled();
     });
   });
-
   it('redirect-uje korisnike koji nisu organizatori ili administratori', async () => {
     renderPage({ korisnikId: 1, trenutnaUloga: 'IGRAC', punoIme: 'Igrač' });
 

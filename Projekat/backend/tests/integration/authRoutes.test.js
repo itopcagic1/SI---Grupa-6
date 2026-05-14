@@ -1,15 +1,27 @@
 const request = require('supertest');
-const app = require('../../app'); 
+const app = require('../../src/app');
 
 describe('INTEGRACIJSKI TEST: Auth Rute (Maida)', () => {
   let token;
 
   beforeAll(async () => {
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'test@sport.ba', lozinka: 'Lozinka123!' });
-    token = loginRes.body.access_token;
-  });
+  // Pokušaj registraciju (ignoriši grešku ako već postoji)
+  await request(app)
+    .post('/api/auth/register')
+    .send({
+      punoIme: 'Test Korisnik',
+      email: 'test@sport.ba',
+      lozinka: 'Lozinka123!',
+      potvrdalozinke: 'Lozinka123!',
+      trazenaUloga: 'NAVIJAC'
+    });
+
+  const loginRes = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'test@sport.ba', lozinka: 'Lozinka123!' });
+
+  token = loginRes.body.access_token;
+});
 
   // Testiramo GET /profile 
   test('GET /api/auth/profile - Treba vratiti 200 i uspjeh', async () => {

@@ -83,7 +83,7 @@ function MojePrijave() {
         ) : prijave.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-[32px] border border-amber-100 shadow-sm">
             <p className="text-slate-500 text-lg font-medium">
-              Još nemate prijavljenih takmicenja.
+              Još nemate prijavljenih takmičenja.
             </p>
           </div>
         ) : (

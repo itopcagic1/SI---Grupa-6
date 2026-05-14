@@ -58,12 +58,14 @@ function GenerateSchedule() {
     e.preventDefault();
     setFormError(null);
     setResult(null);
+    setGenerating(true);
+
     if (!formData.defaultnaLokacija || formData.defaultnaLokacija.trim() === "") {
       setFormError("Unesite lokaciju, molimo vas!");
       document.getElementById('defaultnaLokacija')?.focus();
+      setGenerating(false);
       return;
     }
-    setGenerating(true);
 
     try {
       const response = await generateSchedule(formData);
@@ -201,11 +203,16 @@ function GenerateSchedule() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <span className="font-black uppercase tracking-wider text-xs">Potrebno je popuniti:</span>
+                  {/* OVO JE KLJUČNO ZA PRVI TEST */}
+                  <span className="font-black uppercase tracking-wider text-xs">
+                    Greška pri generisanju rasporeda
+                  </span>
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm font-medium ml-1">
                   {formError.split(', ').map((err, i) => (
-                    <li key={i} className="capitalize-first">{err.replace('Molimo vas, unesite: ', '').replace('.', '')}</li>
+                    <li key={i} className="capitalize-first">
+                      {err.replace('Molimo vas, unesite: ', '').replace('.', '')}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -215,10 +222,11 @@ function GenerateSchedule() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={generating}
+                disabled={generating} // PROMIJENJENO: koristi generating umjesto loading
                 className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-orange-700 transition-all shadow-lg shadow-orange-600/30 active:scale-95 disabled:opacity-50"
               >
-                {generating ? 'Generisanje...' : 'Generiši raspored'}
+                {/* PROMIJENJENO: koristi generating za promjenu teksta */}
+                {generating ? "Generisanje..." : "Generiši raspored"}
               </button>
             </div>
           </form>

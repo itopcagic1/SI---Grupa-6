@@ -58,7 +58,7 @@ describe('MojePrijave', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Jos nemate prijavljenih takmicenja.')).toBeInTheDocument();
+    expect(await screen.findByText('Još nemate prijavljenih takmičenja.')).toBeInTheDocument();
   });
 
   it('prikazuje error state ako API vrati gresku', async () => {
@@ -75,7 +75,7 @@ describe('MojePrijave', () => {
     renderPage();
 
     await screen.findByText('FK Test');
-    fireEvent.click(screen.getByText('Osvjezi'));
+    fireEvent.click(screen.getByText('Osvježi'));
 
     await waitFor(() => {
       expect(applicationsApi.fetchMojePrijave).toHaveBeenCalledTimes(2);

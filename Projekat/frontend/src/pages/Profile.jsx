@@ -64,10 +64,6 @@ const Profile = () => {
         return <div className="min-h-screen bg-amber-50 flex items-center justify-center text-amber-500 font-medium">Učitavanje podataka...</div>;
     }
 
-    if (!user) {
-        return <div className="min-h-screen bg-amber-50 flex items-center justify-center text-red-500">Korisnik nije pronađen.</div>;
-    }
-
     return (
         <div className="min-h-screen bg-amber-50 font-sans">
 
@@ -82,14 +78,15 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
                     <div className="md:col-span-1 space-y-6">
+                        {!user && <div className="text-center py-8 text-red-500 text-sm">Korisnik nije pronađen.</div>}
                         <div className="bg-white rounded-3xl border border-amber-100 p-8 shadow-sm text-center">
                             <div className="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-4 border-4 border-white shadow-inner">
-                                {user.punoIme?.charAt(0).toUpperCase()}
+                                {user?.punoIme?.charAt(0).toUpperCase()}
                             </div>
-                            <h2 className="text-xl font-bold text-amber-950 mb-1">{user.punoIme}</h2>
-                            <p className="text-sm text-amber-600 font-medium mb-4">{user.email}</p>
+                            <h2 className="text-xl font-bold text-amber-950 mb-1">{user?.punoIme}</h2>
+                            <p className="text-sm text-amber-600 font-medium mb-4">{user?.email}</p>
                             <div className="inline-block px-4 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-bold border border-orange-100 uppercase tracking-widest">
-                                {user.uloga}
+                                {user?.uloga}
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-amber-50 text-left space-y-4">
@@ -97,7 +94,7 @@ const Profile = () => {
                                     <label className="block text-[10px] font-black uppercase text-amber-400 tracking-widest mb-1">Status računa</label>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span className="text-sm font-bold text-slate-700">{user.statusPouzdanosti || 'AKTIVAN'}</span>
+                                        <span className="text-sm font-bold text-slate-700">{user?.statusPouzdanosti || 'AKTIVAN'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -106,13 +103,13 @@ const Profile = () => {
                         <div className="bg-white rounded-3xl border border-amber-100 p-6 shadow-sm">
                             <h3 className="text-sm font-black uppercase text-amber-950 mb-4 tracking-tighter">Aktivni angažmani</h3>
                             <div className="space-y-3">
-                                {user.clanstvaUTimovima && user.clanstvaUTimovima.length > 0 ? (
-                                    user.clanstvaUTimovima.map((clanstvo) => (
+                                {user?.clanstvaUTimovima && user?.clanstvaUTimovima.length > 0 ? (
+                                    user?.clanstvaUTimovima?.map((clanstvo) => (
                                         <div key={clanstvo.clanstvoTimaId} className="bg-amber-50 rounded-xl px-4 py-3 border border-amber-100 flex items-center gap-3">
                                            
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">
-                                                    {clanstvo.ulogaUTimu || user.uloga}
+                                                    {clanstvo.ulogaUTimu || user?.uloga}
                                                 </span>
                                                 <span className="text-sm font-bold text-amber-900">
                                                     {clanstvo.tim.naziv}
@@ -123,7 +120,7 @@ const Profile = () => {
                                 ) : (
                                     <div className="text-center py-4">
                                         <p className="text-xs text-amber-400 italic">Trenutno nema aktivnih angažmana.</p>
-                                        {user.uloga === 'NAVIJAC' && (
+                                        {user?.uloga === 'NAVIJAC' && (
                                             <p className="text-[10px] text-slate-400 mt-1">Zapratite neki tim da biste vidjeli novosti!</p>
                                         )}
                                     </div>
@@ -143,7 +140,7 @@ const Profile = () => {
                                 <h3 className="text-xl font-bold text-amber-950">Promjena lozinke</h3>
                             </div>
 
-                            <form onSubmit={handlePasswordChange} className="space-y-5">
+                            <form onSubmit={handlePasswordChange} className="space-y-5" noValidate>
                                 <div>
                                     <label className="block text-sm font-bold text-amber-900 mb-2 ml-1">Trenutna lozinka</label>
                                     <input
