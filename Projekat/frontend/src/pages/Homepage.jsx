@@ -58,7 +58,7 @@ const Homepage = () => {
   useEffect(() => {
     const fetchHomepageData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/homepage');
+        const response = await axios.get('https://sportmanager-frontend.onrender.com');
         if (response.data && response.data.uspjeh) {
           setData(response.data.podaci);
         }
