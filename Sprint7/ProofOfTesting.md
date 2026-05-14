@@ -98,7 +98,7 @@
 
 ## Pregled prijava za trenera
 
-### UNIT TESTOVI — APPLICATIONSERVICE
+### UNIT TESTOVI — APPLICATION SERVICE
 
 | Nivo | AC / Opis | Test koji pokriva | Rezultat |
 | :--- | :--- | :--- | :--- |
@@ -129,3 +129,20 @@
 | UI | MojePrijave — Empty state | Prikazuje poruku "Jos nemate prijavljenih takmicenja." | PASS |
 | UI | MojePrijave — Error state | Prikazuje grešku ako API vrati error | PASS |
 | UI | MojePrijave — Refresh | Refresh dugme ponovo učitava podatke | PASS |
+
+
+## Početna stranica za goste (Homepage)
+
+### INTEGRACIJSKI TESTOVI 
+
+| Nivo          | Komponenta / Opis                  | Test koji pokriva                                                  | Rezultat |
+|----------------|------------------------------------|--------------------------------------------------------------------|-----------|
+| Integracijski | Homepage Routes — Dohvat podataka | treba vratiti podatke za homepage uspješno bez tokena (Javni API) | PASS      |
+| Integracijski | Homepage Routes — Greška servisa  | treba vratiti 500 error kada servis baci izuzetak                 | PASS      |
+
+### UI TESTOVI
+
+| Nivo | Komponenta / Opis           | Test koji pokriva                                      | Rezultat |
+|-------|-----------------------------|--------------------------------------------------------|-----------|
+| UI    | Homepage — Renderovanje    | renders correctly and fetches data                    | PASS      |
+| UI    | Homepage — Prazno stanje   | displays empty state messages when no data is returned | PASS      |
