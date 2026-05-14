@@ -134,8 +134,11 @@ const createTeam = async (data, currentUserId, currentUserRole) => {
 
 // US-05.3.2 & US-06: Update team info
 const updateTeam = async (id, data) => {
-  return await prisma.tim.update({
-    where: { timId: parseInt(id) },
+  const teamId = parseInt(id);
+
+  // 1. Ažuriraj osnovne podatke tima
+  const updatedTeam = await prisma.tim.update({
+    where: { timId: teamId },
     data: {
       naziv: data.name,
       opis: data.description,
@@ -143,6 +146,31 @@ const updateTeam = async (id, data) => {
       status: data.status
     }
   });
+
+  // 2. Ako je proslijeđen novi trenerId, ažuriraj članstvo
+  if (data.trenerId) {
+    const noviTrenerId = parseInt(data.trenerId);
+
+    // Prvo ukloni bilo kojeg trenutnog trenera iz tog tima
+    await prisma.clanstvoTima.deleteMany({
+      where: {
+        timId: teamId,
+        ulogaUTimu: 'TRENER'
+      }
+    });
+
+    // Dodaj novog trenera kao aktivnog člana
+    await prisma.clanstvoTima.create({
+      data: {
+        timId: teamId,
+        korisnikId: noviTrenerId,
+        ulogaUTimu: 'TRENER',
+        status: 'ACTIVE'
+      }
+    });
+  }
+
+  return updatedTeam;
 };
 
 // US-05.3.3: Delete team (with a check if it's in a league)

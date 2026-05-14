@@ -81,10 +81,17 @@ async function generisiRaspored(req, res) {
     const { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija } = req.body;
 
     // Validacija obaveznih polja
-    if (!takmicenjeId || !pocetniDatum || !defaultnoVrijeme) {
+    let poljaKojaFale = [];
+
+    if (!takmicenjeId) poljaKojaFale.push("Takmičenje");
+    if (!pocetniDatum) poljaKojaFale.push("Datum početka");
+    if (!defaultnoVrijeme) poljaKojaFale.push("Vrijeme prve utakmice");
+    if (!defaultnaLokacija || defaultnaLokacija.trim() === "") poljaKojaFale.push("Lokacija");
+
+    if (poljaKojaFale.length > 0) {
       return res.status(400).json({
-        greska: 'MISSING_REQUIRED_FIELDS',
-        poruka: 'Nedostaju obavezna polja: Takmicenje, Datum, Vrijeme'
+        greska: 'MISSING_FIELDS',
+        poruka: `${poljaKojaFale.join(", ")}.`
       });
     }
 
@@ -121,7 +128,14 @@ async function generisiRaspored(req, res) {
       });
     }
 
-    // defaultnaLokacija je opcionalna — ako nije proslijeđena, service će koristiti podrazumijevanu vrijednost
+    if (!defaultnaLokacija || defaultnaLokacija.trim() === "") {
+      return res.status(400).json({
+        greska: 'LOCATION_REQUIRED',
+        poruka: 'Unesite lokaciju, molimo vas! Polje ne smije biti prazno.'
+      });
+    }
+
+
     const rezultat = await matchService.generisiRaspored(
       { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija },
       {
@@ -129,6 +143,7 @@ async function generisiRaspored(req, res) {
         uloga: req.user.uloga
       }
     );
+
 
     return res.status(201).json({
       uspjeh: true,

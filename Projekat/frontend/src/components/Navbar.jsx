@@ -109,7 +109,7 @@ const Navbar = () => {
               className={
                 location.pathname.startsWith('/admin')
                   ? "px-4 py-2 bg-orange-600 text-white font-bold rounded-xl text-sm transition-colors"
-                  : "px-4 py-2 bg-orange-100 text-orange-700 font-bold rounded-xl text-sm hover:bg-orange-200 transition-colors"
+                  : "px-4 py-2 text-slate-500 font-medium hover:text-slate-800 cursor-pointer text-sm transition-colors"
               }
             >
               Admin Panel
