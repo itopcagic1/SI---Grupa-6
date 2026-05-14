@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+
 import { useForm } from 'react-hook-form';
+
 import { Link, useNavigate } from 'react-router-dom';
+
 import Navbar from '../components/Navbar';
+
 import {
   fetchTeams,
   fetchSports,
@@ -13,6 +17,8 @@ import {
   updateTeam,
   deleteTeam,
 } from '../api/teamApi';
+
+
 
 function Modal({ isOpen, onClose, children }) {
   if (!isOpen) return null;
@@ -31,6 +37,8 @@ function Modal({ isOpen, onClose, children }) {
     </div>
   );
 }
+
+
 
 function CoachModal({ isOpen, onClose, team, onRefresh }) {
   const [allPlayers, setAllPlayers] = useState([]);
@@ -152,6 +160,8 @@ function CoachModal({ isOpen, onClose, team, onRefresh }) {
     </div>
   );
 }
+
+
 
 function Timovi() {
   const [teams, setTeams] = useState([]);
@@ -370,82 +380,181 @@ function Timovi() {
         {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         {submissionMessage && <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{submissionMessage}</div>}
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
+        {/* Search + filter */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="relative flex-1 max-w-2xl">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
             <input
               type="text"
               placeholder="Pretraži timove..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 border border-amber-100 rounded-xl text-sm bg-white outline-none focus:border-orange-500 transition"
+              className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-slate-700 shadow-sm"
             />
           </div>
-          <select
-            value={sportFilter}
-            onChange={(e) => setSportFilter(e.target.value)}
-            className="border border-amber-100 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-orange-500 transition min-w-[160px]"
-          >
-            <option value="">Svi sportovi</option>
+
+          {/* Sport filter pills */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <button
+              onClick={() => setSportFilter('')}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sportFilter === '' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-600 border border-amber-200 hover:bg-amber-50'}`}
+            >
+              Svi
+            </button>
             {sports.map((sport) => (
-              <option key={sport.sportId} value={String(sport.sportId)}>{sport.naziv}</option>
+              <button
+                key={sport.sportId}
+                onClick={() => setSportFilter(String(sport.sportId))}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sportFilter === String(sport.sportId) ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-amber-200 hover:bg-amber-50'}`}
+              >
+                {sport.naziv}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-amber-500 text-sm">Učitavanje podataka...</div>
+          <div className="text-center py-20">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Učitavanje timova...</p>
+          </div>
+        ) : filteredTeams.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-[32px] border border-amber-100 shadow-sm">
+            <p className="text-slate-500 text-lg font-medium">Nije pronađen nijedan tim.</p>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTeams.map((team) => (
-              <div key={team.timId} className="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm hover:shadow-md transition flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <h3 className="font-bold text-amber-950 text-base">{team.naziv}</h3>
+              <div
+                key={team.timId}
+                className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+              >
+                {/* Card header */}
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="text-xl font-bold text-slate-800 group-hover:text-orange-600 transition-colors leading-snug pr-2">
+                    {team.naziv}
+                  </h3>
+
+                  {/* Admin menu */}
                   {isAdmin && (
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                       <button
                         onClick={() => setOpenMenuTeamId(openMenuTeamId === team.timId ? null : team.timId)}
-                        className="p-1 rounded-lg hover:bg-amber-50 text-amber-400"
+                        className="p-2 rounded-xl hover:bg-amber-50 text-slate-400 hover:text-slate-600 transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+                        </svg>
                       </button>
                       {openMenuTeamId === team.timId && (
-                        <div className="absolute right-0 top-7 z-10 flex flex-col bg-white border border-amber-100 rounded-xl shadow-lg py-1 min-w-[140px]">
-                          <button onClick={() => { openEditModal(team); setOpenMenuTeamId(null); }} className="px-4 py-2 text-sm text-left hover:bg-amber-50 text-amber-950">Uredi</button>
+                        <div className="absolute right-0 top-9 z-10 flex flex-col bg-white border border-amber-100 rounded-2xl shadow-lg py-1 min-w-[150px]">
+                          <button
+                            onClick={() => { openEditModal(team); setOpenMenuTeamId(null); }}
+                            className="px-4 py-2.5 text-sm text-left hover:bg-amber-50 text-slate-700 font-semibold rounded-t-2xl transition-colors"
+                          >
+                            Uredi
+                          </button>
                           {deleteConfirmTeam?.timId === team.timId ? (
                             <div className="px-3 py-2 flex flex-col gap-1 border-t border-amber-50">
-                              <span className="text-xs text-red-600 font-semibold">Sigurni ste?</span>
-                              <div className="flex gap-2">
-                                <button onClick={() => handleDelete(team)} disabled={deletingTeamId === team.timId} className="flex-1 text-xs bg-red-600 text-white rounded-lg py-1 font-bold disabled:opacity-60">
+                              <span className="text-xs text-red-600 font-bold uppercase tracking-wider">Sigurni ste?</span>
+                              <div className="flex gap-2 mt-1">
+                                <button
+                                  onClick={() => handleDelete(team)}
+                                  disabled={deletingTeamId === team.timId}
+                                  className="flex-1 text-xs bg-red-600 text-white rounded-xl py-1.5 font-bold disabled:opacity-60 transition-colors"
+                                >
                                   {deletingTeamId === team.timId ? '...' : 'DA'}
                                 </button>
-                                <button onClick={() => { setDeleteConfirmTeam(null); setOpenMenuTeamId(null); }} className="flex-1 text-xs bg-amber-50 text-amber-800 rounded-lg py-1 font-bold">
+                                <button
+                                  onClick={() => { setDeleteConfirmTeam(null); setOpenMenuTeamId(null); }}
+                                  className="flex-1 text-xs bg-amber-50 text-amber-800 rounded-xl py-1.5 font-bold transition-colors"
+                                >
                                   NE
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <button onClick={() => handleDelete(team)} className="px-4 py-2 text-sm text-left hover:bg-red-50 text-red-600">Obriši</button>
+                            <button
+                              onClick={() => handleDelete(team)}
+                              className="px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 font-semibold rounded-b-2xl transition-colors"
+                            >
+                              Obriši
+                            </button>
                           )}
                         </div>
                       )}
                     </div>
                   )}
+
+                  {/* Trainer manage button */}
                   {!isAdmin && team.clanstvaUcesnika?.some(
                     c => c.korisnikId === korisnikData?.korisnikId && c.ulogaUTimu === 'TRENER' && c.status === 'ACTIVE'
                   ) && (
-                      <button
-                        onClick={() => { setCoachModalTeam(team); setCoachModalOpen(true); }}
-                        className="text-xs text-orange-600 font-semibold border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition"
-                      >
-                        Upravljaj
-                      </button>
-                    )}
+                    <button
+                      onClick={() => { setCoachModalTeam(team); setCoachModalOpen(true); }}
+                      className="flex-shrink-0 text-xs text-orange-600 font-bold border border-orange-200 rounded-xl px-3 py-1.5 hover:bg-orange-50 transition-colors uppercase tracking-wider"
+                    >
+                      Upravljaj
+                    </button>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-100">{team.sport?.naziv || 'Sport nije definisan'}</span>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${team.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>{team.status === 'ACTIVE' ? 'Aktivan' : 'Neaktivan'}</span>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-black uppercase tracking-widest rounded-lg border border-amber-100">
+                    {team.sport?.naziv || 'Sport nije definisan'}
+                  </span>
+                  <span className={`px-3 py-1 text-xs font-black uppercase tracking-widest rounded-lg ${
+                    team.status === 'ACTIVE'
+                      ? 'bg-green-50 text-green-700 border border-green-100'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}>
+                    {team.status === 'ACTIVE' ? 'Aktivan' : 'Neaktivan'}
+                  </span>
                 </div>
-                <p className="text-sm text-amber-700 line-clamp-2">{team.opis || 'Nema opisa'}</p>
+
+                {/* Description */}
+                <p className="text-sm text-slate-500 font-medium line-clamp-2 flex-1">
+                  {team.opis || 'Nema opisa'}
+                </p>
+
+                {/* Coach and Player count */}
+<div className="mt-4 pt-4 border-t border-amber-50 flex items-center gap-3">
+  {/* Trener - Suptilni prikaz */}
+  {team.clanstvaUcesnika?.some(c => c.ulogaUTimu === 'TRENER' && c.status === 'ACTIVE') && (
+    <div className="flex items-center gap-1.5">
+      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Trener: {team.clanstvaUcesnika.find(c => c.ulogaUTimu === 'TRENER' && c.status === 'ACTIVE')?.korisnik?.punoIme || 'Nije dodijeljen'}
+      </span>
+    </div>
+  )}
+
+  {/* Separator | - prikazuje se samo ako imamo i trenera i igrače */}
+  {team.clanstvaUcesnika?.some(c => c.ulogaUTimu === 'TRENER' && c.status === 'ACTIVE') && (
+    <span className="text-amber-200 font-light">|</span>
+  )}
+
+  {/* Broj igrača */}
+  {team.clanstvaUcesnika && (
+    <div className="flex items-center gap-1.5">
+      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        {team.clanstvaUcesnika.filter(c => c.ulogaUTimu === 'IGRAC' && c.status === 'ACTIVE').length} igrača
+      </span>
+    </div>
+  )}
+</div>
+
+                
               </div>
             ))}
           </div>

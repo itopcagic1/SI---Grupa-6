@@ -56,7 +56,7 @@ function MojePrijave() {
             </h1>
 
             <p className="text-slate-500 mt-2 text-lg">
-              Takmicenja na koja ste prijavili svoje timove
+              Takmičenja na koja ste prijavili svoje timove
             </p>
           </div>
 
@@ -64,7 +64,7 @@ function MojePrijave() {
             onClick={loadPrijave}
             className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg shadow-orange-600/30 transition-all active:scale-95"
           >
-            Osvjezi
+            Osvježi
           </button>
         </div>
 
@@ -73,7 +73,7 @@ function MojePrijave() {
             <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
 
             <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">
-              Ucitavanje prijava...
+              Učitavanje prijava...
             </p>
           </div>
         ) : error ? (
@@ -83,7 +83,7 @@ function MojePrijave() {
         ) : prijave.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-[32px] border border-amber-100 shadow-sm">
             <p className="text-slate-500 text-lg font-medium">
-              Jos nemate prijavljenih takmicenja.
+              Još nemate prijavljenih takmičenja.
             </p>
           </div>
         ) : (
