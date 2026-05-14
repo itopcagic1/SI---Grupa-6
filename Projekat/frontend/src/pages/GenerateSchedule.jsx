@@ -61,7 +61,7 @@ function GenerateSchedule() {
     setGenerating(true);
 
     if (!formData.defaultnaLokacija || formData.defaultnaLokacija.trim() === "") {
-      setFormError("Unesite lokaciju, molimo vas!");
+      setFormError("Unesite lokaciju!");
       document.getElementById('defaultnaLokacija')?.focus();
       setGenerating(false);
       return;
