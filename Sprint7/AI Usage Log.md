@@ -81,3 +81,79 @@ Svi generirani fajlovi su prihvaćeni.
 Irma Topčagić
 
 ---
+
+## Zapis 3
+
+**Datum:** 12.05.2026.
+
+**Sprint broj:** 7
+
+**Alat koji je korišten:** Gemini 3 Flash
+
+**Svrha korištenja:**
+Razvoj javne početne stranice (Homepage) i reorganizacija navigacije (uklanjanje Dashboarda).
+
+**Kratak opis zadatka ili upita:**
+Kreiranje modernog UI-a za "sport.ba" početnu stranicu, te uklanjanje suvišne Dashboard stranice uz prebacivanje svih funkcionalnosti direktno u Navbar i ostale dijelove aplikacije. Također, dodavanje direktnog filtriranja rasporeda klikom na ligu.
+
+**Šta je AI predložio ili generisao:**
+- Strukturu i dizajn Homepage-a s fokusom na moderne estetike
+- Logiku za uslovno prikazivanje Navbar linkova na osnovu korisničkih uloga (npr. "Generiši raspored" samo za admine/organizatore)
+- Redirect logiku za uklanjanje Dashboard-a (preusmjeravanje sa `/dashboard` na `/`)
+- Implementaciju `useSearchParams` u `Raspored.jsx` za automatsko filtriranje liga
+- Stilsko usklađivanje `GenerateSchedule.jsx` sa ostatkom aplikacije
+
+**Šta je tim prihvatio:**
+- Većinu UI dizajna i logiku za navigaciju
+- Odluku o potpunom uklanjanju Dashboard-a radi čišćeg korisničkog iskustva
+- Direktno filtriranje liga kao UX poboljšanje
+
+**Šta je tim izmijenio:**
+- AI je pružio pomoć pri osnovnoj strukturi i logici preusmjeravanja, dok je ostatak implementacije i finog podešavanja dizajna urađen od strane autora
+
+**Šta je tim odbacio:**
+- Određene vizuelne prijedloge koji se nisu uklapali u postojeći brending
+
+**Rizici, problemi ili greške koje su uočene:**
+- Potreba za ažuriranjem svih postojećih testova koji su očekivali navigaciju na `/dashboard`
+
+**Ko je koristio alat:**
+Ilma Hindija
+
+---
+
+## Zapis 4
+
+**Datum:** 13.05.2026.
+
+**Sprint broj:** 7
+
+**Alat koji je korišten:** ChatGPT-4o
+
+**Svrha korištenja:**
+Implementacija stranica za prikaz rasporeda utakmica i rezultata uz kompleksno filtriranje.
+
+**Kratak opis zadatka ili upita:**
+Razvoj `Raspored.jsx` i `Rezultati.jsx` komponenti. Dohvatanje podataka sa backenda, te implementacija višestrukih padajućih menija za filtere (po sportu, ligi, timu, datumu).
+
+**Šta je AI predložio ili generisao:**
+- Logiku za paralelno dohvatanje podataka (sportovi, lige, timovi) pomoću `Promise.all` radi znatno bržeg inicijalnog učitavanja stranice.
+- Pomoćne funkcije za bezbjedno formatiranje datuma, vremena i rezultata (tzv. *null-checking* kako aplikacija ne bi pucala na "undefined" vrijednostima).
+- Pomoć pri optimizaciji `useEffect` hookova prilikom izmjene filtera.
+
+**Šta je tim prihvatio:**
+- Predloženu asinhronu `Promise.all` strukturu i sve pomoćne funkcije za čisto renderovanje podataka.
+
+**Šta je tim izmijenio:**
+- UI komponente su prepravljene "od nule" pomoću dogovorenih Tailwind klasa kako bi se vizuelno stopile sa premium izgledom aplikacije, umjesto generičkog izgleda koji je alat predložio.
+
+**Šta je tim odbacio:**
+- Prijedlog AI-a da se svo filtriranje (pretraga i filteri) radi na frontendu (klijentskoj strani).
+
+**Rizici, problemi ili greške koje su uočene:**
+- Brisanje komponenti prije nego što se asinhroni pozivi završe je uzrokovalo "memory leak" upozorenja u Reactu, što je naknadno riješeno dodavanjem `isActive` varijable unutar `useEffect` kuka.
+
+**Ko je koristio alat:**
+Semir Jamaković
+
+---
