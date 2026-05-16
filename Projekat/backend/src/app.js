@@ -13,6 +13,10 @@ const ligaRoutes = require('./routes/ligaRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const matchRoutes = require('./routes/matchRoutes');
 const homepageRoutes = require('./routes/homepageRoutes');
+const tabelaRoutes = require('./routes/tabelaRoutes');
+
+
+
 
 const app = express();
 
@@ -44,6 +48,7 @@ app.use('/api/lige', ligaRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/homepage', homepageRoutes);
+app.use('/api/takmicenja', tabelaRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');
