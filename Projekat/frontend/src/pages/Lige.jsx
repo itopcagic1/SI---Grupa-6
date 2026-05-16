@@ -382,13 +382,19 @@ function Lige() {
                                         </div>
                                     </div>
                                 )}
-                                <div className="pt-2">
+                               <div className="pt-2 flex flex-col gap-2">
                                     <button
                                         onClick={() => openTimoviModal(liga)}
-                                        className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors mt-2"
+                                        className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-100 transition-colors"
                                     >
                                         {isAdmin ? 'Upravljaj timovima' : 'Pregledaj timove'}
                                     </button>
+                                    <Link
+                                        to={`/tabela/${liga.takmicenjeId}`}
+                                        className="w-full py-2.5 bg-green-50 text-green-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-green-100 transition-colors text-center"
+                                    >
+                                        TABELA
+                                    </Link>
                                 </div>
                             </div>
                         ))}

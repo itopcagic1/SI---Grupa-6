@@ -23,6 +23,10 @@ import PrijavaEkipe from './pages/PrijavaEkipe';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
+import Tabela from './pages/Tabela';
+
+
+
 function App() {
   return (
     <Router>
@@ -32,6 +36,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/blokiran" element={<Blokiran />} />
+        <Route path="/tabela/:id" element={<Tabela />} />
 
         <Route
           path="/admin/korisnici"
