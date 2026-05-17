@@ -8,7 +8,7 @@ export const fetchTabela = async (takmicenjeId, sortBy = 'ukupniBodovi', sezona 
   if (sezona) params.sezona = sezona;
 
   const response = await axios.get(
-    `${API_URL}/api/takmicenja/${takmicenjeId}/tabela`,
+    `${API_URL}/takmicenja/${takmicenjeId}/tabela`,
     { params }
   );
   return response.data;
