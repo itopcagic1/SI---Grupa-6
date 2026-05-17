@@ -11,4 +11,23 @@ router.post(
   matchController.generisiRaspored
 );
 
+const resultController = require('../controllers/resultController');
+
+router.post(
+  '/:id/rezultat',
+  authenticateToken,
+  resultController.kreirajRezultat
+);
+
+router.put(
+  '/:id/rezultat',
+  authenticateToken,
+  resultController.azurirajRezultat
+);
+
+router.get(
+  '/:id/rezultat',
+  resultController.dohvatiRezultat
+);
+
 module.exports = router;
