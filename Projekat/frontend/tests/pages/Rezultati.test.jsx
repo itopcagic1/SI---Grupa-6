@@ -5,6 +5,7 @@ import Rezultati from '../../src/pages/Rezultati';
 import * as matchApi from '../../src/api/matchApi';
 import * as ligaApi from '../../src/api/ligaApi';
 import * as teamApi from '../../src/api/teamApi';
+import * as statistikaApi from '../../src/api/statistikaApi';
 
 vi.mock('../../src/api/matchApi', () => ({
   fetchPublicMatches: vi.fn(),
@@ -17,6 +18,11 @@ vi.mock('../../src/api/ligaApi', () => ({
 
 vi.mock('../../src/api/teamApi', () => ({
   fetchTeams: vi.fn(),
+}));
+
+vi.mock('../../src/api/statistikaApi', () => ({
+  fetchTipoviStatistike: vi.fn(),
+  dohvatiTopStrijelce: vi.fn(),
 }));
 
 const utakmica = {
@@ -44,8 +50,10 @@ describe('Rezultati page', () => {
     localStorage.clear();
     matchApi.fetchPublicMatches.mockResolvedValue([utakmica]);
     ligaApi.fetchSportovi.mockResolvedValue([{ sportId: 1, naziv: 'Fudbal' }]);
-    ligaApi.fetchLige.mockResolvedValue({ lige: [{ takmicenjeId: 2, naziv: 'Premijer liga' }] });
+    ligaApi.fetchLige.mockResolvedValue({ lige: [{ takmicenjeId: 2, naziv: 'Premijer liga', sportId: 1 }] });
     teamApi.fetchTeams.mockResolvedValue([{ timId: 5, naziv: 'FK Tempo' }]);
+    statistikaApi.fetchTipoviStatistike.mockResolvedValue([{ tipStatistikeId: 10, nazivStatistike: 'Golovi' }]);
+    statistikaApi.dohvatiTopStrijelce.mockResolvedValue({ topStrijelci: [] });
   });
 
   it('renderuje filtere i listu utakmica', async () => {
@@ -110,5 +118,29 @@ describe('Rezultati page', () => {
     renderPage();
 
     expect(await screen.findByText('Nema rezultata za odabrane filtere.')).toBeInTheDocument();
+  });
+
+  it('prikazuje lidere statistike kada je odabrana liga', async () => {
+    statistikaApi.dohvatiTopStrijelce.mockResolvedValue({
+      takmicenje: { takmicenjeId: 2, naziv: 'Premijer liga' },
+      tipStatistike: { nazivStatistike: 'Golovi + asistencije (prosjek)' },
+      topStrijelci: [
+        {
+          igrac: { korisnikId: 42, punoIme: 'Ivan Igrac' },
+          tim: { naziv: 'FK Tempo' },
+          vrijednost: 7,
+        },
+      ],
+    });
+
+    renderPage();
+
+    await screen.findByText('FC Arena');
+
+    fireEvent.change(screen.getByLabelText('Liga'), { target: { value: '2' } });
+
+    expect(statistikaApi.fetchTipoviStatistike).not.toHaveBeenCalled();
+    expect(await screen.findByText('Lideri statistike')).toBeInTheDocument();
+    expect(screen.getByText('Ivan Igrac')).toBeInTheDocument();
   });
 });
