@@ -24,6 +24,9 @@ import PrijavaEkipe from './pages/PrijavaEkipe';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 import Tabela from './pages/Tabela';
+import StatistikaIgraca from './pages/StatistikaIgraca';
+import StatistikaTima from './pages/StatistikaTima';
+import TopStrijelci from './pages/TopStrijelci';
 
 
 
@@ -37,6 +40,9 @@ function App() {
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/blokiran" element={<Blokiran />} />
         <Route path="/tabela/:id" element={<Tabela />} />
+        <Route path="/statistika-igraca/:id" element={<StatistikaIgraca />} />
+        <Route path="/statistika-tima/:id" element={<StatistikaTima />} />
+        <Route path="/top-strijelci/:id" element={<TopStrijelci />} />
 
         <Route
           path="/admin/korisnici"

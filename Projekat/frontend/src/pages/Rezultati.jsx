@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
+import { dohvatiTopStrijelce } from '../api/statistikaApi';
 
 const initialFilters = {
   sportId: '',
@@ -78,6 +80,7 @@ function groupPlayerStatsByTeam(utakmica) {
 }
 
 function Rezultati() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState(initialFilters);
   const [reloadKey, setReloadKey] = useState(0);
   const [utakmice, setUtakmice] = useState([]);
@@ -87,6 +90,10 @@ function Rezultati() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [topStrijelci, setTopStrijelci] = useState(null);
+  const [topStrijelciLoading, setTopStrijelciLoading] = useState(false);
+  const [topStrijelciError, setTopStrijelciError] = useState('');
+  const [topStrijelciTip, setTopStrijelciTip] = useState(null);
 
   useEffect(() => {
     let isActive = true;
@@ -161,6 +168,58 @@ function Rezultati() {
     setReloadKey((current) => current + 1);
   };
 
+  const aktivnaLiga = useMemo(() => {
+    if (!filters.takmicenjeId) return null;
+    return lige.find((liga) => String(liga.takmicenjeId) === String(filters.takmicenjeId)) || null;
+  }, [filters.takmicenjeId, lige]);
+
+  const aktivniSport = useMemo(() => {
+    if (!aktivnaLiga) return null;
+    return sportovi.find((sport) => sport.sportId === aktivnaLiga.sportId) || null;
+  }, [aktivnaLiga, sportovi]);
+
+  const supportTopScorers = useMemo(() => {
+    const sportNaziv = aktivniSport?.naziv || '';
+    return Boolean(
+      aktivnaLiga &&
+      ['Fudbal', 'Kosarka', 'Košarka'].includes(sportNaziv)
+    );
+  }, [aktivniSport, aktivnaLiga]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadTopStrijelci = async () => {
+      if (!supportTopScorers || !aktivnaLiga) {
+        setTopStrijelci(null);
+        setTopStrijelciTip(null);
+        return;
+      }
+
+      try {
+        setTopStrijelciLoading(true);
+        setTopStrijelciError('');
+
+        const topData = await dohvatiTopStrijelce(aktivnaLiga.takmicenjeId, undefined, 5);
+        if (!active) return;
+
+        setTopStrijelci(topData);
+        setTopStrijelciTip(topData.tipStatistike);
+      } catch (err) {
+        if (!active) return;
+        setTopStrijelciError(err.response?.data?.poruka || 'Greška pri učitavanju lidera statistike.');
+        setTopStrijelci(null);
+      } finally {
+        if (active) setTopStrijelciLoading(false);
+      }
+    };
+
+    loadTopStrijelci();
+    return () => {
+      active = false;
+    };
+  }, [supportTopScorers, aktivnaLiga]);
+
   const rezultati = useMemo(
     () => utakmice.filter((utakmica) => getResultLabel(utakmica)),
     [utakmice]
@@ -232,6 +291,45 @@ function Rezultati() {
             </div>
           </div>
         </section>
+
+        {supportTopScorers && aktivnaLiga && (
+          <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">Lideri statistike</p>
+                <h2 className="text-2xl font-black text-slate-800">{aktivnaLiga.naziv}</h2>
+                <p className="text-slate-500 mt-2">Prikaz lidera statistike za odabranu ligu i sport.</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate(`/top-strijelci/${aktivnaLiga.takmicenjeId}`)}
+                className="px-5 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-orange-700 transition-all shadow-md shadow-orange-600/20"
+              >
+                Otvori lidere statistike
+              </button>
+            </div>
+
+            {topStrijelciLoading ? (
+              <div className="mt-6 text-sm text-slate-500">Učitavanje lidera statistike...</div>
+            ) : topStrijelciError ? (
+              <div className="mt-6 text-sm font-medium text-red-600">{topStrijelciError}</div>
+            ) : topStrijelci?.topStrijelci?.length ? (
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {topStrijelci.topStrijelci.map((igrac) => (
+                  <div key={igrac.igrac.korisnikId} className="rounded-2xl border border-amber-100 p-4 bg-slate-50">
+                    <div className="text-sm font-bold text-slate-800">{igrac.igrac.punoIme}</div>
+                    <div className="text-xs text-slate-500">{igrac.tim?.naziv || 'Tim'}</div>
+                    <div className="mt-2 text-xl font-black text-orange-600">{igrac.vrijednost.toFixed(1)}</div>
+                    <div className="text-[11px] uppercase tracking-widest text-slate-500">{topStrijelciTip?.nazivStatistike}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 text-sm text-slate-500">Nema dostupnih lidera statistike za odabranu ligu.</div>
+            )}
+          </section>
+        )}
 
         {loading ? (
           <div className="text-center py-20">
@@ -345,7 +443,20 @@ function Rezultati() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {selectedMatch.statistikeTimova.map((statistika) => (
                             <div key={statistika.statistikaTimaId} className="border border-amber-100 rounded-2xl p-5">
-                              <div className="font-black text-slate-800 mb-3">{statistika.tim?.naziv || 'Tim'}</div>
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                                <div>
+                                  <div className="font-black text-slate-800 mb-3">{statistika.tim?.naziv || 'Tim'}</div>
+                                </div>
+                                {statistika.tim?.timId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(`/statistika-tima/${statistika.tim.timId}`)}
+                                    className="self-start rounded-2xl bg-orange-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-orange-700 transition-all"
+                                  >
+                                    Statistika tima
+                                  </button>
+                                )}
+                              </div>
                               <div className="flex flex-wrap gap-2">
                                 {(statistika.vrijednosti || []).map((item) => (
                                   <span key={item.vrijednostId} className="rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
@@ -372,8 +483,21 @@ function Rezultati() {
                                 <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                                   {group.igraci.map((statistika) => (
                                     <div key={statistika.statistikaIgracaId} className="rounded-2xl bg-slate-50 px-4 py-3">
-                                      <div className="font-bold text-slate-800">{statistika.korisnik?.punoIme || 'Igrac'}</div>
-                                      <div className="text-sm text-slate-600 mt-1">{formatVrijednosti(statistika.vrijednosti)}</div>
+                                      <div className="flex flex-col gap-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                          <div className="font-bold text-slate-800">{statistika.korisnik?.punoIme || 'Igrac'}</div>
+                                          {statistika.korisnik?.korisnikId && (
+                                            <button
+                                              type="button"
+                                              onClick={() => navigate(`/statistika-igraca/${statistika.korisnik.korisnikId}`)}
+                                              className="rounded-2xl bg-slate-900 px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white hover:bg-slate-700 transition-all"
+                                            >
+                                              Statistika igrača
+                                            </button>
+                                          )}
+                                        </div>
+                                        <div className="text-sm text-slate-600 mt-1">{formatVrijednosti(statistika.vrijednosti)}</div>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
