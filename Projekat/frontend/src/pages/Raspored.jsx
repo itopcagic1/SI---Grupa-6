@@ -5,6 +5,8 @@ import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { unesiRezultat, azurirajRezultat } from '../api/resultApi';
+import { fetchTipoviStatistike, snimiStatistikuIgraca, snimiStatistikuTima } from '../api/statistikaApi';
+import { getIgrackiTipoviStatistike, getTimskiTipoviStatistike } from '../utils/statistikaTipovi';
 
 const initialFilters = {
   sportId: '',
@@ -73,6 +75,12 @@ function Raspored() {
   const [rezultatError, setRezultatError] = useState('');
   const [rezultatSuccess, setRezultatSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('nadolazece');
+  const [modalTab, setModalTab] = useState('rezultat');
+  const [tipoviStatistike, setTipoviStatistike] = useState([]);
+  const [statistikaIgracaForm, setStatistikaIgracaForm] = useState({ korisnikId: '', timId: '', vrijednosti: {} });
+  const [statistikaTimaForm, setStatistikaTimaForm] = useState({ timId: '', vrijednosti: {} });
+  const [statistikaError, setStatistikaError] = useState('');
+  const [statistikaSuccess, setStatistikaSuccess] = useState('');
 
   const korisnikStr = localStorage.getItem('korisnik');
   const korisnik = korisnikStr ? JSON.parse(korisnikStr) : null;
@@ -163,7 +171,149 @@ function Raspored() {
     }
     setRezultatError('');
     setRezultatSuccess('');
+    setStatistikaError('');
+    setStatistikaSuccess('');
+    setModalTab('rezultat');
+    setStatistikaIgracaForm({ korisnikId: '', timId: '', vrijednosti: {} });
+    setStatistikaTimaForm({
+      timId: utakmica.domaciTimId || utakmica.domaciTim?.timId || '',
+      vrijednosti: {}
+    });
     setModalOpen(true);
+  };
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadTipovi = async () => {
+      if (!modalOpen || !selectedMatch?.takmicenje?.sportId) {
+        setTipoviStatistike([]);
+        return;
+      }
+
+      try {
+        const data = await fetchTipoviStatistike(selectedMatch.takmicenje.sportId);
+        if (isActive) setTipoviStatistike(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (isActive) setStatistikaError(err.response?.data?.poruka || 'Nije moguće učitati tipove statistike.');
+      }
+    };
+
+    loadTipovi();
+
+    return () => {
+      isActive = false;
+    };
+  }, [modalOpen, selectedMatch]);
+
+  const getIgraciZaUtakmicu = () => {
+    if (!selectedMatch) return [];
+
+    const dozvoljeniTimovi = [selectedMatch.domaciTimId, selectedMatch.gostujuciTimId];
+    return timovi
+      .filter((tim) => dozvoljeniTimovi.includes(tim.timId))
+      .flatMap((tim) => (tim.clanstvaUcesnika || [])
+        .filter((clanstvo) => clanstvo.ulogaUTimu === 'IGRAC' && clanstvo.status === 'ACTIVE')
+        .map((clanstvo) => ({
+          korisnikId: clanstvo.korisnikId,
+          timId: tim.timId,
+          ime: clanstvo.korisnik?.punoIme || `Igrač #${clanstvo.korisnikId}`,
+          timNaziv: tim.naziv
+        })));
+  };
+
+  const igrackiTipoviStatistike = getIgrackiTipoviStatistike(tipoviStatistike);
+  const timskiTipoviStatistike = getTimskiTipoviStatistike(tipoviStatistike);
+
+  const mapVrijednostiPayload = (vrijednostiMap, tipoviZaFormu) => tipoviZaFormu
+    .map((tip) => ({
+      tipStatistikeId: tip.tipStatistikeId,
+      rawVrijednost: vrijednostiMap[tip.tipStatistikeId]
+    }))
+    .filter((item) => item.rawVrijednost !== '' && item.rawVrijednost !== undefined)
+    .map((item) => ({
+      tipStatistikeId: item.tipStatistikeId,
+      vrijednost: Number(item.rawVrijednost)
+    }));
+
+  const vrijednostiSuCijeliBrojevi = (vrijednosti) => vrijednosti.every((item) => (
+    Number.isInteger(item.vrijednost) && item.vrijednost >= 0
+  ));
+
+  const handleStatistikaIgracaSubmit = async (event) => {
+    event.preventDefault();
+    setStatistikaError('');
+    setStatistikaSuccess('');
+
+    if (igrackiTipoviStatistike.length === 0) {
+      setStatistikaError('Nema definisanih igračkih tipova statistike za sport ove utakmice.');
+      return;
+    }
+
+    const odabraniIgrac = getIgraciZaUtakmicu().find((igrac) => String(igrac.korisnikId) === String(statistikaIgracaForm.korisnikId));
+    if (!odabraniIgrac) {
+      setStatistikaError('Odaberite igrača iz jednog od timova na utakmici.');
+      return;
+    }
+
+    const vrijednosti = mapVrijednostiPayload(statistikaIgracaForm.vrijednosti, igrackiTipoviStatistike);
+    if (vrijednosti.length === 0) {
+      setStatistikaError('Unesite barem jednu vrijednost statistike.');
+      return;
+    }
+    if (!vrijednostiSuCijeliBrojevi(vrijednosti)) {
+      setStatistikaError('Vrijednosti statistike moraju biti cijeli nenegativni brojevi.');
+      return;
+    }
+
+    try {
+      await snimiStatistikuIgraca(selectedMatch.utakmicaId, {
+        korisnikId: odabraniIgrac.korisnikId,
+        timId: odabraniIgrac.timId,
+        vrijednosti
+      });
+      setStatistikaSuccess('Statistika igrača je sačuvana.');
+      setReloadKey((current) => current + 1);
+    } catch (err) {
+      setStatistikaError(err.response?.data?.poruka || 'Greška pri spašavanju statistike igrača.');
+    }
+  };
+
+  const handleStatistikaTimaSubmit = async (event) => {
+    event.preventDefault();
+    setStatistikaError('');
+    setStatistikaSuccess('');
+
+    if (timskiTipoviStatistike.length === 0) {
+      setStatistikaError('Nema definisanih timskih tipova statistike za sport ove utakmice.');
+      return;
+    }
+
+    if (!statistikaTimaForm.timId) {
+      setStatistikaError('Odaberite tim.');
+      return;
+    }
+
+    const vrijednosti = mapVrijednostiPayload(statistikaTimaForm.vrijednosti, timskiTipoviStatistike);
+    if (vrijednosti.length === 0) {
+      setStatistikaError('Unesite barem jednu vrijednost statistike.');
+      return;
+    }
+    if (!vrijednostiSuCijeliBrojevi(vrijednosti)) {
+      setStatistikaError('Vrijednosti statistike moraju biti cijeli nenegativni brojevi.');
+      return;
+    }
+
+    try {
+      await snimiStatistikuTima(selectedMatch.utakmicaId, {
+        timId: Number(statistikaTimaForm.timId),
+        vrijednosti
+      });
+      setStatistikaSuccess('Statistika tima je sačuvana.');
+      setReloadKey((current) => current + 1);
+    } catch (err) {
+      setStatistikaError(err.response?.data?.poruka || 'Greška pri spašavanju statistike tima.');
+    }
   };
 
   const handleResultSubmit = async (e) => {
@@ -392,7 +542,7 @@ function Raspored() {
         {/* Modal za unos rezultata */}
         {modalOpen && selectedMatch && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <div className="px-8 py-6 border-b border-amber-50 flex justify-between items-center bg-white z-10">
                 <h2 className="text-2xl font-black text-slate-800">
                   {selectedMatch.rezultatUtakmice ? 'Koriguj Rezultat' : 'Unesi Rezultat'}
@@ -403,7 +553,7 @@ function Raspored() {
                   </svg>
                 </button>
               </div>
-              <div className="px-8 py-6 flex-1">
+              <div className="px-8 py-6 flex-1 overflow-y-auto">
                 {rezultatError && (
                   <div className="mb-6 px-5 py-3.5 bg-red-50 border-2 border-red-200 text-red-700 rounded-2xl text-sm font-bold">{rezultatError}</div>
                 )}
@@ -423,6 +573,24 @@ function Raspored() {
                   </div>
                 </div>
 
+                <div className="flex gap-3 mb-6 border-b border-amber-100 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalTab('rezultat')}
+                    className={`px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${modalTab === 'rezultat' ? 'bg-orange-600 text-white' : 'bg-amber-50 text-slate-600'}`}
+                  >
+                    Rezultat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalTab('statistika')}
+                    className={`px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${modalTab === 'statistika' ? 'bg-orange-600 text-white' : 'bg-amber-50 text-slate-600'}`}
+                  >
+                    Statistika
+                  </button>
+                </div>
+
+                {modalTab === 'rezultat' && (
                 <form id="rezultatForm" onSubmit={handleResultSubmit} className="flex gap-4 items-center justify-center">
                   <input
                     type="number"
@@ -442,10 +610,102 @@ function Raspored() {
                     required
                   />
                 </form>
+                )}
+
+                {modalTab === 'statistika' && (
+                  <div className="space-y-6">
+                    {statistikaError && (
+                      <div className="px-5 py-3.5 bg-red-50 border-2 border-red-200 text-red-700 rounded-2xl text-sm font-bold">{statistikaError}</div>
+                    )}
+                    {statistikaSuccess && (
+                      <div className="px-5 py-3.5 bg-green-50 border-2 border-green-200 text-green-700 rounded-2xl text-sm font-bold">{statistikaSuccess}</div>
+                    )}
+                    {tipoviStatistike.length === 0 && (
+                      <div className="px-5 py-3.5 bg-amber-50 border-2 border-amber-200 text-amber-800 rounded-2xl text-sm font-bold">
+                        Nema definisanih tipova statistike za sport ove utakmice.
+                      </div>
+                    )}
+                    {tipoviStatistike.length > 0 && igrackiTipoviStatistike.length === 0 && timskiTipoviStatistike.length === 0 && (
+                      <div className="px-5 py-3.5 bg-amber-50 border-2 border-amber-200 text-amber-800 rounded-2xl text-sm font-bold">
+                        Nema relevantnih tipova statistike za unos.
+                      </div>
+                    )}
+
+                    <form onSubmit={handleStatistikaIgracaSubmit} className="border border-amber-100 rounded-2xl p-5">
+                      <div className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika igrača</div>
+                      <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">Igrač</label>
+                      <select
+                        value={statistikaIgracaForm.korisnikId}
+                        onChange={(e) => setStatistikaIgracaForm({ ...statistikaIgracaForm, korisnikId: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-slate-700 mb-4"
+                      >
+                        <option value="">Odaberite igrača</option>
+                        {getIgraciZaUtakmicu().map((igrac) => (
+                          <option key={`${igrac.timId}-${igrac.korisnikId}`} value={igrac.korisnikId}>
+                            {igrac.ime} - {igrac.timNaziv}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {igrackiTipoviStatistike.map((tip) => (
+                          <div key={tip.tipStatistikeId}>
+                            <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">{tip.nazivStatistike}</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={statistikaIgracaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
+                              onChange={(e) => setStatistikaIgracaForm({
+                                ...statistikaIgracaForm,
+                                vrijednosti: { ...statistikaIgracaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
+                              })}
+                              className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <button type="submit" className="mt-5 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 transition-all">Spasi igrača</button>
+                    </form>
+
+                    <form onSubmit={handleStatistikaTimaSubmit} className="border border-amber-100 rounded-2xl p-5">
+                      <div className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika tima</div>
+                      <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">Tim</label>
+                      <select
+                        value={statistikaTimaForm.timId}
+                        onChange={(e) => setStatistikaTimaForm({ ...statistikaTimaForm, timId: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-slate-700 mb-4"
+                      >
+                        <option value={selectedMatch.domaciTimId}>{selectedMatch.domaciTim?.naziv}</option>
+                        <option value={selectedMatch.gostujuciTimId}>{selectedMatch.gostujuciTim?.naziv}</option>
+                      </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {timskiTipoviStatistike.map((tip) => (
+                          <div key={tip.tipStatistikeId}>
+                            <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">{tip.nazivStatistike}</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={statistikaTimaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
+                              onChange={(e) => setStatistikaTimaForm({
+                                ...statistikaTimaForm,
+                                vrijednosti: { ...statistikaTimaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
+                              })}
+                              className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <button type="submit" className="mt-5 px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all">Spasi tim</button>
+                    </form>
+                  </div>
+                )}
               </div>
               <div className="px-8 py-5 border-t border-amber-50 bg-slate-50 flex justify-end gap-3 rounded-b-[32px]">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-6 py-3.5 bg-white border-2 border-amber-200 text-slate-700 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm">Otkaži</button>
-                <button type="submit" form="rezultatForm" className="px-8 py-3.5 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-orange-700 transition-all shadow-lg active:scale-95">Spasi</button>
+                {modalTab === 'rezultat' && (
+                  <button type="submit" form="rezultatForm" className="px-8 py-3.5 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-orange-700 transition-all shadow-lg active:scale-95">Spasi</button>
+                )}
               </div>
             </div>
           </div>

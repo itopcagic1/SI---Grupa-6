@@ -29,6 +29,9 @@ const mockPrisma = {
   vrijednostStatistikeIgraca: {
     deleteMany: jest.fn(),
   },
+  plasmanNaTabeli: {
+    deleteMany: jest.fn(),
+  },
   $transaction: jest.fn(async (fn) => fn(mockPrisma)),
 };
 
@@ -136,6 +139,9 @@ describe('matchService', () => {
 
       expect(result.brojKreiranihUtakmica).toBe(1);
       expect(result.utakmice).toHaveLength(1);
+      expect(mockPrisma.plasmanNaTabeli.deleteMany).toHaveBeenCalledWith({
+        where: { takmicenjeId: 1 }
+      });
     });
 
     test('baca grešku ako takmičenje ne postoji', async () => {

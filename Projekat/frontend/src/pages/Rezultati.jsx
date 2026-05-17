@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
@@ -48,6 +48,35 @@ function getResultLabel(utakmica) {
   return `${rezultat.rezultatDomacin} : ${rezultat.rezultatGost}`;
 }
 
+function formatVrijednosti(vrijednosti = []) {
+  return vrijednosti
+    .map((item) => `${item.tipStatistike?.nazivStatistike || 'Statistika'}: ${item.vrijednost}`)
+    .join(', ');
+}
+
+function hasStatistike(utakmica) {
+  return Boolean(utakmica?.statistikeTimova?.length || utakmica?.statistikeIgraca?.length);
+}
+
+function groupPlayerStatsByTeam(utakmica) {
+  const groups = new Map();
+  const timovi = [utakmica.domaciTim, utakmica.gostujuciTim].filter(Boolean);
+
+  timovi.forEach((tim) => {
+    groups.set(tim.timId, { tim, igraci: [] });
+  });
+
+  (utakmica.statistikeIgraca || []).forEach((statistika) => {
+    const tim = statistika.tim || { timId: statistika.timId, naziv: 'Tim' };
+    if (!groups.has(tim.timId)) {
+      groups.set(tim.timId, { tim, igraci: [] });
+    }
+    groups.get(tim.timId).igraci.push(statistika);
+  });
+
+  return Array.from(groups.values());
+}
+
 function Rezultati() {
   const [filters, setFilters] = useState(initialFilters);
   const [reloadKey, setReloadKey] = useState(0);
@@ -57,6 +86,7 @@ function Rezultati() {
   const [timovi, setTimovi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
     let isActive = true;
@@ -76,7 +106,7 @@ function Rezultati() {
         setTimovi(normalizeList(timoviData, ['timovi', 'podaci']));
       } catch (err) {
         if (isActive) {
-          console.error('Greška pri učitavanju filtera:', err);
+          console.error('Greska pri ucitavanju filtera:', err);
         }
       }
     };
@@ -101,7 +131,7 @@ function Rezultati() {
         }
       } catch (err) {
         if (isActive) {
-          setError(err.response?.data?.poruka || 'Nije moguće učitati rezultate.');
+          setError(err.response?.data?.poruka || 'Nije moguce ucitati rezultate.');
           setUtakmice([]);
         }
       } finally {
@@ -131,7 +161,10 @@ function Rezultati() {
     setReloadKey((current) => current + 1);
   };
 
-  const rezultati = utakmice.filter((utakmica) => getResultLabel(utakmica));
+  const rezultati = useMemo(
+    () => utakmice.filter((utakmica) => getResultLabel(utakmica)),
+    [utakmice]
+  );
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
@@ -203,7 +236,7 @@ function Rezultati() {
         {loading ? (
           <div className="text-center py-20">
             <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Učitavanje rezultata...</p>
+            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Ucitavanje rezultata...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200 text-center font-bold">
@@ -220,19 +253,20 @@ function Rezultati() {
                 <thead>
                   <tr className="bg-amber-50 text-left">
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Liga</th>
-                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Domaći tim</th>
-                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Gostujući tim</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Domaci tim</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Gostujuci tim</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60 text-center">Rezultat</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Datum</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Lokacija</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60 text-right">Akcije</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rezultati.map((utakmica) => (
                     <tr key={utakmica.utakmicaId} className="border-t border-amber-50 hover:bg-amber-50 transition-colors">
-                      <td className="px-5 py-4 font-bold text-orange-600">{utakmica.takmicenje?.naziv || 'Takmičenje nije definisano'}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.domaciTim?.naziv || 'Domaći tim'}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.gostujuciTim?.naziv || 'Gostujući tim'}</td>
+                      <td className="px-5 py-4 font-bold text-orange-600">{utakmica.takmicenje?.naziv || 'Takmicenje nije definisano'}</td>
+                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.domaciTim?.naziv || 'Domaci tim'}</td>
+                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.gostujuciTim?.naziv || 'Gostujuci tim'}</td>
                       <td className="px-5 py-4 text-center">
                         <span className="inline-flex min-w-20 justify-center rounded-2xl bg-orange-50 px-4 py-2 text-lg font-black text-orange-600">
                           {getResultLabel(utakmica)}
@@ -240,10 +274,122 @@ function Rezultati() {
                       </td>
                       <td className="px-5 py-4 text-slate-600">{formatDateTime(utakmica.vrijemePocetka)}</td>
                       <td className="px-5 py-4 text-slate-600">{getLocationLabel(utakmica)}</td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMatch(utakmica)}
+                          className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                        >
+                          Detalji
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {selectedMatch && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="bg-white w-full max-w-4xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="px-8 py-6 border-b border-amber-50 flex justify-between items-start gap-4">
+                <div>
+                  <div className="text-xs font-black uppercase tracking-widest text-orange-600 mb-2">
+                    {selectedMatch.takmicenje?.naziv || 'Takmicenje'}
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-800">Detalji utakmice</h2>
+                </div>
+                <button onClick={() => setSelectedMatch(null)} className="text-slate-400 hover:text-slate-600 p-2 bg-slate-50 rounded-full transition-colors">
+                  <span className="sr-only">Zatvori</span>
+                  X
+                </button>
+              </div>
+
+              <div className="px-8 py-6 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center text-center mb-6">
+                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Domaci tim</div>
+                    <div className="text-lg font-black text-slate-800">{selectedMatch.domaciTim?.naziv || 'Domaci tim'}</div>
+                  </div>
+                  <div className="rounded-2xl bg-orange-50 px-6 py-4 border border-orange-100">
+                    <div className="text-3xl font-black text-orange-600">{getResultLabel(selectedMatch)}</div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Gostujuci tim</div>
+                    <div className="text-lg font-black text-slate-800">{selectedMatch.gostujuciTim?.naziv || 'Gostujuci tim'}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium text-slate-500 mb-8">
+                  <div className="bg-slate-50 rounded-2xl px-4 py-3">
+                    <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Datum i vrijeme</span>
+                    <span className="text-slate-800">{formatDateTime(selectedMatch.vrijemePocetka)}</span>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl px-4 py-3">
+                    <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Lokacija</span>
+                    <span className="text-slate-800">{getLocationLabel(selectedMatch)}</span>
+                  </div>
+                </div>
+
+                {!hasStatistike(selectedMatch) ? (
+                  <div className="text-center py-12 bg-amber-50 rounded-2xl border border-amber-100">
+                    <p className="text-slate-600 font-bold">Statistika nije unesena.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    <section>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika timova</h3>
+                      {selectedMatch.statistikeTimova?.length ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {selectedMatch.statistikeTimova.map((statistika) => (
+                            <div key={statistika.statistikaTimaId} className="border border-amber-100 rounded-2xl p-5">
+                              <div className="font-black text-slate-800 mb-3">{statistika.tim?.naziv || 'Tim'}</div>
+                              <div className="flex flex-wrap gap-2">
+                                {(statistika.vrijednosti || []).map((item) => (
+                                  <span key={item.vrijednostId} className="rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                                    {item.tipStatistike?.nazivStatistike || 'Statistika'}: {item.vrijednost}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-slate-500">Timska statistika nije unesena.</p>
+                      )}
+                    </section>
+
+                    <section>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika igraca</h3>
+                      {selectedMatch.statistikeIgraca?.length ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {groupPlayerStatsByTeam(selectedMatch).map((group) => (
+                            <div key={group.tim.timId} className="border border-amber-100 rounded-2xl p-5">
+                              <div className="font-black text-slate-800 mb-4">{group.tim.naziv}</div>
+                              {group.igraci.length ? (
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                  {group.igraci.map((statistika) => (
+                                    <div key={statistika.statistikaIgracaId} className="rounded-2xl bg-slate-50 px-4 py-3">
+                                      <div className="font-bold text-slate-800">{statistika.korisnik?.punoIme || 'Igrac'}</div>
+                                      <div className="text-sm text-slate-600 mt-1">{formatVrijednosti(statistika.vrijednosti)}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm font-medium text-slate-500">Nema unesene statistike za ovaj tim.</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-slate-500">Statistika igraca nije unesena.</p>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

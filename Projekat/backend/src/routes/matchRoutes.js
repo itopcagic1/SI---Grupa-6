@@ -12,6 +12,7 @@ router.post(
 );
 
 const resultController = require('../controllers/resultController');
+const statistikaController = require('../controllers/statistikaController');
 
 router.post(
   '/:id/rezultat',
@@ -28,6 +29,18 @@ router.put(
 router.get(
   '/:id/rezultat',
   resultController.dohvatiRezultat
+);
+
+router.post(
+  '/:id/statistika/igraci',
+  authenticateToken,
+  statistikaController.snimiStatistikuIgraca
+);
+
+router.post(
+  '/:id/statistika/timovi',
+  authenticateToken,
+  statistikaController.snimiStatistikuTima
 );
 
 module.exports = router;

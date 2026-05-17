@@ -56,6 +56,19 @@ async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo
           rezultatGost: true,
           datumUnosa: true
         }
+      },
+      statistikeIgraca: {
+        include: {
+          korisnik: { select: { korisnikId: true, punoIme: true } },
+          tim: { select: { timId: true, naziv: true } },
+          vrijednosti: { include: { tipStatistike: true } }
+        }
+      },
+      statistikeTimova: {
+        include: {
+          tim: { select: { timId: true, naziv: true } },
+          vrijednosti: { include: { tipStatistike: true } }
+        }
       }
     },
     orderBy: { vrijemePocetka: 'asc' }
@@ -103,6 +116,10 @@ async function generisiRaspored({ takmicenjeId, pocetniDatum, defaultnoVrijeme, 
 
 
   await prisma.$transaction(async (tx) => {
+    await tx.plasmanNaTabeli.deleteMany({
+      where: { takmicenjeId: Number(takmicenjeId) }
+    });
+
     // 1. Dohvati ID-eve svih utakmica koje treba obrisati
     const utakmiceZaBrisanje = await tx.utakmica.findMany({
       where: { takmicenjeId: Number(takmicenjeId) },
