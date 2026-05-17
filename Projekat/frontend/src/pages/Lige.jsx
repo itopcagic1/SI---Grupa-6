@@ -363,7 +363,7 @@ function Lige() {
                                     </div>
                                 </div>
 
-                                {isAdminOrOrganizer && (
+                                { (isAdmin || (korisnik?.trenutnaUloga === 'ORGANIZATOR' && liga.organizatorId === korisnik?.korisnikId)) && (
                                     <div className="pt-4 border-t border-amber-50 flex flex-col gap-2">
                                         <div className="flex gap-3">
                                             <button

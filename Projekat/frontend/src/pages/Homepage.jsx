@@ -268,7 +268,7 @@ const Homepage = () => {
                     </div>
                     
                     <div className="w-full md:w-1/5 text-right text-sm font-medium text-slate-500 mt-4 md:mt-0 flex items-center justify-end gap-2">
-                      <CalendarIcon /> {formatDate(rezultat.datumUnosa)}
+                      <CalendarIcon /> {formatDate(rezultat.utakmica.vrijemePocetka)}
                     </div>
                   </div>
                 ))}

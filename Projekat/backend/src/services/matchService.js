@@ -38,6 +38,7 @@ async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo
           takmicenjeId: true,
           naziv: true,
           sportId: true,
+          organizatorId: true,
           sport: { select: { sportId: true, naziv: true } }
         }
       },
