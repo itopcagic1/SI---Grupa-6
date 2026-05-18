@@ -30,6 +30,7 @@ import StatistikaTima from './pages/StatistikaTima';
 import TopStrijelci from './pages/TopStrijelci';
 
 import FacilitiesPage from './pages/FacilitiesPage'; 
+import FacilityTermsPage from './pages/FacilityTermsPage';
 
 
 function App() {
@@ -100,8 +101,16 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/objekti" element={<FacilitiesPage />} />
+        <Route
+          path="/objekti/:id/termini"
+          element={
+            <ProtectedRoute>
+              <FacilityTermsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </Router>

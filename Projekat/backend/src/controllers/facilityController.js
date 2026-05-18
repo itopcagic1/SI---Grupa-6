@@ -59,10 +59,72 @@ const deleteFacility = async (req, res) => {
   }
 };
 
+const createFacilityTerms = async (req, res) => {
+  try {
+    const termini = await facilityService.createFacilityTermsService(req.params.id, req.body, req.user);
+    res.status(201).json({
+      poruka: "Termini su uspjesno kreirani.",
+      brojKreiranihTermina: termini.length,
+      termini
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_KREIRANJA_TERMINA',
+      poruka: error.message || 'Greska prilikom kreiranja termina.'
+    });
+  }
+};
+
+const getFacilityTerms = async (req, res) => {
+  try {
+    const termini = await facilityService.getFacilityTermsService(req.params.id, req.query);
+    res.json({ termini });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_DOHVATANJA_TERMINA',
+      poruka: error.message || 'Greska pri dohvatanju termina.'
+    });
+  }
+};
+
+const updateFacilityTerm = async (req, res) => {
+  try {
+    const termin = await facilityService.updateFacilityTermService(req.params.id, req.body, req.user);
+    res.json({
+      poruka: "Termin je uspjesno izmijenjen.",
+      termin
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_IZMJENE_TERMINA',
+      poruka: error.message || 'Greska prilikom izmjene termina.'
+    });
+  }
+};
+
+const blockFacilityTerm = async (req, res) => {
+  try {
+    const termin = await facilityService.blockFacilityTermService(req.params.id, req.user);
+    res.json({
+      poruka: "Termin je uspjesno blokiran.",
+      termin
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      greska: error.code || 'GRESKA_BRISANJA_TERMINA',
+      poruka: error.message || 'Greska prilikom brisanja termina.'
+    });
+  }
+};
+
 module.exports = {
   createFacility,
   getAllFacilities,
   getFacilityById,
   updateFacility,
-  deleteFacility
+  deleteFacility,
+  createFacilityTerms,
+  getFacilityTerms,
+  updateFacilityTerm,
+  blockFacilityTerm
 };
