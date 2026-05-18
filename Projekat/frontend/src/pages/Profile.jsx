@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 const Profile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:3000/api/auth/profile', {
+            const res = await axios.get(`${API_URL}/auth/profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(res.data.korisnik);
@@ -44,7 +46,7 @@ const Profile = () => {
         }
         try {
             const token = localStorage.getItem('token');
-            await axios.patch('http://localhost:3000/api/auth/change-password', passwordData, {
+            await axios.patch(`${API_URL}/auth/change-password`, passwordData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessage({ type: 'success', text: 'Lozinka uspješno promijenjena!' });

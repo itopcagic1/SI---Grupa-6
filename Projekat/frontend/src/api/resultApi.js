@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/matches';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/matches`;
 
 export const unesiRezultat = async (utakmicaId, rezultatDomacin, rezultatGost) => {
   const token = localStorage.getItem('token');

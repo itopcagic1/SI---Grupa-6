@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios'; 
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
-const API_URL = 'http://localhost:3000/api/objekti';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/objekti`;
 
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
@@ -310,6 +311,12 @@ export default function FacilitiesPage() {
                             </div>
                           ) : (
                             <div className="flex justify-end gap-2">
+                              <Link
+                                to={`/objekti/${facility.objekatId}/termini`}
+                                className="px-4 py-1.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl font-bold text-xs hover:bg-blue-100 transition-colors"
+                              >
+                                Termini
+                              </Link>
                               <button 
                                 onClick={() => handleEdit(facility)}
                                 className="px-4 py-1.5 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl font-bold text-xs hover:bg-amber-100 transition-colors"
