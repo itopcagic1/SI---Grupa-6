@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Homepage from './pages/Homepage';
 import Register from './pages/Register';
@@ -28,6 +29,7 @@ import StatistikaIgraca from './pages/StatistikaIgraca';
 import StatistikaTima from './pages/StatistikaTima';
 import TopStrijelci from './pages/TopStrijelci';
 
+import FacilitiesPage from './pages/FacilitiesPage'; 
 
 
 function App() {
@@ -99,6 +101,7 @@ function App() {
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/objekti" element={<FacilitiesPage />} />
 
       </Routes>
     </Router>
