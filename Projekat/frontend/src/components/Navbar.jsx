@@ -20,6 +20,11 @@ const Navbar = () => {
     korisnik?.trenutnaUloga === 'TRENER' ||
     korisnik?.uloga === 'TRENER';
 
+  // DODANO: Provjera da li je prijavljeni korisnik Vlasnik objekta
+  const isOwner =
+    korisnik?.trenutnaUloga === 'VLASNIK' ||
+    korisnik?.uloga === 'VLASNIK';
+
   const handleLogout = async () => {
     try {
       if (token) await logoutUser(token);
@@ -96,6 +101,15 @@ const Navbar = () => {
               </Link>
             </>
           )}
+
+          {/* IZMJENA: Link se sada prikazuje samo ako je korisnik prijavljen I ako ima ulogu vlasnika (ili admina ako admin treba imati pristup) */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated && (isOwner || isAdmin) && (
+              <Link to="/objekti" className={navLinkClass('/objekti')}>
+                Sportski Objekti
+              </Link>
+            )}
+          </div>
 
           {isAuthenticated && (
             <Link to="/profile" className={navLinkClass('/profile')}>

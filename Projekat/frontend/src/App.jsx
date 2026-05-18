@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Homepage from './pages/Homepage';
 import Register from './pages/Register';
@@ -25,6 +26,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 import Tabela from './pages/Tabela';
 
+import FacilitiesPage from './pages/FacilitiesPage'; 
 
 
 function App() {
@@ -93,6 +95,7 @@ function App() {
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/objekti" element={<FacilitiesPage />} />
 
       </Routes>
     </Router>
