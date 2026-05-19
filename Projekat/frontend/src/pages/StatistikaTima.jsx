@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { dohvatiStatistikuTima, dohvatiTakmicenjaTima } from '../api/statistikaApi';
+import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
 
 function StatistikaTima() {
   const { id } = useParams(); // timId iz URL-a
@@ -182,7 +183,7 @@ function StatistikaTima() {
                         {stat.nazivStatistike}
                       </td>
                       <td className="px-5 py-4 text-center font-black text-orange-600">
-                        {stat.ukupno.toFixed(1)}
+                        {formatStatistikaVrijednost(stat.nazivStatistike, stat.ukupno, { mode: 'aggregate' })}
                       </td>
                     </tr>
                   ))}

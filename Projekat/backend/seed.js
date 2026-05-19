@@ -10,30 +10,86 @@ function normalizeSportName(naziv) {
 }
 
 async function main() {
+  const sportsToEnsure = [
+    { naziv: 'Fudbal', opis: 'Fudbal', jeTimskiSport: true },
+    { naziv: 'Kosarka', opis: 'Kosarka', jeTimskiSport: true },
+    { naziv: 'Odbojka', opis: 'Odbojka', jeTimskiSport: true },
+    { naziv: 'Tenis', opis: 'Tenis', jeTimskiSport: false },
+    { naziv: 'Rukomet', opis: 'Rukomet', jeTimskiSport: true },
+    { naziv: 'Hokej na ledu', opis: 'Hokej na ledu', jeTimskiSport: true },
+    { naziv: 'Plivanje', opis: 'Plivanje', jeTimskiSport: false }
+  ];
+
+  for (const sport of sportsToEnsure) {
+    const postoji = await prisma.sport.findFirst({
+      where: { naziv: sport.naziv }
+    });
+
+    if (!postoji) {
+      await prisma.sport.create({ data: sport });
+    }
+  }
+
   const sports = await prisma.sport.findMany();
   console.log('SPORTS:', sports);
 
-  if (sports.length === 0) {
-    await prisma.sport.createMany({
-      data: [
-        { naziv: 'Fudbal', opis: 'Fudbal', jeTimskiSport: true },
-        { naziv: 'Kosarka', opis: 'Kosarka', jeTimskiSport: true },
-        { naziv: 'Tenis', opis: 'Tenis', jeTimskiSport: false }
-      ]
-    });
-    console.log('Seeded sports.');
-  } else {
-    console.log('Sports already exist.');
-  }
-
   const defaultTipovi = {
-    fudbal: ['Golovi', 'Asistencije', 'Zuti kartoni', 'Crveni kartoni', 'Prekrsaji', 'Posjed lopte'],
-    kosarka: ['Poeni', 'Asistencije', 'Skokovi', 'Prekrsaji', 'Blokade', 'Ukradene lopte'],
-    odbojka: ['Poeni', 'Asistencije', 'Blokovi', 'Servis greske'],
-    tenis: ['Asevi', 'Dvostruke greske', 'Winneri', 'Neiznudjene greske'],
-    rukomet: ['Golovi', 'Asistencije', 'Iskljucenja', 'Zuti kartoni', 'Odbrane'],
-    plivanje: ['Vrijeme', 'Pozicija', 'Bodovi'],
-    'hokej na ledu': ['Golovi', 'Asistencije', 'Kazne', 'Sutevi']
+    fudbal: [
+      'Golovi',
+      'Asistencije',
+      'Zuti kartoni',
+      'Crveni kartoni',
+      'Golovi iz penala',
+      'Sutevi u okvir',
+      'Prekrsaji',
+      'Posjed lopte',
+      'Korneri'
+    ],
+    kosarka: [
+      'Poeni',
+      'Asistencije',
+      'Skokovi',
+      'Ukradene lopte',
+      'Blokovi',
+      'Prekrsaji',
+      'Pogodjene trojke',
+      'Izgubljene lopte'
+    ],
+    odbojka: [
+      'Poeni',
+      'Asevi',
+      'Blokovi',
+      'Digovi',
+      'Greske'
+    ],
+    tenis: [
+      'Asevi',
+      'Dvostruke greske',
+      'Winneri',
+      'Neiznudjene greske'
+    ],
+    rukomet: [
+      'Golovi',
+      'Asistencije',
+      'Odbrane',
+      'Prekrsaji',
+      'Zuti kartoni',
+      'Crveni kartoni'
+    ],
+    'hokej na ledu': [
+      'Golovi',
+      'Asistencije',
+      'Kazneni minuti',
+      'Odbrane',
+      'Sutevi na gol'
+    ],
+    plivanje: [
+      'Vrijeme trke',
+      'Pozicija',
+      'Licni rekord',
+      'Poeni',
+      'Medalje'
+    ]
   };
 
   const sviSportovi = await prisma.sport.findMany();

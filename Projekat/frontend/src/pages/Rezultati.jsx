@@ -5,6 +5,7 @@ import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { dohvatiTopStrijelce } from '../api/statistikaApi';
+import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
 
 const initialFilters = {
   sportId: '',
@@ -52,7 +53,7 @@ function getResultLabel(utakmica) {
 
 function formatVrijednosti(vrijednosti = []) {
   return vrijednosti
-    .map((item) => `${item.tipStatistike?.nazivStatistike || 'Statistika'}: ${item.vrijednost}`)
+    .map((item) => `${item.tipStatistike?.nazivStatistike || 'Statistika'}: ${formatStatistikaVrijednost(item.tipStatistike, item.vrijednost)}`)
     .join(', ');
 }
 
@@ -460,7 +461,7 @@ function Rezultati() {
                               <div className="flex flex-wrap gap-2">
                                 {(statistika.vrijednosti || []).map((item) => (
                                   <span key={item.vrijednostId} className="rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                                    {item.tipStatistike?.nazivStatistike || 'Statistika'}: {item.vrijednost}
+                                    {item.tipStatistike?.nazivStatistike || 'Statistika'}: {formatStatistikaVrijednost(item.tipStatistike, item.vrijednost)}
                                   </span>
                                 ))}
                               </div>

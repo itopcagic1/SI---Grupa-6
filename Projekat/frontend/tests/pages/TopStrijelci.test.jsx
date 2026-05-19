@@ -19,9 +19,13 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-vi.mock('../../src/utils/statistikaTipovi', () => ({
-  getIgrackiTipoviStatistike: (tipovi) => tipovi,
-}));
+vi.mock('../../src/utils/statistikaTipovi', async () => {
+  const actual = await vi.importActual('../../src/utils/statistikaTipovi');
+  return {
+    ...actual,
+    getIgrackiTipoviStatistike: (tipovi) => tipovi,
+  };
+});
 
 describe('TopStrijelci stranica', () => {
   beforeEach(() => {

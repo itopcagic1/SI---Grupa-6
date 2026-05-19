@@ -14,8 +14,8 @@ const mockPrisma = {
     findUnique: jest.fn(),
   },
   vrijednostStatistikeIgraca: {
-    findFirst: jest.fn(),
-    create: jest.fn(),
+    findMany: jest.fn(),
+    createMany: jest.fn(),
     update: jest.fn(),
   },
   statistikaTimaNaUtakmici: {
@@ -24,8 +24,8 @@ const mockPrisma = {
     findUnique: jest.fn(),
   },
   vrijednostStatistikeTima: {
-    findFirst: jest.fn(),
-    create: jest.fn(),
+    findMany: jest.fn(),
+    createMany: jest.fn(),
     update: jest.fn(),
   },
   $transaction: jest.fn(async (fn) => fn(mockPrisma)),
@@ -61,13 +61,13 @@ describe('statistikaService', () => {
     mockPrisma.statistikaIgracaNaUtakmici.findFirst.mockResolvedValue(null);
     mockPrisma.statistikaIgracaNaUtakmici.create.mockResolvedValue({ statistikaIgracaId: 7 });
     mockPrisma.statistikaIgracaNaUtakmici.findUnique.mockResolvedValue({ statistikaIgracaId: 7 });
-    mockPrisma.vrijednostStatistikeIgraca.findFirst.mockResolvedValue(null);
-    mockPrisma.vrijednostStatistikeIgraca.create.mockResolvedValue({ vrijednostId: 9 });
+    mockPrisma.vrijednostStatistikeIgraca.findMany.mockResolvedValue([]);
+    mockPrisma.vrijednostStatistikeIgraca.createMany.mockResolvedValue({ count: 1 });
     mockPrisma.statistikaTimaNaUtakmici.findFirst.mockResolvedValue(null);
     mockPrisma.statistikaTimaNaUtakmici.create.mockResolvedValue({ statistikaTimaId: 8 });
     mockPrisma.statistikaTimaNaUtakmici.findUnique.mockResolvedValue({ statistikaTimaId: 8 });
-    mockPrisma.vrijednostStatistikeTima.findFirst.mockResolvedValue(null);
-    mockPrisma.vrijednostStatistikeTima.create.mockResolvedValue({ vrijednostId: 10 });
+    mockPrisma.vrijednostStatistikeTima.findMany.mockResolvedValue([]);
+    mockPrisma.vrijednostStatistikeTima.createMany.mockResolvedValue({ count: 1 });
   });
 
   test('dohvata tipove statistike za sport', async () => {
@@ -108,7 +108,7 @@ describe('statistikaService', () => {
 
   test('azurira postojecu vrijednost umjesto duplikata', async () => {
     mockPrisma.statistikaIgracaNaUtakmici.findFirst.mockResolvedValue({ statistikaIgracaId: 7 });
-    mockPrisma.vrijednostStatistikeIgraca.findFirst.mockResolvedValue({ vrijednostId: 9 });
+    mockPrisma.vrijednostStatistikeIgraca.findMany.mockResolvedValue([{ vrijednostId: 9, tipStatistikeId: 1 }]);
 
     await statistikaService.snimiStatistikuIgraca(1, {
       korisnikId: 200,
@@ -119,7 +119,7 @@ describe('statistikaService', () => {
       where: { vrijednostId: 9 },
       data: { vrijednost: 4 },
     });
-    expect(mockPrisma.vrijednostStatistikeIgraca.create).not.toHaveBeenCalled();
+    expect(mockPrisma.vrijednostStatistikeIgraca.createMany).not.toHaveBeenCalled();
   });
 
   test('odbija tip statistike koji nije vezan za sport utakmice', async () => {
@@ -140,8 +140,8 @@ describe('statistikaService', () => {
     expect(mockPrisma.statistikaTimaNaUtakmici.create).toHaveBeenCalledWith({
       data: { utakmicaId: 1, timId: 20 },
     });
-    expect(mockPrisma.vrijednostStatistikeTima.create).toHaveBeenCalledWith({
-      data: { statistikaTimaId: 8, tipStatistikeId: 1, vrijednost: 55 },
+    expect(mockPrisma.vrijednostStatistikeTima.createMany).toHaveBeenCalledWith({
+      data: [{ statistikaTimaId: 8, tipStatistikeId: 1, vrijednost: 55 }],
     });
   });
 

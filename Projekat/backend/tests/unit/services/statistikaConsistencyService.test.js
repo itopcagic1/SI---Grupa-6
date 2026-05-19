@@ -11,6 +11,7 @@ function vrijednost(id, nazivStatistike, value) {
 function utakmicaSaStatistikom({
   rezultatDomacin = 2,
   rezultatGost = 1,
+  sportNaziv = 'Fudbal',
   statistikeIgraca = [],
   statistikeTimova = []
 } = {}) {
@@ -18,6 +19,11 @@ function utakmicaSaStatistikom({
     utakmicaId: 1,
     domaciTimId: 20,
     gostujuciTimId: 30,
+    takmicenje: {
+      sport: {
+        naziv: sportNaziv
+      }
+    },
     rezultatUtakmice: {
       rezultatDomacin,
       rezultatGost
@@ -74,6 +80,62 @@ describe('statistikaConsistencyService', () => {
 
     await expect(validateStatistikaKonzistentnost(tx, 1))
       .rejects.toThrow('Zbir zutih kartona igraca ne moze biti veci od timskih zutih kartona.');
+  });
+
+  test('odbija vise od jednog crvenog kartona za fudbalera', async () => {
+    const tx = txFor(utakmicaSaStatistikom({
+      statistikeIgraca: [
+        { statistikaIgracaId: 1, timId: 20, vrijednosti: [vrijednost(1, 'Crveni kartoni', 2)] }
+      ]
+    }));
+
+    await expect(validateStatistikaKonzistentnost(tx, 1))
+      .rejects.toThrow('Crveni karton za igraca moze biti samo 0 ili 1.');
+  });
+
+  test('odbija vise od dva zuta kartona za fudbalera', async () => {
+    const tx = txFor(utakmicaSaStatistikom({
+      statistikeIgraca: [
+        { statistikaIgracaId: 1, timId: 20, vrijednosti: [vrijednost(1, 'Zuti kartoni', 3)] }
+      ]
+    }));
+
+    await expect(validateStatistikaKonzistentnost(tx, 1))
+      .rejects.toThrow('Zuti kartoni za igraca mogu biti samo 0, 1 ili 2.');
+  });
+
+  test('odbija previse timskih zutih kartona u fudbalu', async () => {
+    const tx = txFor(utakmicaSaStatistikom({
+      statistikeTimova: [
+        { statistikaTimaId: 1, timId: 20, vrijednosti: [vrijednost(1, 'Zuti kartoni', 12)] }
+      ]
+    }));
+
+    await expect(validateStatistikaKonzistentnost(tx, 1))
+      .rejects.toThrow('Timski zuti kartoni u fudbalu ne mogu biti veci od 11.');
+  });
+
+  test('odbija posjed lopte van opsega', async () => {
+    const tx = txFor(utakmicaSaStatistikom({
+      statistikeTimova: [
+        { statistikaTimaId: 1, timId: 20, vrijednosti: [vrijednost(1, 'Posjed lopte', 101)] }
+      ]
+    }));
+
+    await expect(validateStatistikaKonzistentnost(tx, 1))
+      .rejects.toThrow('Posjed lopte mora biti cijeli broj izmedju 0 i 100.');
+  });
+
+  test('odbija kada posjed oba fudbalska tima nije priblizno 100%', async () => {
+    const tx = txFor(utakmicaSaStatistikom({
+      statistikeTimova: [
+        { statistikaTimaId: 1, timId: 20, vrijednosti: [vrijednost(1, 'Posjed lopte', 60)] },
+        { statistikaTimaId: 2, timId: 30, vrijednosti: [vrijednost(2, 'Posjed lopte', 35)] }
+      ]
+    }));
+
+    await expect(validateStatistikaKonzistentnost(tx, 1))
+      .rejects.toThrow('Posjed lopte oba tima zajedno mora biti priblizno 100%.');
   });
 
   test('odbija asistencije igraca koje prelaze timske asistencije kada timska statistika postoji', async () => {

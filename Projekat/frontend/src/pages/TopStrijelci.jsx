@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { dohvatiTopStrijelce, fetchTipoviStatistike } from '../api/statistikaApi';
-import { getIgrackiTipoviStatistike } from '../utils/statistikaTipovi';
+import { formatStatistikaVrijednost, getIgrackiTipoviStatistike } from '../utils/statistikaTipovi';
 import { fetchLige } from '../api/ligaApi';
 
 function TopStrijelci() {
@@ -44,7 +44,7 @@ function TopStrijelci() {
         const liga = sve_lige.find(l => l.takmicenjeId === Number(takmicenjeId));
         if (liga) {
           const tipovi = await fetchTipoviStatistike(liga.sportId);
-          setTipoviStatistike(getIgrackiTipoviStatistike(tipovi));
+          setTipoviStatistike(getIgrackiTipoviStatistike(tipovi, liga.sport?.naziv || liga.nazivSporta || ''));
         }
       } catch (err) {
         console.error('Greška pri učitavanju tipova statistike:', err);
@@ -239,7 +239,7 @@ function TopStrijelci() {
 
                 <div className="text-right">
                   <p className="text-3xl font-black text-orange-600">
-                    {igrac.vrijednost.toFixed(1)}
+                    {formatStatistikaVrijednost(rezultati.tipStatistike?.nazivStatistike, igrac.vrijednost, { mode: 'aggregate' })}
                   </p>
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">
                     {rezultati.tipStatistike?.nazivStatistike}
