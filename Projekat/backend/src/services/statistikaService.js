@@ -12,6 +12,29 @@ function parsePositiveInt(value, fieldName) {
   return parsed;
 }
 
+function getDefaultTopScorerSearchTerms(sportName = '') {
+  const normalized = sportName
+    .toLowerCase()
+    .replace(/š/g, 's')
+    .replace(/č/g, 'c')
+    .replace(/ć/g, 'c')
+    .replace(/ž/g, 'z')
+    .trim();
+
+  if (normalized.includes('kosark')) return ['poen', 'asist'];
+  if (normalized.includes('odboj')) return ['blok', 'poen'];
+  if (normalized.includes('tenis')) return ['winner', 'asev'];
+  return ['gol', 'asist'];
+}
+
+function getDefaultTopScorerLabel(sportName = '') {
+  const normalized = sportName.toLowerCase();
+  if (normalized.includes('kosark') || normalized.includes('košark')) return 'Poeni + asistencije (prosjek)';
+  if (normalized.includes('odboj')) return 'Blokovi + poeni (prosjek)';
+  if (normalized.includes('tenis')) return 'Winneri + asevi (prosjek)';
+  return 'Golovi + asistencije (prosjek)';
+}
+
 function normalizeVrijednosti(vrijednosti) {
   if (!Array.isArray(vrijednosti) || vrijednosti.length === 0) {
     const error = new Error('Vrijednosti statistike su obavezne.');
@@ -98,10 +121,8 @@ async function validateTipoviZaSport(tx, sportId, vrijednosti) {
   }
 }
 
-// Optimizovana verzija: dohvata sve postojece u jednom upitu,
-// zatim paralelno radi update/create umjesto N sekvencijalnih upita
+
 async function upsertVrijednosti(tx, model, parentField, parentId, vrijednosti) {
-  // 1 upit za sve postojece zapise
   const postojece = await tx[model].findMany({
     where: { [parentField]: parentId }
   });
@@ -126,7 +147,7 @@ async function upsertVrijednosti(tx, model, parentField, parentId, vrijednosti) 
     }
   }
 
-  // Sve operacije izvrsavamo paralelno
+
   await Promise.all([
     ...toUpdate.map(u => tx[model].update({
       where: { vrijednostId: u.id },
@@ -144,7 +165,7 @@ async function snimiStatistikuIgraca(utakmicaId, data, korisnik) {
   const timId = data.timId ? parsePositiveInt(data.timId, 'timId') : null;
   const vrijednosti = normalizeVrijednosti(data.vrijednosti);
 
-  // Cuva se van transakcije da mozemo raditi findUnique nakon sto se transakcija zatvori
+
   let statistikaIgracaId;
 
   await prisma.$transaction(async (tx) => {
@@ -194,7 +215,7 @@ async function snimiStatistikuIgraca(utakmicaId, data, korisnik) {
 
   }, { timeout: 15000 });
 
-  // findUnique se izvrsava NAKON sto je transakcija uspjesno zatvorena
+
   return prisma.statistikaIgracaNaUtakmici.findUnique({
     where: { statistikaIgracaId },
     include: {
@@ -210,7 +231,7 @@ async function snimiStatistikuTima(utakmicaId, data, korisnik) {
   const timId = parsePositiveInt(data.timId, 'timId');
   const vrijednosti = normalizeVrijednosti(data.vrijednosti);
 
-  // Cuva se van transakcije da mozemo raditi findUnique nakon sto se transakcija zatvori
+
   let statistikaTimaId;
 
   await prisma.$transaction(async (tx) => {
@@ -243,7 +264,7 @@ async function snimiStatistikuTima(utakmicaId, data, korisnik) {
 
   }, { timeout: 15000 });
 
-  // findUnique se izvrsava NAKON sto je transakcija uspjesno zatvorena
+
   return prisma.statistikaTimaNaUtakmici.findUnique({
     where: { statistikaTimaId },
     include: {
@@ -436,7 +457,13 @@ async function dohvatiTopStrijelce(takmicenjeId, tipStatistikeId, limit = 10) {
 
   const takmicenje = await prisma.takmicenje.findUnique({
     where: { takmicenjeId: parsedTakmicenjeId },
-    select: { takmicenjeId: true, naziv: true, sezona: true, sportId: true }
+    select: {
+      takmicenjeId: true,
+      naziv: true,
+      sezona: true,
+      sportId: true,
+      sport: { select: { naziv: true } }
+    }
   });
 
   if (!takmicenje) {
@@ -481,25 +508,22 @@ async function dohvatiTopStrijelce(takmicenjeId, tipStatistikeId, limit = 10) {
       }
     });
   } else {
-    const [golTip, asistTip] = await Promise.all([
+    const searchTerms = getDefaultTopScorerSearchTerms(takmicenje.sport?.naziv || '');
+    const [firstTip, secondTip] = await Promise.all(searchTerms.map((term) =>
       prisma.tipStatistike.findFirst({
         where: {
           sportId: takmicenje.sportId,
-          nazivStatistike: { contains: 'gol', mode: 'insensitive' }
-        },
-        select: { tipStatistikeId: true, nazivStatistike: true }
-      }),
-      prisma.tipStatistike.findFirst({
-        where: {
-          sportId: takmicenje.sportId,
-          nazivStatistike: { contains: 'asist', mode: 'insensitive' }
+          nazivStatistike: { contains: term, mode: 'insensitive' }
         },
         select: { tipStatistikeId: true, nazivStatistike: true }
       })
-    ]);
+    ));
 
-    const tipIds = [golTip, asistTip].filter(Boolean).map((tip) => tip.tipStatistikeId);
-    tipStatistike = { tipStatistikeId: null, nazivStatistike: 'Golovi + asistencije (prosjek)' };
+    const tipIds = [firstTip, secondTip].filter(Boolean).map((tip) => tip.tipStatistikeId);
+    tipStatistike = {
+      tipStatistikeId: null,
+      nazivStatistike: getDefaultTopScorerLabel(takmicenje.sport?.naziv || '')
+    };
 
     if (tipIds.length > 0) {
       vrijednosti = await prisma.vrijednostStatistikeIgraca.findMany({

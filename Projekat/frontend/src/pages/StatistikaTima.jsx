@@ -5,7 +5,7 @@ import { dohvatiStatistikuTima, dohvatiTakmicenjaTima } from '../api/statistikaA
 import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
 
 function StatistikaTima() {
-  const { id } = useParams(); // timId iz URL-a
+  const { id } = useParams(); 
 
   const [podatki, setPodatki] = useState(null);
   const [sve_lige, setSveLige] = useState([]);
@@ -14,7 +14,6 @@ function StatistikaTima() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Učitaj takmičenja tima za filter
   useEffect(() => {
     const ucitajTakmicenja = async () => {
       try {
@@ -28,7 +27,6 @@ function StatistikaTima() {
     ucitajTakmicenja();
   }, [id]);
 
-  // Učitaj statistiku tima kada se promijene filteri
   useEffect(() => {
     let isActive = true;
 

@@ -267,7 +267,7 @@ export function formatStatistikaVrijednost(tipOrName, rawValue, options = {}) {
   }
 
   if (mode === 'aggregate') {
-    return value.toFixed(1);
+    return Number.isInteger(value) ? String(value) : value.toFixed(1);
   }
 
   if (mode === 'average') {

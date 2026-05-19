@@ -29,7 +29,7 @@ describe('StatistikaIgraca stranica', () => {
 
   it('trebalo bi da prikaže učitavanje nakon montiranja', () => {
     statistikaApi.dohvatiStatistikuIgraca.mockImplementation(() =>
-      new Promise(() => {}) // nikada se ne resolve-a
+      new Promise(() => {}) 
     );
     statistikaApi.dohvatiTakmicenjaIgraca.mockResolvedValue([]);
     ligaApi.fetchLige.mockResolvedValue({ lige: [] });

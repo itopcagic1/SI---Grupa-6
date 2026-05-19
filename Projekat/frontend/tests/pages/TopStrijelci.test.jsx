@@ -124,7 +124,7 @@ describe('TopStrijelci stranica', () => {
       target: { value: '1' }
     });
 
-    // Čekamo da se tip pojavi kao opcija u selectu
+  
     await waitFor(() => {
       expect(screen.getByDisplayValue('Odaberite tip')).toBeDefined();
       expect(screen.getAllByText('Golovi').length).toBeGreaterThan(0);
@@ -137,7 +137,7 @@ describe('TopStrijelci stranica', () => {
     await waitFor(() => {
       expect(screen.getByText('Marko Markovic')).toBeDefined();
       expect(screen.getByText('Petar Petrovic')).toBeDefined();
-      expect(screen.getByText('20.0')).toBeDefined();
+      expect(screen.getByText('20')).toBeDefined();
     });
   });
 
@@ -197,7 +197,6 @@ describe('TopStrijelci stranica', () => {
       target: { value: '1' }
     });
 
-    // Provjeravamo da su igrači prikazani (medalje se renderuju kao emoji, ne tekst)
     await waitFor(() => {
       expect(screen.getByText('Igrac Prvi')).toBeDefined();
       expect(screen.getByText('Igrac Drugi')).toBeDefined();
