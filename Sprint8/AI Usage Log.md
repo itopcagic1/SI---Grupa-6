@@ -75,3 +75,48 @@ Tražena ideja kako najbezbolnije integrisati opciju za unos rezultata na postoj
 
 **Ko je koristio alat:**
 Ilma Hindija
+
+---
+
+## Zapis 3
+
+**Datum:** 19.05.2026.
+
+**Sprint broj:** 8
+
+**Alat koji je korišten:** OpenAI Codex / ChatGPT
+
+**Svrha korištenja:**
+Pomoć pri proširenju sistema statistike utakmica i validacije za više sportova (US-12 i US-12.1), uključujući frontend i backend logiku te testiranje.
+
+**Kratak opis zadatka ili upita:**
+Tražena pomoć oko proširenja postojećeg sistema statistike koji je prvobitno bio fokusiran na fudbal, kako bi podržavao više sportova (košarka, odbojka, tenis, rukomet, hokej na ledu i plivanje), uz zadržavanje postojeće arhitekture i validacija. Također traženi prijedlozi za logička ograničenja statistike (kartoni, poeni, golovi, posjed lopte i slično), kao i pomoć pri pisanju i ažuriranju testova.
+
+**Šta je AI predložio ili generisao:**
+- Prijedloge sport-specifičnih tipova statistike za igrače i timove.
+- Prijedloge validacija i ograničenja za statistiku (npr. broj kartona, zbir poena/golova, validacija posjeda lopte).
+- Proširenje postojećeg consistency validation servisa bez izmjene postojećeg API-ja i Prisma schema modela.
+- Frontend prilagodbe za dinamičko generisanje statističkih polja po sportu.
+- Ažuriranja i proširenja unit i integration testova za backend i frontend statistiku.
+- `.env.example` template fajlove za lakši lokalni setup projekta.
+
+**Šta je tim prihvatio:**
+- Većinu prijedloga vezanih za validaciju statistike i organizaciju sport-specifičnih tipova statistike.
+- Pristup proširenju postojećeg sistema bez velikih arhitektonskih promjena.
+- Veći dio prijedloga za testiranje i pokrivanje edge-case scenarija.
+
+**Šta je tim izmijenio:**
+- Ručno su pregledani i prilagođeni predloženi tipovi statistike kako bi odgovarali postojećem modelu aplikacije.
+- Dodatno su provjerene validacije između timske i igračke statistike radi očuvanja konzistentnosti podataka.
+- Prilagođeni su frontend prikazi i formatiranje vrijednosti kako bi se uklopili u postojeći UI aplikacije.
+
+**Šta je tim odbacio:**
+- Prijedloge koji bi zahtijevali značajne promjene baze podataka ili postojeće API strukture.
+- Kompletnu reorganizaciju toka unosa statistike (npr. striktni višekoračni unos timske pa igračke statistike).
+
+**Rizici, problemi ili greške koje su uočene:**
+- Tokom implementacije bilo je potrebno dodatno prilagoditi pojedine validacije kako bi ostala kompatibilnost sa starim testovima i postojećim fixture podacima.
+- AI inicijalno nije mogao izvršiti pune test suite-ove bez lokalno instaliranih dependencies paketa, pa su testovi naknadno ručno pokrenuti i verificirani.
+
+**Ko je koristio alat:**
+Mehdi Zaimović
