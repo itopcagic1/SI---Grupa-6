@@ -6,7 +6,12 @@ import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { unesiRezultat, azurirajRezultat } from '../api/resultApi';
 import { fetchTipoviStatistike, snimiStatistikuIgraca, snimiStatistikuTima } from '../api/statistikaApi';
-import { getIgrackiTipoviStatistike, getTimskiTipoviStatistike } from '../utils/statistikaTipovi';
+import {
+  getIgrackiTipoviStatistike,
+  getStatistikaInputConfig,
+  getTimskiTipoviStatistike,
+  validateStatistikaVrijednost
+} from '../utils/statistikaTipovi';
 
 const initialFilters = {
   sportId: '',
@@ -222,8 +227,9 @@ function Raspored() {
         })));
   };
 
-  const igrackiTipoviStatistike = getIgrackiTipoviStatistike(tipoviStatistike);
-  const timskiTipoviStatistike = getTimskiTipoviStatistike(tipoviStatistike);
+  const sportName = selectedMatch?.takmicenje?.sport?.naziv || '';
+  const igrackiTipoviStatistike = getIgrackiTipoviStatistike(tipoviStatistike, sportName);
+  const timskiTipoviStatistike = getTimskiTipoviStatistike(tipoviStatistike, sportName);
 
   const mapVrijednostiPayload = (vrijednostiMap, tipoviZaFormu) => tipoviZaFormu
     .map((tip) => ({
@@ -236,9 +242,39 @@ function Raspored() {
       vrijednost: Number(item.rawVrijednost)
     }));
 
-  const vrijednostiSuCijeliBrojevi = (vrijednosti) => vrijednosti.every((item) => (
-    Number.isInteger(item.vrijednost) && item.vrijednost >= 0
-  ));
+  const validateVrijednosti = (vrijednostiMap, tipoviZaFormu, role) => {
+    for (const tip of tipoviZaFormu) {
+      const errorMessage = validateStatistikaVrijednost(
+        tip,
+        vrijednostiMap[tip.tipStatistikeId],
+        sportName,
+        role
+      );
+
+      if (errorMessage) {
+        return errorMessage;
+      }
+    }
+
+    if (sportName && sportName.toLowerCase().includes('fudbal') && role === 'team') {
+      const possessionTipovi = tipoviZaFormu.filter((tip) => getStatistikaInputConfig(tip, sportName, role).suffix === '%');
+      if (possessionTipovi.length > 0) {
+        const vrijednosti = possessionTipovi
+          .map((tip) => vrijednostiMap[tip.tipStatistikeId])
+          .filter((value) => value !== '' && value !== undefined)
+          .map((value) => Number(value));
+
+        if (vrijednosti.length > 1) {
+          const sum = vrijednosti.reduce((acc, value) => acc + value, 0);
+          if (Math.abs(sum - 100) > 1) {
+            return 'Posjed lopte oba tima zajedno treba biti priblizno 100%.';
+          }
+        }
+      }
+    }
+
+    return null;
+  };
 
   const handleStatistikaIgracaSubmit = async (event) => {
     event.preventDefault();
@@ -261,8 +297,9 @@ function Raspored() {
       setStatistikaError('Unesite barem jednu vrijednost statistike.');
       return;
     }
-    if (!vrijednostiSuCijeliBrojevi(vrijednosti)) {
-      setStatistikaError('Vrijednosti statistike moraju biti cijeli nenegativni brojevi.');
+    const validationError = validateVrijednosti(statistikaIgracaForm.vrijednosti, igrackiTipoviStatistike, 'player');
+    if (validationError) {
+      setStatistikaError(validationError);
       return;
     }
 
@@ -299,8 +336,9 @@ function Raspored() {
       setStatistikaError('Unesite barem jednu vrijednost statistike.');
       return;
     }
-    if (!vrijednostiSuCijeliBrojevi(vrijednosti)) {
-      setStatistikaError('Vrijednosti statistike moraju biti cijeli nenegativni brojevi.');
+    const validationError = validateVrijednosti(statistikaTimaForm.vrijednosti, timskiTipoviStatistike, 'team');
+    if (validationError) {
+      setStatistikaError(validationError);
       return;
     }
 
@@ -650,17 +688,31 @@ function Raspored() {
                         {igrackiTipoviStatistike.map((tip) => (
                           <div key={tip.tipStatistikeId}>
                             <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">{tip.nazivStatistike}</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={statistikaIgracaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
-                              onChange={(e) => setStatistikaIgracaForm({
-                                ...statistikaIgracaForm,
-                                vrijednosti: { ...statistikaIgracaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
-                              })}
-                              className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all"
-                            />
+                            {(() => {
+                              const config = getStatistikaInputConfig(tip, sportName, 'player');
+                              return (
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    min={config.min}
+                                    max={config.max}
+                                    step={config.step}
+                                    inputMode={config.inputMode}
+                                    value={statistikaIgracaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
+                                    onChange={(e) => setStatistikaIgracaForm({
+                                      ...statistikaIgracaForm,
+                                      vrijednosti: { ...statistikaIgracaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
+                                    })}
+                                    className={`w-full bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all ${config.suffix ? 'px-4 py-3 pr-12' : 'px-4 py-3'}`}
+                                  />
+                                  {config.suffix && (
+                                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-black uppercase tracking-widest text-slate-400">
+                                      {config.suffix}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))}
                       </div>
@@ -682,17 +734,31 @@ function Raspored() {
                         {timskiTipoviStatistike.map((tip) => (
                           <div key={tip.tipStatistikeId}>
                             <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">{tip.nazivStatistike}</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={statistikaTimaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
-                              onChange={(e) => setStatistikaTimaForm({
-                                ...statistikaTimaForm,
-                                vrijednosti: { ...statistikaTimaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
-                              })}
-                              className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all"
-                            />
+                            {(() => {
+                              const config = getStatistikaInputConfig(tip, sportName, 'team');
+                              return (
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    min={config.min}
+                                    max={config.max}
+                                    step={config.step}
+                                    inputMode={config.inputMode}
+                                    value={statistikaTimaForm.vrijednosti[tip.tipStatistikeId] ?? ''}
+                                    onChange={(e) => setStatistikaTimaForm({
+                                      ...statistikaTimaForm,
+                                      vrijednosti: { ...statistikaTimaForm.vrijednosti, [tip.tipStatistikeId]: e.target.value }
+                                    })}
+                                    className={`w-full bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all ${config.suffix ? 'px-4 py-3 pr-12' : 'px-4 py-3'}`}
+                                  />
+                                  {config.suffix && (
+                                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-black uppercase tracking-widest text-slate-400">
+                                      {config.suffix}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))}
                       </div>

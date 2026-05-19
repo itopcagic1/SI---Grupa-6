@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { dohvatiStatistikuIgraca, dohvatiTakmicenjaIgraca } from '../api/statistikaApi';
+import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
 
 function StatistikaIgraca() {
   const { id } = useParams(); // igracId iz URL-a
@@ -174,10 +175,10 @@ function StatistikaIgraca() {
                         {stat.nazivStatistike}
                       </td>
                       <td className="px-5 py-4 text-center font-black text-orange-600">
-                        {stat.ukupno.toFixed(1)}
+                        {formatStatistikaVrijednost(stat.nazivStatistike, stat.ukupno, { mode: 'aggregate' })}
                       </td>
                       <td className="px-5 py-4 text-center text-slate-600">
-                        {(stat.ukupno / (podatki.brojUtakmica || 1)).toFixed(2)}
+                        {formatStatistikaVrijednost(stat.nazivStatistike, stat.ukupno / (podatki.brojUtakmica || 1), { mode: 'average' })}
                       </td>
                     </tr>
                   ))}

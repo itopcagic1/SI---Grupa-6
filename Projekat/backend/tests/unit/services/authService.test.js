@@ -1,19 +1,43 @@
+const mockPrisma = {
+  korisnik: {
+    findUnique: jest.fn(),
+    update: jest.fn()
+  }
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma)
+}));
+
+jest.mock('../../../src/services/emailService', () => ({
+  posaljiResetEmail: jest.fn()
+}));
+
 const authService = require('../../../src/services/authService');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
 
 describe('Auth Service - Unit Testovi (Maida)', () => {
-  
-  // Test za dohvaćanje profila (US-07/08)
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   test('getUserProfile treba vratiti korisnika bez lozinke', async () => {
-    // Pretpostavljamo da ID 1 postoji u bazi
+    mockPrisma.korisnik.findUnique.mockResolvedValue({
+      korisnikId: 1,
+      punoIme: 'Test Korisnik',
+      email: 'test@example.com',
+      uloga: 'NAVIJAC',
+      statusPouzdanosti: 'AKTIVAN',
+      clanstvaUTimovima: []
+    });
+
     const profil = await authService.getUserProfile(1);
-    
-    if (profil) {
-      expect(profil).toHaveProperty('punoIme');
-      expect(profil).not.toHaveProperty('lozinkaHash');
-      expect(Array.isArray(profil.clanstvaUTimovima)).toBe(true);
-    }
+
+    expect(profil).toHaveProperty('punoIme');
+    expect(profil).not.toHaveProperty('lozinkaHash');
+    expect(Array.isArray(profil.clanstvaUTimovima)).toBe(true);
+    expect(mockPrisma.korisnik.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      where: { korisnikId: 1 }
+    }));
   });
 
   test('changePassword treba baciti Error ako se lozinke ne podudaraju', async () => {
