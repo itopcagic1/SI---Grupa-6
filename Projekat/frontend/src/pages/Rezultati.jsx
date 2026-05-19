@@ -5,7 +5,7 @@ import { fetchPublicMatches } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { dohvatiTopStrijelce } from '../api/statistikaApi';
-import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
+import { formatStatistikaVrijednost, getSportKey } from '../utils/statistikaTipovi';
 
 const initialFilters = {
   sportId: '',
@@ -180,11 +180,9 @@ function Rezultati() {
   }, [aktivnaLiga, sportovi]);
 
   const supportTopScorers = useMemo(() => {
-    const sportNaziv = aktivniSport?.naziv || '';
-    return Boolean(
-      aktivnaLiga &&
-      ['Fudbal', 'Kosarka', 'Košarka'].includes(sportNaziv)
-    );
+    if (!aktivnaLiga) return false;
+    const sportKey = getSportKey(aktivniSport?.naziv || '');
+    return ['football', 'basketball', 'volleyball', 'tennis', 'handball'].includes(sportKey);
   }, [aktivniSport, aktivnaLiga]);
 
   useEffect(() => {
@@ -321,7 +319,9 @@ function Rezultati() {
                   <div key={igrac.igrac.korisnikId} className="rounded-2xl border border-amber-100 p-4 bg-slate-50">
                     <div className="text-sm font-bold text-slate-800">{igrac.igrac.punoIme}</div>
                     <div className="text-xs text-slate-500">{igrac.tim?.naziv || 'Tim'}</div>
-                    <div className="mt-2 text-xl font-black text-orange-600">{igrac.vrijednost.toFixed(1)}</div>
+                    <div className="mt-2 text-xl font-black text-orange-600">
+                      {formatStatistikaVrijednost(topStrijelciTip?.nazivStatistike, igrac.vrijednost, { mode: 'aggregate' })}
+                    </div>
                     <div className="text-[11px] uppercase tracking-widest text-slate-500">{topStrijelciTip?.nazivStatistike}</div>
                   </div>
                 ))}
@@ -363,7 +363,19 @@ function Rezultati() {
                 <tbody>
                   {rezultati.map((utakmica) => (
                     <tr key={utakmica.utakmicaId} className="border-t border-amber-50 hover:bg-amber-50 transition-colors">
-                      <td className="px-5 py-4 font-bold text-orange-600">{utakmica.takmicenje?.naziv || 'Takmicenje nije definisano'}</td>
+                      <td className="px-5 py-4 font-bold text-orange-600">
+                        {utakmica.takmicenje?.takmicenjeId ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/top-strijelci/${utakmica.takmicenje.takmicenjeId}`)}
+                            className="text-left font-bold text-orange-600 underline underline-offset-4 hover:text-orange-700"
+                          >
+                            {utakmica.takmicenje?.naziv || 'Takmicenje nije definisano'}
+                          </button>
+                        ) : (
+                          'Takmicenje nije definisano'
+                        )}
+                      </td>
                       <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.domaciTim?.naziv || 'Domaci tim'}</td>
                       <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.gostujuciTim?.naziv || 'Gostujuci tim'}</td>
                       <td className="px-5 py-4 text-center">

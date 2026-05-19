@@ -106,8 +106,8 @@ describe('StatistikaTima stranica', () => {
     await waitFor(() => {
       expect(screen.getByText('Golovi')).toBeDefined();
       expect(screen.getByText('Kartoni')).toBeDefined();
-      expect(screen.getByText('40.0')).toBeDefined();
-      expect(screen.getByText('8.0')).toBeDefined();
+      expect(screen.getByText('40')).toBeDefined();
+      expect(screen.getByText('8')).toBeDefined();
     });
   });
 

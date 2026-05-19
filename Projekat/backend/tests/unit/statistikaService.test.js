@@ -257,6 +257,45 @@ describe('Unit testovi - StatistikaService agregacije', () => {
       expect(rezultat.topStrijelci[1].vrijednost).toBe(12);
     });
 
+    test('trebalo bi da koristi poene i asistencije za kosarku kada filter nije postavljen', async () => {
+      const mockValues = [
+        {
+          vrijednost: 20,
+          statistikaIgraca: {
+            statistikaIgracaId: 1,
+            korisnik: { korisnikId: 1, punoIme: 'Nikola Kos' },
+            tim: { timId: 1, naziv: 'KK Bosna', logoUrl: 'url' }
+          }
+        }
+      ];
+
+      prisma.tipStatistike.findUnique.mockResolvedValue(null);
+      prisma.tipStatistike.findFirst
+        .mockResolvedValueOnce({ tipStatistikeId: 10, nazivStatistike: 'Poeni' })
+        .mockResolvedValueOnce({ tipStatistikeId: 11, nazivStatistike: 'Asistencije' });
+      prisma.vrijednostStatistikeIgraca.findMany.mockResolvedValue(mockValues);
+      prisma.takmicenje.findUnique.mockResolvedValue({
+        takmicenjeId: 1,
+        naziv: 'ABA Liga',
+        sezona: '2025/2026',
+        sportId: 2,
+        sport: { naziv: 'Košarka' }
+      });
+
+      const rezultat = await statistikaService.dohvatiTopStrijelce(1, undefined, 10);
+
+      expect(prisma.tipStatistike.findFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        where: expect.objectContaining({
+          nazivStatistike: expect.objectContaining({ contains: 'poen' })
+        })
+      }));
+      expect(prisma.tipStatistike.findFirst).toHaveBeenNthCalledWith(2, expect.objectContaining({
+        where: expect.objectContaining({
+          nazivStatistike: expect.objectContaining({ contains: 'asist' })
+        })
+      }));
+      expect(rezultat.tipStatistike.nazivStatistike).toBe('Poeni + asistencije (prosjek)');
+    });
 
     test('trebalo bi da baci grešku sa nevalidnim ID-om', async () => {
       await expect(

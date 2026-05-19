@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { dohvatiTopStrijelce, fetchTipoviStatistike } from '../api/statistikaApi';
-import { formatStatistikaVrijednost, getIgrackiTipoviStatistike } from '../utils/statistikaTipovi';
+import { formatStatistikaVrijednost, getIgrackiTipoviStatistike, getSportKey } from '../utils/statistikaTipovi';
 import { fetchLige } from '../api/ligaApi';
 
 function TopStrijelci() {
@@ -17,7 +17,21 @@ function TopStrijelci() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Učitaj sve lige za filter
+  const odabranaLiga = sve_lige.find(l => l.takmicenjeId === Number(takmicenjeId));
+  const getDefaultStatistikaLabel = (sportName = '') => {
+    const sport = getSportKey(sportName);
+    if (sport === 'football') return 'Golovi + asistencije';
+    if (sport === 'basketball') return 'Poeni + asistencije';
+    if (sport === 'volleyball') return 'Blokovi + poeni';
+    if (sport === 'tennis') return 'Winneri + asevi';
+    if (sport === 'handball') return 'Golovi + asistencije';
+    return 'Statistika';
+  };
+  const displayStatistikaLabel = tipStatistikeId
+    ? rezultati?.tipStatistike?.nazivStatistike
+    : getDefaultStatistikaLabel(odabranaLiga?.sport?.naziv || odabranaLiga?.nazivSporta || '');
+
+
   useEffect(() => {
     const ucitajLige = async () => {
       try {
@@ -31,7 +45,7 @@ function TopStrijelci() {
     ucitajLige();
   }, []);
 
-  // Učitaj tipove statistike kada se promijeni takmičenje
+  
   useEffect(() => {
     const ucitajTipove = async () => {
       if (!takmicenjeId) {
@@ -40,7 +54,6 @@ function TopStrijelci() {
       }
 
       try {
-        // Pronađi sport za takmičenje
         const liga = sve_lige.find(l => l.takmicenjeId === Number(takmicenjeId));
         if (liga) {
           const tipovi = await fetchTipoviStatistike(liga.sportId);
@@ -54,7 +67,7 @@ function TopStrijelci() {
     ucitajTipove();
   }, [takmicenjeId, sve_lige]);
 
-  // Učitaj top strijelce kada se promijene parametri
+
   useEffect(() => {
     let isActive = true;
 
@@ -170,7 +183,7 @@ function TopStrijelci() {
 
             <div className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-amber-900/60">Statistika</p>
-              <p className="text-2xl font-black text-slate-800 mt-2">{rezultati.tipStatistike?.nazivStatistike || '-'}</p>
+              <p className="text-2xl font-black text-slate-800 mt-2">{displayStatistikaLabel || '-'}</p>
             </div>
 
             <div className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm">
@@ -242,7 +255,7 @@ function TopStrijelci() {
                     {formatStatistikaVrijednost(rezultati.tipStatistike?.nazivStatistike, igrac.vrijednost, { mode: 'aggregate' })}
                   </p>
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">
-                    {rezultati.tipStatistike?.nazivStatistike}
+                    {displayStatistikaLabel}
                   </p>
                 </div>
               </div>

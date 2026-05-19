@@ -14,7 +14,7 @@ function StatistikaIgraca() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Učitaj sve lige za filter
+
   useEffect(() => {
     const ucitajTakmicenja = async () => {
       try {
@@ -28,7 +28,6 @@ function StatistikaIgraca() {
     ucitajTakmicenja();
   }, [id]);
 
-  // Učitaj statistiku igrača kada se promijene filteri
   useEffect(() => {
     let isActive = true;
 

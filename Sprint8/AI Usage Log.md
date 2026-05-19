@@ -120,3 +120,41 @@ Tražena pomoć oko proširenja postojećeg sistema statistike koji je prvobitno
 
 **Ko je koristio alat:**
 Mehdi Zaimović
+
+---
+
+## Zapis 4
+
+**Datum:** 19.05.2026.
+
+**Sprint broj:** 8
+
+**Alat koji je korišten:** Claude Sonnet 4.6
+
+**Svrha korištenja:**
+Pomoć pri implementaciji i testiranju stranica za statistiku timova, statistiku igrača i top strijelce, kao i povezivanju backend statistike sa frontend prikazima.
+
+**Kratak opis zadatka ili upita:**
+Tražena pomoć oko organizacije i generisanja testova za statističke prikaze, te povezivanja API poziva i backend podataka sa frontend stranicama za prikaz statistike.
+
+**Šta je AI predložio ili generisao:**
+- Primjere i prijedloge testova za statistiku timova, statistiku igrača i top strijelce.
+- Prijedloge za povezivanje backend endpointa sa frontend komponentama.
+- Primjere dohvaćanja i prikaza statističkih podataka kroz postojeću frontend arhitekturu.
+
+**Šta je tim prihvatio:**
+- Veći dio prijedloga za testove statistike.
+- Osnovni pristup povezivanju backend statistike sa frontend stranicama.
+
+**Šta je tim izmijenio:**
+- Ručno su prilagođeni pojedini API pozivi i mapiranje podataka kako bi odgovarali postojećoj strukturi aplikacije.
+- Prilagođeni su frontend prikazi i nazivi statističkih kategorija za više sportova.
+
+**Šta je tim odbacio:**
+- Dijelove prijedloga koji nisu bili kompatibilni sa postojećom organizacijom frontend komponenti.
+
+**Rizici, problemi ili greške koje su uočene:**
+- Pojedini prijedlozi inicijalno nisu pravilno obrađivali nedostajuće statističke vrijednosti (`null` / `undefined`), što je naknadno ručno ispravljeno.
+
+**Ko je koristio alat:**
+Amna Kerla
