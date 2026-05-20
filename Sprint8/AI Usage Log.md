@@ -158,3 +158,39 @@ Tražena pomoć oko organizacije i generisanja testova za statističke prikaze, 
 
 **Ko je koristio alat:**
 Amna Kerla
+
+## Zapis 5
+
+**Datum:** 16.05.2026.
+
+**Sprint broj:** 8
+
+**Alat koji je korišten:** Claude Sonnet 4.6
+
+**Svrha korištenja:**
+Pomoć pri implementaciji leaderboard tabele (US-13) – backend servis, controller, rute i frontend stranica.
+
+**Kratak opis zadatka ili upita:**
+Tražena pomoć oko kompletne implementacije `GET /api/takmicenja/:id/tabela` endpointa sa sortiranjem i agregacijom gol-razlike, te React komponente za prikaz tabele sa sortiranjem i vizualnim isticanjem top 3 mjesta.
+
+**Šta je AI predložio ili generisao:**
+- Kompletnu strukturu `tabelaService.js`, `tabelaController.js` i `tabelaRoutes.js`.
+- React komponentu `Tabela.jsx` usklađenu sa postojećim stilom aplikacije (Tailwind, amber boje).
+- `tabelaApi.js` za komunikaciju sa backendom.
+
+**Šta je tim prihvatio:**
+- Osnovnu arhitekturu servisa i controllera.
+- Vizualni dizajn tabele sa medalijama i sortiranjem.
+
+**Šta je tim izmijenio:**
+- Ispravljen API URL u `tabelaApi.js` zbog duplog `/api` prefiksa koji je uzrokovao 404 greške na produkciji.
+- Prilagođen axios import pattern prema postojećoj strukturi projekta.
+
+**Šta je tim odbacio:**
+- Inicijalni prijedlog korištenja `fetch` umjesto axios instance, kako bi se zadržala konzistentnost sa ostatkom projekta.
+
+**Rizici, problemi ili greške koje su uočene:**
+- AI inicijalno nije bio upoznat sa tačnim nazivom axios instance u projektu, što je zahtijevalo ručnu prilagodbu importa u `tabelaApi.js`.
+
+**Ko je koristio alat:**
+Zeir Mašić
