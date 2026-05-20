@@ -158,3 +158,40 @@ Tražena pomoć oko organizacije i generisanja testova za statističke prikaze, 
 
 **Ko je koristio alat:**
 Amna Kerla
+
+---
+
+## Zapis 5
+
+**Datum:** 20.05.2026.
+
+**Sprint broj:** 8
+
+**Alat koji je korišten:** Gemini 3 Flash
+
+**Svrha korištenja:**
+Pomoć pri implementaciji full-stack logike (backend CRUD i kontrole pristupa, struktura testova) te kompletnog UI/UX izgleda forme i frontend integracije za upravljanje sportskim objektima.
+
+**Kratak opis zadatka ili upita:**
+Tražena pomoć oko optimalne strukture servisa `facilityService.js` i pripadajućih kontrolera, s fokusom na to kako kroz Prisma ORM upite osigurati da ulogovani vlasnik vidi i modifikuje isključivo svoje objekte, te generisanje testova uz mockovanje baze.
+
+**Šta je AI predložio ili generisao:**
+- Predložio arhitekturu za CRUD funkcije (kreiranje, čitanje, izmjenu i brisanje objekata) sa ugrađenom `where: { vlasnikId: ownerId }` klauzulom radi sigurnosne izolacije podataka.
+- Generisao kostur testova unutar Jest okruženja koristeći mockovani Prisma klijent (`prismaMock`) za simulaciju uspješnih operacija i izolaciju od stvarne baze podataka.
+
+**Šta je tim prihvatio:**
+- Osnovnu logiku i arhitekturu provjere vlasništva nad objektom prije izvršavanja bilo kakvih operacija ažuriranja (`update`) ili brisanja (`delete`) resursa.
+- Pristup i metodologiju pisanja testova kroz izolaciju servisnog sloja i mockovanje Prisma klijenta (`mocking`).
+
+**Šta je tim izmijenio:**
+- Rute i kontroleri su ručno prilagođeni i uvezani sa JWT middleware-om kako bi se identifikacioni broj korisnika bezbjedno povlačio iz tokena (`req.user.korisnikId`) umjesto da se prosljeđuje kroz tijelo zahtjeva (`req.body`).
+- Izmijenjen je dio koda za brisanje objekta kako bi se osiguralo kaskadno rukovanje i brisanje svih povezanih termina odgovarajuće dvorane u bazi podataka.
+
+**Šta je tim odbacio:**
+- Generisane generičke poruke grešaka i predefinisane HTTP statuse koji nisu bili usklađeni sa ranije postavljenim globalnim standardom i strukturom za rukovanje greškama u aplikaciji (`serviceError`).
+
+**Rizici, problemi ili greške koje su uočene:**
+- U prvobitnim testnim scenarijima, AI je pogrešno pretpostavio sinhrono izvršavanje nekih Prisma metoda, što je uzrokovalo padanje Jest testova sve dok asinhroni pozivi (`async/await`) nisu ručno modifikovani i ispravljeni.
+
+**Ko je koristio alat:**
+Maida Biber
