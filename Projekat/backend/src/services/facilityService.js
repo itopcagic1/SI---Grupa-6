@@ -147,15 +147,33 @@ async function getTerminZaVlasnika(terminId, korisnik) {
   return termin;
 }
 
+function validateCourtCapacity(value) {
+  const capacity = Number(value);
+  if (!Number.isInteger(capacity) || capacity < 1 || capacity > 30) {
+    throw serviceError(
+      'Kapacitet terena mora predstavljati ukupan broj igrača na terenu (između 1 i 30).', 
+      400, 
+      'INVALID_COURT_CAPACITY'
+    );
+  }
+  return capacity;
+}
+
 const createFacilityService = async (data, ownerId) => {
-  return await prisma.sportskiObjekat.create({
+  if (!data.naziv || data.naziv.trim() === '') {
+    throw serviceError('Naziv objekta je obavezan.', 400, 'NEDOSTAJE_NAZIV');
+  }
+
+  const validatedCapacity = validateCourtCapacity(data.kapacitet);
+
+  return prisma.sportskiObjekat.create({
     data: {
-      vlasnikId: parseInt(ownerId), // Poveznica sa modelom Korisnik
       naziv: data.naziv,
-      adresa: data.adresa || null,
-      opis: data.opis || null,
-      kapacitet: data.kapacitet ? parseInt(data.kapacitet) : null,
-      status: data.status || "AKTIVAN" // Podrazumijevano aktivan pri kreiranju
+      adresa: data.adresa,
+      opis: data.opis,
+      kapacitet: validatedCapacity, // Ostaje polje iz baze
+      vlasnikId: ownerId,
+      status: data.status || 'AKTIVAN'
     }
   });
 };
@@ -186,33 +204,38 @@ const getFacilityByIdService = async (id) => {
   });
 };
 
-const updateFacilityService = async (id, data, currentUserId) => {
-  const facility = await prisma.sportskiObjekat.findUnique({ where: { objekatId: parseInt(id) } });
-  if (!facility) throw new Error("Sportski objekat ne postoji u bazi.");
+const updateFacilityService = async (objekatIdParam, data, korisnik) => {
+  const objekatId = parsePositiveId(objekatIdParam, 'objekatId');
+  await assertVlasnikObjekta(objekatId, korisnik);
+  const updateData = {};
+  if (data.naziv !== undefined) updateData.naziv = data.naziv;
+  if (data.adresa !== undefined) updateData.adresa = data.adresa;
+  if (data.opis !== undefined) updateData.opis = data.opis;
+  if (data.status !== undefined) updateData.status = data.status;
 
-  return await prisma.sportskiObjekat.update({
-    where: { objekatId: parseInt(id) },
-    data: {
-      naziv: data.naziv,
-      adresa: data.adresa,
-      opis: data.opis,
-      kapacitet: data.kapacitet ? parseInt(data.kapacitet) : null,
-      status: data.status // Omogućava i ručnu promjenu statusa kroz formu
-    }
+  // Validacija pri izmjeni
+  if (data.kapacitet !== undefined) {
+    updateData.kapacitet = validateCourtCapacity(data.kapacitet);
+  }
+
+  return prisma.sportskiObjekat.update({
+    where: { objekatId },
+    data: updateData
   });
 };
 
-const deleteFacilityService = async (id, currentUserId) => {
-  const facility = await prisma.sportskiObjekat.findUnique({ where: { objekatId: parseInt(id) } });
+const deleteFacilityService = async (id, currentUser) => {
+  const objekatId = parseInt(id);
+  const facility = await prisma.sportskiObjekat.findUnique({ where: { objekatId } });
   if (!facility) throw new Error("Sportski objekat ne postoji.");
 
-  // Izvršavanje zahtijevanog soft-delete-a (status = NEAKTIVAN) umjesto brisanja iz baze
+  await assertVlasnikObjekta(objekatId, currentUser);
+
   return await prisma.sportskiObjekat.update({
-    where: { objekatId: parseInt(id) },
+    where: { objekatId },
     data: { status: "NEAKTIVAN" }
   });
 };
-
 const createFacilityTermsService = async (objekatIdParam, data, korisnik) => {
   const objekatId = parsePositiveId(objekatIdParam, 'objekatId');
   await assertVlasnikObjekta(objekatId, korisnik);

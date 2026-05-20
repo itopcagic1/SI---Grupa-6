@@ -2,8 +2,8 @@ const facilityService = require('../services/facilityService');
 
 const createFacility = async (req, res) => {
   try {
-     const ownerId = req.user?.korisnikId || req.body.vlasnikId; 
-    
+    const ownerId = req.user?.korisnikId || req.body.vlasnikId;
+
     if (!ownerId) {
       return res.status(400).json({ error: "Identifikator vlasnika (vlasnikId) je obavezan." });
     }
@@ -18,7 +18,7 @@ const createFacility = async (req, res) => {
 const getAllFacilities = async (req, res) => {
   try {
     const { grad, status } = req.query;
-    const currentUserId = req.user?.korisnikId; 
+    const currentUserId = req.user?.korisnikId;
     const facilities = await facilityService.getAllFacilitiesService({ grad, status }, currentUserId);
     res.json(facilities);
   } catch (error) {
@@ -41,8 +41,8 @@ const getFacilityById = async (req, res) => {
 
 const updateFacility = async (req, res) => {
   try {
-    const currentUserId = req.user?.korisnikId || req.body.vlasnikId;
-    const updated = await facilityService.updateFacilityService(req.params.id, req.body, currentUserId);
+
+    const updated = await facilityService.updateFacilityService(req.params.id, req.body, req.user);
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -51,8 +51,7 @@ const updateFacility = async (req, res) => {
 
 const deleteFacility = async (req, res) => {
   try {
-    const currentUserId = req.user?.korisnikId || req.body.vlasnikId;
-    await facilityService.deleteFacilityService(req.params.id, currentUserId);
+    await facilityService.deleteFacilityService(req.params.id, req.user);
     res.json({ message: "Sportski objekat je uspješno deaktiviran (soft-delete)." });
   } catch (error) {
     res.status(500).json({ error: error.message });
