@@ -69,4 +69,37 @@ Modalni prozor pruža drastično bolji UX (User Experience). Korisnik (Organizat
 
 **Status odluke:** Prihvaćena i implementirana
 
+## Odluka 3
+
+**ID:** DL-S8-03
+
+**Datum:** 16.05.2026.
+
+**Naziv:** Računanje gol-razlike agregacijom iz `RezultatUtakmice` umjesto posebnog atributa
+
+**Opis:**
+
+Prilikom implementacije leaderboard tabele (US-13), trebalo je odlučiti kako izračunati i prikazati gol-razliku za svaki tim.
+
+**Razmatrane opcije:**
+- Dodati poseban atribut `golRazlika` u `PlasmanNaTabeli` koji se ažurira pri svakom unosu rezultata.
+- Računati gol-razliku dinamički agregacijom iz `RezultatUtakmice` pri svakom dohvatu tabele.
+
+**Odabrana opcija:**
+Dinamička agregacija iz `RezultatUtakmice`.
+
+**Razlog izbora:**
+
+Podaci o golovima su već pohranjeni u `RezultatUtakmice`. Uvođenje redundantnog atributa povećalo bi rizik od nekonzistentnih podataka. Dinamičko računanje garantuje uvijek tačne vrijednosti bez dodatnih migracija baze.
+
+**Posljedice odluke:**
+
+*Pozitivne:*
+- Podaci uvijek konzistentni, bez rizika od desinhronizacije.
+- Nije potrebna izmjena postojeće Prisma sheme.
+*Negativne:*
+- Nešto sporiji upit zbog agregacije, mada zanemarivo za trenutni obim podataka.
+
+**Status odluke:** Prihvaćena i implementirana
+
 ---
