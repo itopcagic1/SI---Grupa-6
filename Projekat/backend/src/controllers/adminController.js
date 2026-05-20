@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 // GET /api/admin/korisnici?status=PENDING&pretraga=ime
 const getKorisnici = async (req, res) => {

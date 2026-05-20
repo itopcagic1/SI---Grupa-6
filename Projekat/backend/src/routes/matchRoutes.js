@@ -4,6 +4,7 @@ const matchController = require('../controllers/matchController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 router.get('/public', matchController.getPublicMatches);
+router.get('/:id/details', matchController.getMatchById);
 
 router.post(
   '/generate-schedule',

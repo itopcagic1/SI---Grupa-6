@@ -12,7 +12,17 @@ const getAuthHeader = () => {
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 };
 
-export const fetchTeams = () => api.get('/teams').then(res => res.data);
+let teamsCache = {};
+export const fetchTeams = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const cacheKey = query || 'default';
+  if (teamsCache[cacheKey]) return Promise.resolve(teamsCache[cacheKey]);
+  
+  return api.get(`/teams${query ? `?${query}` : ''}`).then(res => {
+    teamsCache[cacheKey] = res.data;
+    return res.data;
+  });
+};
 
 export const fetchSports = async () => {
   // 'api' instanca već ima u sebi 'http://localhost:3000/api'

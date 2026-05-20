@@ -1,10 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/db');
 const { posaljiResetEmail } = require('./emailService');
-
-const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
 
 const generateAccessToken = (user) => {

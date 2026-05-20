@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { fetchPublicMatches } from '../api/matchApi';
+import { fetchPublicMatches, fetchMatchDetails } from '../api/matchApi';
 import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { dohvatiTopStrijelce } from '../api/statistikaApi';
@@ -91,6 +91,23 @@ function Rezultati() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState('');
+
+  const handleOpenDetails = async (utakmica) => {
+    setSelectedMatch(utakmica);
+    setDetailsLoading(true);
+    setDetailsError('');
+    try {
+      const fullMatch = await fetchMatchDetails(utakmica.utakmicaId);
+      setSelectedMatch(fullMatch);
+    } catch (err) {
+      console.error('Greška pri učitavanju detalja utakmice:', err);
+      setDetailsError('Nije moguće učitati statistiku za ovu utakmicu.');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
   const [topStrijelci, setTopStrijelci] = useState(null);
   const [topStrijelciLoading, setTopStrijelciLoading] = useState(false);
   const [topStrijelciError, setTopStrijelciError] = useState('');
@@ -103,8 +120,8 @@ function Rezultati() {
       try {
         const [sportoviData, ligeData, timoviData] = await Promise.all([
           fetchSportovi(),
-          fetchLige(),
-          fetchTeams()
+          fetchLige({ simple: 'true' }),
+          fetchTeams({ simple: 'true' })
         ]);
 
         if (!isActive) return;
@@ -388,7 +405,7 @@ function Rezultati() {
                       <td className="px-5 py-4 text-right">
                         <button
                           type="button"
-                          onClick={() => setSelectedMatch(utakmica)}
+                          onClick={() => handleOpenDetails(utakmica)}
                           className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
                         >
                           Detalji
@@ -444,7 +461,16 @@ function Rezultati() {
                   </div>
                 </div>
 
-                {!hasStatistike(selectedMatch) ? (
+                {detailsLoading ? (
+                  <div className="text-center py-20">
+                    <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
+                    <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Učitavanje statistike...</p>
+                  </div>
+                ) : detailsError ? (
+                  <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200 text-center font-bold">
+                    {detailsError}
+                  </div>
+                ) : !hasStatistike(selectedMatch) ? (
                   <div className="text-center py-12 bg-amber-50 rounded-2xl border border-amber-100">
                     <p className="text-slate-600 font-bold">Statistika nije unesena.</p>
                   </div>

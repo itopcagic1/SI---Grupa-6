@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 async function kreirajLigu({ naziv, sportId, sezona, opis, datumPocetka, datumZavrsetka, tipTakmicenja }, organizatorId) {
   const sport = await prisma.sport.findUnique({
@@ -48,12 +47,24 @@ async function kreirajLigu({ naziv, sportId, sezona, opis, datumPocetka, datumZa
   return liga;
 }
 
-async function dohvatiSveLige({ sportId, status, sezona } = {}) {
+async function dohvatiSveLige({ sportId, status, sezona, simple = false } = {}) {
   const where = {};
 
   if (sportId) where.sportId = Number(sportId);
   if (status) where.status = status;
   if (sezona) where.sezona = sezona;
+
+  if (simple) {
+    return await prisma.takmicenje.findMany({
+      where,
+      select: {
+        takmicenjeId: true,
+        naziv: true,
+        sportId: true
+      },
+      orderBy: { takmicenjeId: 'desc' },
+    });
+  }
 
   const lige = await prisma.takmicenje.findMany({
     where,
