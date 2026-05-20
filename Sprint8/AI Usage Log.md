@@ -194,6 +194,7 @@ Tražena pomoć oko kompletne implementacije `GET /api/takmicenja/:id/tabela` en
 
 **Ko je koristio alat:**
 Zeir Mašić
+
 ---
 
 ## Zapis 6
