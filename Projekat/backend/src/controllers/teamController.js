@@ -4,7 +4,8 @@ const getUserIdFromToken = (req) => req.user.id || req.user.korisnikId || req.us
 
 exports.getTeams = async (req, res) => {
   try {
-    const teams = await teamService.getAllTeams();
+    const { simple } = req.query || {};
+    const teams = await teamService.getAllTeams({ simple: simple === 'true' });
     res.json(teams);
   } catch (error) {
     res.status(500).json({ message: "Greška pri dobavljanju timova." });

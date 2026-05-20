@@ -14,13 +14,22 @@ const getAuthHeaders = () => {
   };
 };
 
+let sportoviCache = null;
 export const fetchSportovi = async () => {
+  if (sportoviCache) return sportoviCache;
   const response = await api.get('/sports');
+  sportoviCache = response.data;
   return response.data;
 };
 
-export const fetchLige = async () => {
-  const response = await api.get('/lige');
+let ligeCache = {};
+export const fetchLige = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const cacheKey = query || 'default';
+  if (ligeCache[cacheKey]) return ligeCache[cacheKey];
+  
+  const response = await api.get(`/lige${query ? `?${query}` : ''}`);
+  ligeCache[cacheKey] = response.data;
   return response.data;
 };
 

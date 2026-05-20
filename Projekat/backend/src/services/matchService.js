@@ -1,7 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
-async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo } = {}) {
+async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo, includeStats = false } = {}) {
   const where = {};
 
   if (takmicenjeId) {
@@ -28,8 +27,60 @@ async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo
     };
   }
 
+  const include = {
+    domaciTim: { select: { timId: true, naziv: true, logoUrl: true } },
+    gostujuciTim: { select: { timId: true, naziv: true, logoUrl: true } },
+    takmicenje: {
+      select: {
+        takmicenjeId: true,
+        naziv: true,
+        sportId: true,
+        organizatorId: true
+      }
+    },
+    sportskiObjekat: {
+      select: {
+        objekatId: true,
+        naziv: true,
+        adresa: true
+      }
+    },
+    rezultatUtakmice: {
+      select: {
+        rezultatUtakmiceId: true,
+        rezultatDomacin: true,
+        rezultatGost: true,
+        datumUnosa: true
+      }
+    }
+  };
+
+  if (includeStats) {
+    include.statistikeIgraca = {
+      include: {
+        korisnik: { select: { korisnikId: true, punoIme: true } },
+        tim: { select: { timId: true, naziv: true } },
+        vrijednosti: { include: { tipStatistike: true } }
+      }
+    };
+    include.statistikeTimova = {
+      include: {
+        tim: { select: { timId: true, naziv: true } },
+        vrijednosti: { include: { tipStatistike: true } }
+      }
+    };
+  }
+
   return prisma.utakmica.findMany({
     where,
+    include,
+    orderBy: { vrijemePocetka: 'asc' }
+  });
+}
+
+async function getMatchById(id) {
+  return prisma.utakmica.findUnique({
+    where: { utakmicaId: Number(id) },
     include: {
       domaciTim: { select: { timId: true, naziv: true, logoUrl: true } },
       gostujuciTim: { select: { timId: true, naziv: true, logoUrl: true } },
@@ -70,10 +121,10 @@ async function getPublicMatches({ sportId, takmicenjeId, timId, datumOd, datumDo
           vrijednosti: { include: { tipStatistike: true } }
         }
       }
-    },
-    orderBy: { vrijemePocetka: 'asc' }
+    }
   });
 }
+
 
 async function generisiRaspored({ takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija }, korisnik) {
   // Provjeri da li takmičenje postoji i da li je korisnik organizator ili administrator
@@ -259,5 +310,6 @@ function generisiRoundRobinUtakmice(timovi, pocetniDatum, defaultnoVrijeme, takm
 
 module.exports = {
   getPublicMatches,
+  getMatchById,
   generisiRaspored
 };

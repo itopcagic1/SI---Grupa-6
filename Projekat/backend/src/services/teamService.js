@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 const sanitizeTeamUsers = (team) => {
   if (!team?.clanstvaUcesnika) return team;
@@ -26,20 +25,30 @@ const sanitizeTeamUsers = (team) => {
 };
 
 // US-08: Get all teams with their sport info
-const getAllTeams = async () => {
+const getAllTeams = async ({ simple = false } = {}) => {
+  if (simple) {
+    return await prisma.tim.findMany({
+      select: {
+        timId: true,
+        naziv: true,
+        sportId: true,
+        logoUrl: true
+      }
+    });
+  }
   return await prisma.tim.findMany({
     include: {
       sport: true,
       clanstvaUcesnika: {
-  select: { 
-    korisnikId: true,
-    ulogaUTimu: true,
-    status: true,
-    korisnik: {
-      select: { punoIme: true }
-    }
-  }
-}
+        select: { 
+          korisnikId: true,
+          ulogaUTimu: true,
+          status: true,
+          korisnik: {
+            select: { punoIme: true }
+          }
+        }
+      }
     }
   });
 };

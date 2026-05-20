@@ -135,7 +135,27 @@ async function generisiRaspored(req, res) {
   }
 }
 
+async function getMatchById(req, res) {
+  try {
+    const { id } = req.params;
+    const utakmica = await matchService.getMatchById(id);
+    if (!utakmica) {
+      return res.status(404).json({
+        greska: 'UTAKMICA_NIJE_PRONADJENA',
+        poruka: 'Utakmica nije pronađena.'
+      });
+    }
+    return res.status(200).json(utakmica);
+  } catch (error) {
+    return res.status(500).json({
+      greska: 'GRESKA_DOHVATANJA_DETALJA_UTAKMICE',
+      poruka: error.message || 'Greška pri dohvatanju detalja utakmice.'
+    });
+  }
+}
+
 module.exports = {
   getPublicMatches,
+  getMatchById,
   generisiRaspored
 };

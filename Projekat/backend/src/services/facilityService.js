@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 const DOZVOLJENA_TRAJANJA_TERMINA = [60, 90, 120];
 const DOZVOLJENA_PONAVLJANJA = ['JEDNOM', 'SEDMICNO', 'MJESECNO'];

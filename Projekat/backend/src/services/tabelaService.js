@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 const getTabelaZaTakmicenje = async (takmicenjeId, sortBy = 'ukupniBodovi', sezona = null) => {
 

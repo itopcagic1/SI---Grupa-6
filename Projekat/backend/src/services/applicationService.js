@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/db');
 const { toMyApplicationDto } = require('../dto/applicationDto');
-
-const prisma = new PrismaClient();
 
 async function dohvatiMojePrijave(korisnikId) {
   const prijave = await prisma.ucesceUTakmicenju.findMany({

@@ -19,6 +19,7 @@ export const generateSchedule = async (scheduleData) => {
   return response.data;
 };
 
+let matchesCache = {};
 export const fetchPublicMatches = async (filters = {}) => {
   const params = new URLSearchParams();
 
@@ -29,6 +30,23 @@ export const fetchPublicMatches = async (filters = {}) => {
   });
 
   const queryString = params.toString();
+  const cacheKey = queryString || 'default';
+  const now = Date.now();
+  const cached = matchesCache[cacheKey];
+  
+  if (cached && now - cached.timestamp < 15000) {
+    return cached.data;
+  }
+
   const response = await api.get(`/matches/public${queryString ? `?${queryString}` : ''}`);
+  matchesCache[cacheKey] = {
+    timestamp: now,
+    data: response.data
+  };
+  return response.data;
+};
+
+export const fetchMatchDetails = async (id) => {
+  const response = await api.get(`/matches/${id}/details`);
   return response.data;
 };

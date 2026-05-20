@@ -18,8 +18,12 @@ async function kreirajLigu(req, res) {
 
 async function dohvatiSveLige(req, res) {
   try {
-    const { sportId, status, sezona } = req.query;
-    const lige = await ligaService.dohvatiSveLige({ sportId, status, sezona });
+    const { sportId, status, sezona, simple } = req.query || {};
+    const args = { sportId, status, sezona };
+    if (simple !== undefined) {
+      args.simple = simple === 'true';
+    }
+    const lige = await ligaService.dohvatiSveLige(args);
     return res.status(200).json({
       uspjeh: true,
       ukupno: lige.length,
