@@ -1,12 +1,12 @@
 # Dokaz o Testiranju (Proof of Testing) 
 
 
-## Upravljanje sportskim objektima (CRUD operacije)
+## Modul: Upravljanje sportskim objektima (CRUD operacije)
 
 ### Sumarna statistika pokrivenosti testova
 * **Unit Testovi (`facilityService.test.js`):** 26 testnih scenarija — **Svi uspješni (100% PASS)**
-* **Integracijski Testovi (`facilityRoutes.integration.test.js`):** 13 testnih scenarija — **Svi uspješni (100% PASS)**
-* **UI Testovi (`FacilitiesPage.ui.test.jsx`):** 17 testnih scenarija — **Svi uspješni (100% PASS)**
+* **Integracijski Testovi (`facilityRoutes.test.js`):** 13 testnih scenarija — **Svi uspješni (100% PASS)**
+* **UI Testovi (`Facilities.test.jsx`):** 17 testnih scenarija — **Svi uspješni (100% PASS)**
 
 ---
 
@@ -82,3 +82,65 @@
 | UI | Brisanje: Otvaranje interaktivnog dijalog prozorčića za potvrdu | `Brisanje objekta -> klik na "Ukloni" prikazuje potvrdu` | PASS |
 | UI | Brisanje: Odbijanje i zatvaranje dijaloga bez pokretanja akcije | `Brisanje objekta -> "Ne" otkazuje brisanje i skriva potvrdu` | PASS |
 | UI | Brisanje: Potvrda brisanja, slanje API zahtjeva i ispis uspjeha | `Brisanje objekta -> "Da" poziva API za brisanje i prikazuje poruku` | PASS |
+
+
+
+## Modul: Upravljanje terminima i kalendarom sportskih objekata
+
+### Sumarna statistika pokrivenosti testova
+* **Unit Testovi (`facilityService.test.js`):** 16 testnih scenarija — **Svi uspješni (100% PASS)**
+* **Integracijski Testovi (`facilityRoutes.test.js`):** 4 testna scenarija — **Svi uspješni (100% PASS)**
+* **UI Testovi (`FacilityTermsPage.test.jsx`):** 9 testnih scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+###  Detaljni Matrični Prikaz Izvršenih Testova
+
+####  UNIT TESTOVI
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Uspješno kreiranje pojedinačnog termina od strane autorizovanog vlasnika | `facilityService termini objekta -> VLASNIK objekta moze kreirati jedan termin` | PASS |
+| Unit | Grupno generisanje termina u sekvencama na sedmičnom nivou | `facilityService termini objekta -> SEDMICNO kreira vise termina u razmaku od sedam dana` | PASS |
+| Unit | Grupno generisanje termina u sekvencama na mjesečnom nivou | `facilityService termini objekta -> MJESECNO kreira vise termina u razmaku od mjesec dana` | PASS |
+| Unit | Validacija ulaznih formata datuma i odbijanje neispravnog string zapisa | `facilityService termini objekta -> odbija nevalidan datum pri kreiranju termina` | PASS |
+| Unit | Validacija dozvoljenog trajanja slota i sprečavanje nevalidnih dužina | `facilityService termini objekta -> odbija nevalidno trajanje pri kreiranju termina` | PASS |
+| Unit | Validacija strategije ponavljanja i odbijanje nepodržanih tipova (npr. DNEVNO) | `facilityService termini objekta -> odbija nevalidno ponavljanje pri kreiranju termina` | PASS |
+| Unit | Rukovanje situacijom i vraćanje 404 greške kada matični objekat ne postoji | `facilityService termini objekta -> vraca 404 pri kreiranju termina ako objekat ne postoji` | PASS |
+| Unit | Restrikcija pristupa i vraćanje 403 greške ako korisnik nije registrovani vlasnik | `facilityService termini objekta -> vraca 403 ako korisnik nije vlasnik objekta` | PASS |
+| Unit | Robusna zaštita od preklapanja: blokiranje transakcije u slučaju kolizije | `facilityService termini objekta -> ne kreira nijedan termin ako postoji preklapanje` | PASS |
+| Unit | Dohvatanje i filtriranje kalendarskih termina unutar specifičnog datumskog opsega | `facilityService termini objekta -> dohvata termine objekta koji se preklapaju sa datumskim opsegom` | PASS |
+| Unit | Provjera vidljivosti administratorima: GET zahtjev mora uključiti i blokirane termine | `facilityService termini objekta -> GET termini vraca i BLOKIRAN termine u opsegu` | PASS |
+| Unit | Ispravno rukovanje upitima nad objektima koji trenutno nemaju kreiranih termina | `facilityService termini objekta -> GET termini vraca praznu listu ako nema termina` | PASS |
+| Unit | Zaštita resursa i vraćanje 404 greške pri dohvatu rasporeda za nepostojeći objekat | `facilityService termini objekta -> GET termini vraca 404 ako objekat ne postoji` | PASS |
+| Unit | Uspješno ažuriranje satnice i dužine trajanja postojećeg termina od strane vlasnika | `facilityService termini objekta -> uspjesno mijenja termin ako je korisnik vlasnik objekta` | PASS |
+| Unit | Autorizacija izmjene: sprečavanje pokušaja modifikacije tuđeg termina (403) | `facilityService termini objekta -> zabranjuje izmjenu termina ako korisnik nije vlasnik objekta` | PASS |
+| Unit | Pokušaj slanja modifikacije za termin sa nepostojećim identifikatorom (404) | `facilityService termini objekta -> vraca 404 pri izmjeni ako termin ne postoji` | PASS |
+| Unit | Validacija preklapanja satnica prilikom pomjeranja termina na novi slot | `facilityService termini objekta -> zabranjuje izmjenu termina ako novi termin ima overlap` | PASS |
+| Unit | Algoritamsko ignorisanje samog sebe u provjeri preklapanja pri ažuriranju | `facilityService termini objekta -> pri izmjeni ne tretira trenutni termin kao overlap sam sa sobom` | PASS |
+| Unit | Uspješno administrativno i ručno blokiranje slobodnog termina od strane vlasnika | `facilityService termini objekta -> uspjesno blokira termin ako je korisnik vlasnik objekta` | PASS |
+| Unit | Autorizacija blokiranja: sprečavanje vlasnika da onesposobe termine na tuđim objektima | `facilityService termini objekta -> zabranjuje blokiranje termina ako korisnik nije vlasnik objekta` | PASS |
+| Unit | Pokušaj pokretanja akcije blokiranja za termin koji ne postoji u bazi podataka | `facilityService termini objekta -> vraca 404 pri blokiranju ako termin ne postoji` | PASS |
+
+####  INTEGRACIJSKI TESTOVI — FACILITY RUTE
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | Verifikacija rute, JWT zaštite i kontrolera za kreiranje novih termina (201) | `POST /api/objekti/:id/termini je registrovan i koristi auth middleware i controller` | PASS |
+| Int. | Provjera rute i controllerske logike za preuzimanje filtriranog kalendara termina (200) | `GET /api/objekti/:id/termini je registrovan i poziva controller` | PASS |
+| Int. | Verifikacija rute, middleware autorizacije i kontrolera za modifikaciju termina (200) | `PUT /api/termini/:id je registrovan i koristi auth middleware i controller` | PASS |
+| Int. | Provjera rute, autentifikacijskog tokena i kontrolera za blokiranje slota (200) | `DELETE /api/termini/:id je registrovan i koristi auth middleware i controller` | PASS |
+
+####  UI TESTOVI — FACILITY TERMS PAGE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Inicijalni prikaz: renderovanje naslova, naziva dvorane, prikaza i dd.mm.yyyy. datuma | `FacilityTermsPage -> prikazuje naslov, naziv objekta, sedmicni prikaz i datume u dd.mm.yyyy. formatu` | PASS |
+| UI | Korisničke akcije: Otvaranje forme u modalu, unos podataka i kreiranje termina preko API-ja | `FacilityTermsPage -> otvara modal za kreiranje i uspjesno poziva create API` | PASS |
+| UI | Rukovanje greškama: Prikaz poruke `TERMIN_SE_PREKLAPA` u modalu za kreiranje i zadržavanje modala | `FacilityTermsPage -> prikazuje TERMIN_SE_PREKLAPA gresku unutar create modala i ne zatvara ga` | PASS |
+| UI | Mod za izmjenu: Selektovanje termina, otvaranje edit forme i pozivanje update API-ja | `FacilityTermsPage -> otvara detalje termina, edit modal i poziva update API` | PASS |
+| UI | Rukovanje greškama: Prikaz specifične poruke o preklapanju unutar modala za ažuriranje | `FacilityTermsPage -> prikazuje TERMIN_SE_PREKLAPA gresku unutar edit modala` | PASS |
+| UI | Korisničke akcije: Uspješno pokretanje blokiranja i sakrivanje akcija za već blokiran termin | `FacilityTermsPage -> blokira termin i za BLOKIRAN termin ne prikazuje Uredi niti Blokiraj` | PASS |
+| UI | Klijentsko filtriranje: Dinamičko sakrivanje i ponovno vraćanje kartica termina klikom na status badge | `FacilityTermsPage -> status filteri frontend-side sakrivaju i vracaju termine` | PASS |
+| UI | Kalendarska navigacija: Promjena sedmičnog opsega preko kontrolnih strelica i date picker-a | `FacilityTermsPage -> sedmicna navigacija i date picker mijenjaju prikazanu sedmicu` | PASS |
+| UI | Optimizacija interfejsa: Prikaz skraćene liste i dugmeta "Vidi sve termine dana" za više od 4 stavke | `FacilityTermsPage -> prikazuje Vidi sve termine dana samo kada dan ima vise od cetiri termina` | PASS |
