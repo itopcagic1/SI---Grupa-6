@@ -10,5 +10,5 @@ Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 8, sa f
 | **2** | **Razvoj modula za upravljanje statistikom i doprinosom igrača na određenoj utakmici** | Mehdi Zaimović | Done |  Detaljna statistika igrača se može unijeti tek nakon što je uspješno upisan i spašen konačni rezultat utakmice. |
 | **3** | **Razvoj servisa za dinamički proračun i generisanje tabele poretka na osnovu ručno unesenih rezultata** | Zeir Mašić | Done |  |
 | **4** | **Implementacija analitike sveukupnih individualnih performansi igrača i timova unutar lige** | Amna Kerla | Done | |
-| **5** | **Cjelokupno CRUD upravljanje sportskim objektima sa soft-delete mehanizmom i naprednim validacijama**| Maida Biber | Done | |
-| **6** | **Upravljanje generisanjem i validacijama rasporeda termina sportskih objekata, uz mogućnost rezervacije, otkazivanja i administratorskog blokiranje termina** | Semir Jamaković| Done | |
+| **5** | **Cjelokupno CRUD upravljanje sportskim objektima sa soft-delete mehanizmom i naprednim validacijama**| Maida Biber | Done | Za sada pregled objekata i upravljanje dostupni samo vlasniku tog sportskog objekta.|
+| **6** | **Upravljanje generisanjem i validacijama rasporeda termina sportskih objekata, uz mogućnost rezervacije, otkazivanja i administratorskog blokiranja termina** | Semir Jamaković| Done | |
