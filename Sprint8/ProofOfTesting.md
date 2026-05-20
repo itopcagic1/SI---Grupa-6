@@ -147,12 +147,108 @@
 
 
 
-## Modul: Statistika utakmica i automatsko bodovanje
+## Modul: Unos, korekcija i pregled rezultata utakmica (Ilma Hindija)
 
 ### Sumarna statistika pokrivenosti testova
-* **Unit Testovi:** 51 testni scenarij — **Svi uspješni (100% PASS)**
-* **Integracijski Testovi (`statistikaRoutes.test.js`):** 11 testnih scenarija — **Svi uspješni (100% PASS)**
-* **UI Testovi (`StatistikaIgraca.test.jsx`, `StatistikaTima.test.jsx`, `TopStrijelci.test.jsx`):** 16 testnih scenarija — **Svi uspješni (100% PASS)**
+* **Unit Testovi (`resultController.test.js`):** 7 testnih scenarija — **Svi uspješni (100% PASS)**
+* **Integracijski Testovi (`matchRoutes.test.js`):** 1 testni scenario — **Svi uspješni (100% PASS)**
+* **UI Testovi (`Rezultati.test.jsx`, `Raspored.test.jsx`):** 2 testna scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### UNIT TESTOVI
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Odbijanje unosa rezultata sa negativnim brojem golova | `kreirajRezultat -> vraca gresku za negativan rezultat` | PASS |
+| Unit | Odbijanje unosa rezultata za nepostojeću utakmicu | `kreirajRezultat -> vraca gresku ako utakmica nije pronadjena` | PASS |
+| Unit | Provjera autorizacije organizatora za ligu u kojoj se utakmica igra | `kreirajRezultat -> vraca gresku ako korisnik nije organizator te lige` | PASS |
+| Unit | Uspješan unos rezultata i postavljanje statusa utakmice na "Završeno" | `kreirajRezultat -> uspjesno kreira rezultat i azurira plasman u istoj transakciji` | PASS |
+| Unit | Odbijanje korekcije rezultata ako rezultat još nije inicijalno unesen | `azurirajRezultat -> vraca gresku ako rezultat jos nije unesen` | PASS |
+| Unit | Uspješna korekcija rezultata i automatsko ažuriranje tabele poretka | `azurirajRezultat -> uspjesno azurira rezultat i tabelu atomski` | PASS |
+| Unit | Sprečavanje korekcije rezultata koja narušava zbir golova pojedinačnih igrača | `azurirajRezultat -> odbija promjenu rezultata koja invalidira postojecu statistiku golova` | PASS |
+
+### INTEGRACIJSKI TESTOVI — MATCH RUTE
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | Autorizovani unos rezultata utakmice preko API rute | `POST /api/matches/:id/result -> 201 — uspješno unosi rezultat` | PASS |
+
+### UI TESTOVI — RASPORED I REZULTATI PAGE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikaz dugmeta za unos/korekciju rezultata samo za autorizovane korisnike | `Raspored -> prikazuje dugme za unos/korekciju rezultata ako je korisnik organizator` | PASS |
+| UI | Otvaranje modalnog prozora za unos rezultata utakmice | `Raspored -> otvara modal za unos rezultata klikom na dugme` | PASS |
+
+
+## Modul: Dinamički proračun i generisanje tabele poretka (Zeir Mašić)
+
+### Sumarna statistika pokrivenosti testova
+* **Unit Testovi (`tabelaService.test.js`):** 2 testna scenarija — **Svi uspješni (100% PASS)**
+* **UI Testovi (`Tabela.test.jsx`):** 2 testna scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### UNIT TESTOVI
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Proračun golova (G+), primljenih golova (G-) i gol razlike (GR) iz unesenih rezultata za domaći i gostujući tim | `racuna G+, G- i GR iz RezultatUtakmice za domaci i gostujuci tim` | PASS |
+| Unit | Proračun bodova (3 za pobjedu, 1 za remi, 0 za poraz) | `racuna bodove za pobjede, remije i poraze` | PASS |
+
+### UI TESTOVI — TABELA PAGE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Ispravan prikaz i sortiranje tabele plasmana na korisničkom interfejsu | `Tabela -> ispravno prikazuje i sortira timove po bodovima` | PASS |
+| UI | Prikaz prazne tabele kada nema unesenih utakmica | `Tabela -> prikazuje poruku ako nema podataka o odigranim utakmicama` | PASS |
+
+
+## Modul: Analitika sveukupnih individualnih performansi igrača i timova unutar lige (Amna Kerla)
+
+### Sumarna statistika pokrivenosti testova
+* **Unit Testovi (`statistikaService.test.js`):** 3 testna scenarija — **Svi uspješni (100% PASS)**
+* **Integracijski Testovi (`statistikaRoutes.test.js`):** 1 testni scenario — **Svi uspješni (100% PASS)**
+* **UI Testovi (`TopStrijelci.test.jsx`):** 4 testna scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### UNIT TESTOVI
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Agregacija golova igrača po tipu statistike (npr. Top strijelci) | `statistikaService -> agregira statistike igraca po tipu` | PASS |
+| Unit | Ograničenje i filtriranje top strijelaca po sezoni i takmičenju | `statistikaService -> filtrira top strijelce po sezoni i takmicenju` | PASS |
+| Unit | Sortiranje liste top strijelaca u opadajućem redoslijedu prema broju pogodaka | `statistikaService -> sortira top strijelce po vrijednosti` | PASS |
+
+### INTEGRACIJSKI TESTOVI — STATISTIKA RUTE
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Int. | API endpoint za dohvat top strijelaca sa svim parametrima (limit, takmičenje, tip) | `GET /api/statistika/top-strijelci -> vraca top strijelce sa filterima` | PASS |
+
+### UI TESTOVI — TOP STRIJELCI PAGE
+
+| Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikaz rang liste i dodjela medalja za top 3 rezultata na stranici | `TopStrijelci -> prikazuje medalje za top 3 strijelca` | PASS |
+| UI | Primjena klijentskog limita za prikazani broj igrača | `TopStrijci -> koristi custom limit za prikaz` | PASS |
+| UI | Prikaz filtera i početne poruke na Top Strijelci stranici | `TopStrijelci -> prikazuje filtre i poruku da odaberete takmicenje` | PASS |
+| UI | Dinamičko učitavanje tipova statistike nakon izbora takmičenja | `TopStrijelci -> ucita tipove statistike kada se takmicenje odabere` | PASS |
+
+
+## Modul: Upravljanje statistikom i doprinosom igrača na utakmici (Mehdi Zaimović)
+
+### Sumarna statistika pokrivenosti testova
+* **Unit Testovi (`statistikaConsistencyService.test.js`):** 6 testnih scenarija — **Svi uspješni (100% PASS)**
+* **UI Testovi (`StatistikaIgraca.test.jsx`, `StatistikaTima.test.jsx`):** 4 testna scenarija — **Svi uspješni (100% PASS)**
 
 ---
 
@@ -163,84 +259,17 @@
 | Nivo | AC / Opis | Test koji pokriva | Rezultat |
 | :--- | :--- | :--- | :--- |
 | Unit | Validacija agregata: zbir golova igrača ne smije preći rezultat tima | `odbija unos previse golova igraca u odnosu na rezultat tima` | PASS |
-| Unit | Validacija agregata nakon izmjene rezultata utakmice | `odbija promjenu rezultata koja invalidira postojece golove igraca` | PASS |
 | Unit | Validacija konzistentnosti kartona između igrača i tima | `odbija kartone igraca koji prelaze timske kartone` | PASS |
 | Unit | Ograničenje crvenih kartona za fudbalera (maksimalno 1) | `odbija vise od jednog crvenog kartona za fudbalera` | PASS |
 | Unit | Ograničenje žutih kartona za fudbalera (maksimalno 2) | `odbija vise od dva zuta kartona za fudbalera` | PASS |
-| Unit | Validacija maksimalnog broja timskih žutih kartona | `odbija previse timskih zutih kartona u fudbalu` | PASS |
 | Unit | Validacija posjeda lopte unutar raspona 0-100 | `odbija posjed lopte van opsega` | PASS |
 | Unit | Validacija ukupnog posjeda oba tima (~100%) | `odbija kada posjed oba fudbalska tima nije priblizno 100%` | PASS |
-| Unit | Validacija asistencija igrača u odnosu na timske statistike | `odbija asistencije igraca koje prelaze timske asistencije kada timska statistika postoji` | PASS |
-| Unit | Validacija asistencija u odnosu na broj golova | `odbija previse asistencija u odnosu na golove tima` | PASS |
-| Unit | Propuštanje validnog scenarija statistike | `propusta validan scenario` | PASS |
-| Unit | Dozvola parcijalne statistike ispod timskog agregata | `propusta djelimicnu statistiku kada je zbir igraca manji od timskog agregata` | PASS |
-| Unit | Dohvatanje tipova statistike po sportu | `dohvata tipove statistike za sport` | PASS |
-| Unit | Unos statistike samo za igrače koji učestvuju u utakmici | `snima statistiku igraca samo ako je igrac clan tima na utakmici` | PASS |
-| Unit | Odbijanje igrača koji nije član nijednog tima utakmice | `odbija igraca koji nije clan timova utakmice` | PASS |
-| Unit | Ažuriranje postojeće statistike bez dupliranja zapisa | `azurira postojecu vrijednost umjesto duplikata` | PASS |
-| Unit | Validacija tipa statistike za određeni sport | `odbija tip statistike koji nije vezan za sport utakmice` | PASS |
-| Unit | Unos timske statistike samo za timove sa utakmice | `snima timsku statistiku za tim koji igra utakmicu` | PASS |
-| Unit | Poštivanje autorizacije kao kod unosa rezultata | `postuje isti permission model kao unos rezultata` | PASS |
-| Unit | Agregacija statistike igrača po tipu | `trebalo bi da agregira statistike igraca po tipu` | PASS |
-| Unit | Filtriranje statistike po takmičenju | `trebalo bi da filtriraj po takmicenju` | PASS |
-| Unit | Filtriranje statistike po sezoni | `trebalo bi da filtriraj po sezoni` | PASS |
-| Unit | Validacija neispravnog ID-a igrača | `trebalo bi da baci gresku sa nevalidnim ID-om` | PASS |
-| Unit | Vraćanje praznog rezultata kada nema statistike | `trebalo bi da vrati prazan niz ako nema statistike` | PASS |
-| Unit | Agregacija timske statistike po tipu | `trebalo bi da agregira statistike tima po tipu` | PASS |
-| Unit | Validacija neispravnog ID-a tima | `trebalo bi da baci gresku sa nevalidnim ID-om` | PASS |
-| Unit | Sortiranje top strijelaca po vrijednosti | `trebalo bi da vrati top strijelce sortirane po vrijednosti` | PASS |
-| Unit | Validacija neispravnog ID-a takmičenja | `trebalo bi da baci gresku sa nevalidnim ID-om` | PASS |
-| Unit | Validacija negativnog rezultata utakmice | `vraca gresku za negativan rezultat` | PASS |
-| Unit | Odbijanje nepostojeće utakmice | `vraca gresku ako utakmica nije pronadjena` | PASS |
-| Unit | Autorizacija organizatora pri unosu rezultata | `vraca gresku ako korisnik nije organizator te lige` | PASS |
-| Unit | Automatsko ažuriranje plasmana u istoj transakciji | `uspjesno kreira rezultat i azurira plasman u istoj transakciji` | PASS |
-| Unit | Odbijanje izmjene rezultata prije prvog unosa | `vraca gresku ako rezultat jos nije unesen` | PASS |
-| Unit | Atomsko ažuriranje rezultata i tabele | `uspjesno azurira rezultat i tabelu atomski` | PASS |
-| Unit | Odbijanje izmjene rezultata koja kvari postojeću statistiku | `odbija promjenu rezultata koja invalidira postojecu statistiku golova` | PASS |
-| Unit | Izračunavanje gol razlike i ukupnih golova | `racuna G+, G- i GR iz RezultatUtakmice za domaci i gostujuci tim` | PASS |
-| Unit | Filtriranje fudbalskih statistika za igrače | `filtrira fudbalske igracke tipove statistike` | PASS |
-| Unit | Filtriranje fudbalskih statistika za timove | `filtrira fudbalske timske tipove statistike` | PASS |
-| Unit | Frontend ograničenja za kartone i posjed lopte | `vraca ogranicenja za fudbalske kartone i posjed` | PASS |
-| Unit | Frontend validacija ograničenja statistike | `validira ogranicenja za kartone i posjed na frontendu` | PASS |
-| Unit | Formatiranje procenata i vremenskih vrijednosti | `formatira procente i vremena sa jedinicama` | PASS |
 
----
-
-### INTEGRACIJSKI TESTOVI — STATISTIKA RUTE
-
-| Nivo | AC / Opis | Test koji pokriva | Rezultat |
-| :--- | :--- | :--- | :--- |
-| Int. | Dohvatanje agregirane statistike igrača sa svim filterima | `dohvat agregiranih statistika igraca sa svim filtrima` | PASS |
-| Int. | Dohvatanje statistike igrača bez filtera | `dohvat statistika igraca bez filtera` | PASS |
-| Int. | Validacija neispravnog ID-a igrača | `greska pri dohvatu statistika igraca sa nevalidnim ID` | PASS |
-| Int. | Dohvatanje agregirane statistike tima sa filterima | `dohvat agregiranih statistika tima sa filtrima` | PASS |
-| Int. | Validacija neispravnog ID-a tima | `greska sa nevalidnim timId` | PASS |
-| Int. | Dohvatanje top strijelaca sa svim parametrima | `dohvat top strijelaca sa svim parametrima` | PASS |
-| Int. | Dohvatanje top strijelaca bez tipa statistike | `poziv bez tipStatistikeId vraca rezultat iz servisa` | PASS |
-| Int. | Dohvatanje top strijelaca sa custom limitom | `top strijelci sa custom limitom` | PASS |
-| Int. | Dohvatanje top strijelaca sa default limitom | `top strijelci sa default limitom` | PASS |
-| Int. | Validacija neispravnog ID-a takmičenja | `greska sa nevalidnim takmicenjeId` | PASS |
-| Int. | Validacija neispravnog ID-a tipa statistike | `greska sa nevalidnim tipStatistikeId` | PASS |
-
----
-
-### UI TESTOVI — STATISTIKA I PRIKAZ REZULTATA
+### UI TESTOVI — STATISTIKA IGRACA PAGE
 
 | Nivo | Komponenta / Opis | Test koji pokriva | Rezultat |
 | :--- | :--- | :--- | :--- |
-| UI | Prikaz loading stanja za statistiku igrača | `trebalo bi da prikaze ucitavanje nakon montiranja` | PASS |
-| UI | Prikaz podataka nakon uspješnog učitavanja | `trebalo bi da prikaze podatke nakon ucitavanja` | PASS |
-| UI | Prikaz greške pri neuspješnom dohvatu statistike | `trebalo bi da prikaze gresku ako dohvat ne uspije` | PASS |
-| UI | Filtriranje statistike po takmičenju | `trebalo bi da pozove API sa takmicenjeId filterom` | PASS |
-| UI | Prikaz tabele statistike igrača | `trebalo bi da prikaze tabelu sa statistikom` | PASS |
-| UI | Prikaz naziva tima u naslovu stranice | `trebalo bi da prikaze naziv tima u naslovu` | PASS |
-| UI | Prikaz greške pri neuspješnom dohvatu timske statistike | `trebalo bi da prikaze gresku ako dohvat padne` | PASS |
-| UI | Prikaz broja odigranih utakmica | `trebalo bi da prikaze broj odigranih utakmica` | PASS |
-| UI | Prikaz tabele timske statistike | `trebalo bi da prikaze tabelu sa statistikom tima` | PASS |
-| UI | Dinamičko ažuriranje API poziva pri promjeni filtera | `trebalo bi da azurira API poziv kada se filter promijeni` | PASS |
-| UI | Prikaz filtera i početne poruke na Top Strijelci stranici | `trebalo bi da prikaze filtre i poruku da odaberete takmicenje` | PASS |
-| UI | Dinamičko učitavanje tipova statistike nakon izbora takmičenja | `trebalo bi da ucita tipove statistike kada se takmicenje odabere` | PASS |
-| UI | Prikaz rang liste/top strijelaca nakon odabira filtera | `trebalo bi da prikaze top strijelce nakon odabira` | PASS |
-| UI | Vizuelni prikaz medalja za top 3 rezultata | `trebalo bi da prikaze medalje za top 3` | PASS |
-| UI | Prikaz greške pri neuspješnom dohvatu top strijelaca | `trebalo bi da prikaze gresku ako dohvat ne uspije` | PASS |
-| UI | Primjena korisnički definisanog limita rezultata | `trebalo bi da koristi custom limit` | PASS |
+| UI | Prikaz loading stanja za statistiku igrača | `StatistikaIgraca -> prikazuje ucitavanje nakon montiranja` | PASS |
+| UI | Prikaz podataka nakon uspješnog učitavanja | `StatistikaIgraca -> prikazuje podatke nakon ucitavanja` | PASS |
+| UI | Prikaz greške pri neuspješnom dohvatu statistike | `StatistikaIgraca -> prikazuje gresku ako dohvat ne uspije` | PASS |
+| UI | Prikaz tabele statistike igrača | `StatistikaIgraca -> prikazuje tabelu sa statistikom` | PASS |
