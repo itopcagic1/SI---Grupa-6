@@ -99,7 +99,7 @@ function Raspored() {
         const [sportoviData, ligeData, timoviData] = await Promise.all([
           fetchSportovi(),
           fetchLige({ simple: 'true' }),
-          fetchTeams({ simple: 'true' })
+          fetchTeams()
         ]);
 
         if (!isActive) return;
