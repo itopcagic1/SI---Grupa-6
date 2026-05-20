@@ -418,3 +418,260 @@ describe('facilityService termini objekta', () => {
     expect(mockPrisma.terminObjekta.update).not.toHaveBeenCalled();
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CRUD operacije — sportski objekti
+// ══════════════════════════════════════════════════════════════════════════════
+
+const mockObjekat = {
+  objekatId: 1,
+  naziv: 'Zetra Dvorana',
+  adresa: 'Koševo 4, Sarajevo',
+  opis: 'Košarkaška dvorana',
+  kapacitet: 10,
+  status: 'AKTIVAN',
+  vlasnikId: 1,
+};
+
+const mockVlasnik = { korisnikId: 1, uloga: 'VLASNIK' };
+
+const {
+  createFacilityService,
+  getAllFacilitiesService,
+  getFacilityByIdService,
+  updateFacilityService,
+  deleteFacilityService,
+} = require('../../../src/services/facilityService');
+
+// ─── createFacilityService ────────────────────────────────────────────────────
+
+describe('createFacilityService', () => {
+  test('kreira objekat s validnim podacima', async () => {
+    mockPrisma.sportskiObjekat.create.mockResolvedValue(mockObjekat);
+
+    const result = await createFacilityService(
+      { naziv: 'Zetra Dvorana', adresa: 'Koševo 4', kapacitet: 10 },
+      1
+    );
+
+    expect(mockPrisma.sportskiObjekat.create).toHaveBeenCalledTimes(1);
+    expect(result.naziv).toBe('Zetra Dvorana');
+    expect(result.kapacitet).toBe(10);
+  });
+
+  test('baca grešku ako naziv nedostaje', async () => {
+    await expect(
+      createFacilityService({ naziv: '', kapacitet: 10 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'NEDOSTAJE_NAZIV' });
+  });
+
+  test('baca grešku ako naziv sadrži samo razmake', async () => {
+    await expect(
+      createFacilityService({ naziv: '   ', kapacitet: 10 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'NEDOSTAJE_NAZIV' });
+  });
+
+  test('baca grešku ako je kapacitet 0', async () => {
+    await expect(
+      createFacilityService({ naziv: 'Teren', kapacitet: 0 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_COURT_CAPACITY' });
+  });
+
+  test('baca grešku ako je kapacitet veći od 30', async () => {
+    await expect(
+      createFacilityService({ naziv: 'Teren', kapacitet: 31 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_COURT_CAPACITY' });
+  });
+
+  test('baca grešku ako je kapacitet decimalan broj', async () => {
+    await expect(
+      createFacilityService({ naziv: 'Teren', kapacitet: 5.5 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_COURT_CAPACITY' });
+  });
+
+  test('baca grešku ako je kapacitet negativan', async () => {
+    await expect(
+      createFacilityService({ naziv: 'Teren', kapacitet: -1 }, 1)
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_COURT_CAPACITY' });
+  });
+
+  test('prihvata kapacitet 1 (minimum)', async () => {
+    mockPrisma.sportskiObjekat.create.mockResolvedValue({ ...mockObjekat, kapacitet: 1 });
+    const result = await createFacilityService({ naziv: 'Teren', kapacitet: 1 }, 1);
+    expect(result.kapacitet).toBe(1);
+  });
+
+  test('prihvata kapacitet 30 (maksimum)', async () => {
+    mockPrisma.sportskiObjekat.create.mockResolvedValue({ ...mockObjekat, kapacitet: 30 });
+    const result = await createFacilityService({ naziv: 'Teren', kapacitet: 30 }, 1);
+    expect(result.kapacitet).toBe(30);
+  });
+
+  test('postavlja status AKTIVAN ako nije proslijeđen', async () => {
+    mockPrisma.sportskiObjekat.create.mockResolvedValue(mockObjekat);
+    await createFacilityService({ naziv: 'Teren', kapacitet: 10 }, 1);
+
+    expect(mockPrisma.sportskiObjekat.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'AKTIVAN' }),
+      })
+    );
+  });
+});
+
+// ─── getAllFacilitiesService ───────────────────────────────────────────────────
+
+describe('getAllFacilitiesService', () => {
+  test('vraća listu objekata za datog vlasnika', async () => {
+    mockPrisma.sportskiObjekat.findMany.mockResolvedValue([mockObjekat]);
+
+    const result = await getAllFacilitiesService({}, 1);
+
+    expect(mockPrisma.sportskiObjekat.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ vlasnikId: 1, status: 'AKTIVAN' }),
+      })
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].naziv).toBe('Zetra Dvorana');
+  });
+
+  test('vraća praznu listu ako vlasnik nema objekata', async () => {
+    mockPrisma.sportskiObjekat.findMany.mockResolvedValue([]);
+    const result = await getAllFacilitiesService({}, 99);
+    expect(result).toHaveLength(0);
+  });
+
+  test('filtrira po gradu ako je proslijeđen', async () => {
+    mockPrisma.sportskiObjekat.findMany.mockResolvedValue([mockObjekat]);
+    await getAllFacilitiesService({ grad: 'Sarajevo' }, 1);
+
+    expect(mockPrisma.sportskiObjekat.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          adresa: { contains: 'Sarajevo', mode: 'insensitive' },
+        }),
+      })
+    );
+  });
+
+  test('koristi status AKTIVAN kao default', async () => {
+    mockPrisma.sportskiObjekat.findMany.mockResolvedValue([]);
+    await getAllFacilitiesService({}, 1);
+
+    expect(mockPrisma.sportskiObjekat.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'AKTIVAN' }),
+      })
+    );
+  });
+
+  test('može filtrirati po statusu NEAKTIVAN', async () => {
+    mockPrisma.sportskiObjekat.findMany.mockResolvedValue([]);
+    await getAllFacilitiesService({ status: 'NEAKTIVAN' }, 1);
+
+    expect(mockPrisma.sportskiObjekat.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'NEAKTIVAN' }),
+      })
+    );
+  });
+});
+
+// ─── getFacilityByIdService ───────────────────────────────────────────────────
+
+describe('getFacilityByIdService', () => {
+  test('vraća objekat po ID-u', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(mockObjekat);
+
+    const result = await getFacilityByIdService(1);
+
+    expect(mockPrisma.sportskiObjekat.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { objekatId: 1 } })
+    );
+    expect(result.naziv).toBe('Zetra Dvorana');
+  });
+
+  test('vraća null ako objekat ne postoji', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(null);
+    const result = await getFacilityByIdService(999);
+    expect(result).toBeNull();
+  });
+
+  test('parsira string ID u broj', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(mockObjekat);
+    await getFacilityByIdService('1');
+
+    expect(mockPrisma.sportskiObjekat.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { objekatId: 1 } })
+    );
+  });
+});
+
+// ─── updateFacilityService ────────────────────────────────────────────────────
+
+describe('updateFacilityService', () => {
+  beforeEach(() => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(mockObjekat);
+    mockPrisma.sportskiObjekat.update.mockResolvedValue({ ...mockObjekat, naziv: 'Novi naziv' });
+  });
+
+  test('uspješno ažurira naziv objekta', async () => {
+    const result = await updateFacilityService('1', { naziv: 'Novi naziv' }, mockVlasnik);
+    expect(result.naziv).toBe('Novi naziv');
+  });
+
+  test('baca grešku za nevažeći (negativan) ID objekta', async () => {
+    await expect(
+      updateFacilityService('-1', { naziv: 'Test' }, mockVlasnik)
+    ).rejects.toMatchObject({ status: 400, code: 'NEVALIDAN_ID' });
+  });
+
+  test('baca grešku za nevažeći kapacitet pri izmjeni', async () => {
+    await expect(
+      updateFacilityService('1', { kapacitet: 50 }, mockVlasnik)
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_COURT_CAPACITY' });
+  });
+
+  test('baca grešku ako korisnik nije vlasnik', async () => {
+    await expect(
+      updateFacilityService('1', { naziv: 'Test' }, { korisnikId: 99, uloga: 'VLASNIK' })
+    ).rejects.toMatchObject({ status: 403, code: 'NISTE_VLASNIK_OBJEKTA' });
+  });
+
+  test('baca grešku ako korisnik nije uloge VLASNIK', async () => {
+    await expect(
+      updateFacilityService('1', { naziv: 'Test' }, { korisnikId: 1, uloga: 'IGRAC' })
+    ).rejects.toMatchObject({ status: 403, code: 'NISTE_VLASNIK_OBJEKTA' });
+  });
+
+  test('baca grešku ako objekat ne postoji', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(null);
+    await expect(
+      updateFacilityService('1', { naziv: 'Test' }, mockVlasnik)
+    ).rejects.toMatchObject({ status: 404, code: 'OBJEKAT_NIJE_PRONADJEN' });
+  });
+});
+
+// ─── deleteFacilityService ────────────────────────────────────────────────────
+
+describe('deleteFacilityService', () => {
+  test('postavlja status NEAKTIVAN umjesto brisanja iz baze', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(mockObjekat);
+    mockPrisma.sportskiObjekat.update.mockResolvedValue({ ...mockObjekat, status: 'NEAKTIVAN' });
+
+    const result = await deleteFacilityService('1', mockVlasnik);
+    expect(mockPrisma.sportskiObjekat.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { objekatId: 1 },
+        data: { status: 'NEAKTIVAN' },
+      })
+    );
+    expect(result.status).toBe('NEAKTIVAN');
+  });
+
+  test('baca grešku ako objekat ne postoji', async () => {
+    mockPrisma.sportskiObjekat.findUnique.mockResolvedValue(null);
+    await expect(deleteFacilityService('999', 1)).rejects.toThrow('Sportski objekat ne postoji.');
+  });
+});
