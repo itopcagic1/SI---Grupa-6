@@ -20,6 +20,10 @@ const Navbar = () => {
     korisnik?.trenutnaUloga === 'TRENER' ||
     korisnik?.uloga === 'TRENER';
 
+  const isPlayer =
+    korisnik?.trenutnaUloga === 'IGRAC' ||
+    korisnik?.uloga === 'IGRAC';
+
   // DODANO: Provjera da li je prijavljeni korisnik Vlasnik objekta
   const isOwner =
     korisnik?.trenutnaUloga === 'VLASNIK' ||
@@ -114,6 +118,12 @@ const Navbar = () => {
           {isAuthenticated && (
             <Link to="/profile" className={navLinkClass('/profile')}>
               Profil
+            </Link>
+          )}
+
+          {isPlayer && (
+            <Link to="/rezervacije/individualne" className={navLinkClass('/rezervacije/individualne')}>
+              Individualni treninzi
             </Link>
           )}
 

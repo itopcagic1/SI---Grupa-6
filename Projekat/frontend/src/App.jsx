@@ -31,6 +31,7 @@ import TopStrijelci from './pages/TopStrijelci';
 
 import FacilitiesPage from './pages/FacilitiesPage'; 
 import FacilityTermsPage from './pages/FacilityTermsPage';
+import IndividualTraining from './pages/IndividualTraining';
 
 
 function App() {
@@ -107,6 +108,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FacilityTermsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rezervacije/individualne"
+          element={
+            <ProtectedRoute>
+              <IndividualTraining />
             </ProtectedRoute>
           }
         />
