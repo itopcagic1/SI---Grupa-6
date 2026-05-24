@@ -180,12 +180,17 @@ const createFacilityService = async (data, ownerId) => {
 const getAllFacilitiesService = async (filters, ownerId) => {
   const searchStatus = filters.status || "AKTIVAN";
 
+  const whereClause = {
+    status: searchStatus,
+    adresa: filters.grad ? { contains: filters.grad, mode: 'insensitive' } : undefined
+  };
+
+  if (ownerId !== undefined && ownerId !== null) {
+    whereClause.vlasnikId = parseInt(ownerId);
+  }
+
   return await prisma.sportskiObjekat.findMany({
-    where: {
-      vlasnikId: parseInt(ownerId), 
-      status: searchStatus,
-      adresa: filters.grad ? { contains: filters.grad, mode: 'insensitive' } : undefined
-    },
+    where: whereClause,
     include: {
       vlasnik: {
         select: { punoIme: true, email: true }
@@ -297,6 +302,19 @@ const getFacilityTermsService = async (objekatIdParam, filters = {}) => {
 
   return prisma.terminObjekta.findMany({
     where,
+    include: {
+      zahtjeviZaRezervaciju: {
+        where: { status: 'ODOBRENO' },
+        include: {
+          korisnik: {
+            select: { punoIme: true }
+          },
+          tim: {
+            select: { naziv: true }
+          }
+        }
+      }
+    },
     orderBy: { vrijemePocetka: 'asc' }
   });
 };

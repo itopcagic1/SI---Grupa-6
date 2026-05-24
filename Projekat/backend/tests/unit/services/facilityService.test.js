@@ -204,6 +204,15 @@ describe('facilityService termini objekta', () => {
         vrijemePocetka: { lt: new Date('2026-05-21T00:00:00.000Z') },
         vrijemeZavrsetka: { gt: new Date('2026-05-20T00:00:00.000Z') },
       },
+      include: {
+        zahtjeviZaRezervaciju: {
+          where: { status: 'ODOBRENO' },
+          include: {
+            korisnik: { select: { punoIme: true } },
+            tim: { select: { naziv: true } }
+          }
+        }
+      },
       orderBy: { vrijemePocetka: 'asc' },
     });
   });

@@ -32,6 +32,8 @@ import TopStrijelci from './pages/TopStrijelci';
 import FacilitiesPage from './pages/FacilitiesPage'; 
 import FacilityTermsPage from './pages/FacilityTermsPage';
 import IndividualTraining from './pages/IndividualTraining';
+import CoachDashboard from './pages/CoachDashboard';
+import GroupTrainingsBrowse from './pages/GroupTrainingsBrowse';
 
 
 function App() {
@@ -116,6 +118,22 @@ function App() {
           element={
             <ProtectedRoute>
               <IndividualTraining />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rezervacije/grupne/trener"
+          element={
+            <ProtectedRoute>
+              <CoachDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rezervacije/grupne"
+          element={
+            <ProtectedRoute>
+              <GroupTrainingsBrowse />
             </ProtectedRoute>
           }
         />

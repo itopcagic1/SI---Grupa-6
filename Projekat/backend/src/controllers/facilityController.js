@@ -18,8 +18,9 @@ const createFacility = async (req, res) => {
 const getAllFacilities = async (req, res) => {
   try {
     const { grad, status } = req.query;
-    const currentUserId = req.user?.korisnikId;
-    const facilities = await facilityService.getAllFacilitiesService({ grad, status }, currentUserId);
+    const isOwner = req.user?.uloga === 'VLASNIK' || req.user?.trenutnaUloga === 'VLASNIK';
+    const ownerId = isOwner ? req.user?.korisnikId : null;
+    const facilities = await facilityService.getAllFacilitiesService({ grad, status }, ownerId);
     res.json(facilities);
   } catch (error) {
     res.status(500).json({ error: "Greška pri dohvaćanju objekata: " + error.message });
