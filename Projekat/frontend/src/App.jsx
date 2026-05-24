@@ -33,6 +33,8 @@ import FacilitiesPage from './pages/FacilitiesPage';
 import FacilityTermsPage from './pages/FacilityTermsPage';
 import IndividualTraining from './pages/IndividualTraining';
 
+import VlasnikDashboard from './pages/VlasnikDashboard';
+
 
 function App() {
   return (
@@ -47,6 +49,7 @@ function App() {
         <Route path="/statistika-igraca/:id" element={<StatistikaIgraca />} />
         <Route path="/statistika-tima/:id" element={<StatistikaTima />} />
         <Route path="/top-strijelci/:id" element={<TopStrijelci />} />
+        <Route path="/vlasnik/rezervacije" element={<ProtectedRoute> <VlasnikDashboard /> </ProtectedRoute>} />
 
         <Route
           path="/admin/korisnici"

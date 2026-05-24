@@ -17,6 +17,7 @@ const tabelaRoutes = require('./routes/tabelaRoutes');
 const statistikaRoutes = require('./routes/statistikaRoutes');
 const facilityRoutes = require('./routes/facilityRoutes');
 const rezervacijaRoutes = require('./routes/rezervacijaRoutes');
+const vlasnikRoutes = require('./routes/vlasnikRoutes');
 
 
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/takmicenja', tabelaRoutes);
 app.use('/api', statistikaRoutes);
 app.use('/api', facilityRoutes);
 app.use('/api', rezervacijaRoutes);
+app.use('/api/vlasnik', vlasnikRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');
