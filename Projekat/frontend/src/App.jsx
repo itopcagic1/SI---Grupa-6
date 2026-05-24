@@ -35,6 +35,8 @@ import IndividualTraining from './pages/IndividualTraining';
 import CoachDashboard from './pages/CoachDashboard';
 import GroupTrainingsBrowse from './pages/GroupTrainingsBrowse';
 
+import VlasnikDashboard from './pages/VlasnikDashboard';
+
 
 function App() {
   return (
@@ -49,6 +51,7 @@ function App() {
         <Route path="/statistika-igraca/:id" element={<StatistikaIgraca />} />
         <Route path="/statistika-tima/:id" element={<StatistikaTima />} />
         <Route path="/top-strijelci/:id" element={<TopStrijelci />} />
+        <Route path="/vlasnik/rezervacije" element={<ProtectedRoute> <VlasnikDashboard /> </ProtectedRoute>} />
 
         <Route
           path="/admin/korisnici"

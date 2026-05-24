@@ -115,11 +115,17 @@ const Navbar = () => {
 
           {/* IZMJENA: Link se sada prikazuje samo ako je korisnik prijavljen I ako ima ulogu vlasnika (ili admina ako admin treba imati pristup) */}
           <div className="flex items-center gap-3">
-            {isAuthenticated && (isOwner || isAdmin) && (
+          {isAuthenticated && (isOwner || isAdmin) && (
+            <>
               <Link to="/objekti" className={navLinkClass('/objekti')}>
                 Sportski Objekti
               </Link>
-            )}
+
+              <Link to="/vlasnik/rezervacije" className={navLinkClass('/vlasnik/rezervacije')}>
+                Monitoring Rezervacija
+              </Link>
+            </>
+          )}
           </div>
 
           {isAuthenticated && (
