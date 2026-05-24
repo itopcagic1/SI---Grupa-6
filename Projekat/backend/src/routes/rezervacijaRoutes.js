@@ -8,6 +8,13 @@ const {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
   otkaziIndividualnuRezervaciju,
+  kreirajGrupniTrening,
+  prijaviSeNaGrupniTrening,
+  getTrenerGrupniTreninzi,
+  getGrupniTreninzi,
+  otkaziGrupniTrening,
+  odjaviSeSaGrupnogTreninga,
+  getTrenerNotifikacije,
 } = require('../controllers/rezervacijaController');
 
 router.get(
@@ -30,6 +37,57 @@ router.delete(
   authenticateToken,
   requireRole('IGRAC'),
   otkaziIndividualnuRezervaciju
+);
+
+// --- Grupne rezervacije (Developer 5) ---
+
+router.post(
+  '/rezervacije/grupne/:id',
+  authenticateToken,
+  requireRole('TRENER'),
+  kreirajGrupniTrening
+);
+
+router.post(
+  '/rezervacije/grupne/:id/prijave',
+  authenticateToken,
+  requireRole('IGRAC'),
+  prijaviSeNaGrupniTrening
+);
+
+router.get(
+  '/rezervacije/grupne/moje',
+  authenticateToken,
+  requireRole('TRENER'),
+  getTrenerGrupniTreninzi
+);
+
+router.get(
+  '/rezervacije/grupne/sve',
+  authenticateToken,
+  requireRole('IGRAC'),
+  getGrupniTreninzi
+);
+
+router.delete(
+  '/rezervacije/grupne/:id',
+  authenticateToken,
+  requireRole('TRENER'),
+  otkaziGrupniTrening
+);
+
+router.delete(
+  '/rezervacije/grupne/:id/prijave',
+  authenticateToken,
+  requireRole('IGRAC'),
+  odjaviSeSaGrupnogTreninga
+);
+
+router.get(
+  '/rezervacije/grupne/notifikacije',
+  authenticateToken,
+  requireRole('TRENER'),
+  getTrenerNotifikacije
 );
 
 module.exports = router;

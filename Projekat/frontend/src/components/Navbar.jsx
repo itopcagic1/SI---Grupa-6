@@ -103,6 +103,13 @@ const Navbar = () => {
               >
                 Moje prijave
               </Link>
+
+              <Link
+                to="/rezervacije/grupne/trener"
+                className={navLinkClass('/rezervacije/grupne/trener')}
+              >
+                Grupni treninzi (Trener)
+              </Link>
             </>
           )}
 
@@ -128,9 +135,14 @@ const Navbar = () => {
           )}
 
           {isPlayer && (
-            <Link to="/rezervacije/individualne" className={navLinkClass('/rezervacije/individualne')}>
-              Individualni treninzi
-            </Link>
+            <>
+              <Link to="/rezervacije/individualne" className={navLinkClass('/rezervacije/individualne')}>
+                Individualni treninzi
+              </Link>
+              <Link to="/rezervacije/grupne" className={navLinkClass('/rezervacije/grupne')}>
+                Grupni treninzi
+              </Link>
+            </>
           )}
 
           {isAdmin && (
