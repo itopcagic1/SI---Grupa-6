@@ -51,6 +51,8 @@ model Korisnik {
   prijaveNaTakmicenja        UcesceUTakmicenju[]
   statistikeIgraca           StatistikaIgracaNaUtakmici[]
   uneseniRezultati           RezultatUtakmice[]
+  grupniTreninzi             GrupniTrening[]              @relation("TrenerTreninga")
+  prijaveGrupnogTreninga     PrijavaGrupnogTreninga[]     @relation("IgracPrijavljen")
 }
 
 // ==========================================
@@ -281,6 +283,7 @@ model TerminObjekta {
 
   zahtjeviZaRezervaciju ZahtjevZaRezervaciju[]
   potvrdjeneRezervacije Rezervacija[]
+  grupniTrening         GrupniTrening?
 }
 
 model ZahtjevZaRezervaciju {
@@ -324,6 +327,27 @@ model StavkaListeCekanja {
   redniBroj        Int
   datumDodavanja   DateTime             @default(now())
   statusStavke     String?
+}
+
+model GrupniTrening {
+  treningId             Int                      @id @default(autoincrement())
+  terminId              Int                      @unique
+  terminObjekta         TerminObjekta            @relation(fields: [terminId], references: [terminId], onDelete: Cascade)
+  trenerId              Int
+  trener                Korisnik                 @relation("TrenerTreninga", fields: [trenerId], references: [korisnikId])
+  maksimalanBrojIgraca  Int
+  prijave               PrijavaGrupnogTreninga[]
+}
+
+model PrijavaGrupnogTreninga {
+  prijavaId             Int            @id @default(autoincrement())
+  treningId             Int
+  grupniTrening         GrupniTrening  @relation(fields: [treningId], references: [treningId], onDelete: Cascade)
+  korisnikId            Int
+  korisnik              Korisnik       @relation("IgracPrijavljen", fields: [korisnikId], references: [korisnikId], onDelete: Cascade)
+  datumPrijave          DateTime       @default(now())
+
+  @@unique([treningId, korisnikId])
 }
 
 // ==========================================

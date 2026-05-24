@@ -1,6 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import axios from 'axios';
-import { getFreeIndividualTerms, reserveIndividualTerm, cancelIndividualTerm } from '../reservationApi';
+import {
+  getFreeIndividualTerms,
+  reserveIndividualTerm,
+  cancelIndividualTerm,
+  kreirajGrupniTrening,
+  prijaviSeNaGrupniTrening,
+  getTrenerGrupniTreninzi,
+  getGrupniTreninzi,
+  getAllTeams,
+  otkaziGrupniTrening,
+  odjaviSeSaGrupnogTreninga,
+  getTrenerNotifikacije
+} from '../reservationApi';
 
 
 const mockApiInstance = vi.hoisted(() => ({
@@ -121,5 +133,116 @@ describe('reservationApi', () => {
       expect.any(String),
       expect.objectContaining({ headers: { Authorization: 'Bearer null' } })
     );
+  });
+
+  // --- Grupne rezervacije ---
+
+  it('kreira grupni trening sa ispravnim parametrima i autorizacijom', async () => {
+    const responseData = { poruka: 'Grupni trening je uspješno kreiran.' };
+    mockApiInstance.post.mockResolvedValue({ data: responseData });
+
+    const result = await kreirajGrupniTrening(10, 15, 3);
+
+    expect(mockApiInstance.post).toHaveBeenCalledWith(
+      '/rezervacije/grupne/10',
+      { maksimalanBrojIgraca: 15, timId: 3 },
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('prijavljuje igrača na grupni trening sa ispravnim parametrima i autorizacijom', async () => {
+    const responseData = { poruka: 'Uspješno ste se prijavili na grupni trening.' };
+    mockApiInstance.post.mockResolvedValue({ data: responseData });
+
+    const result = await prijaviSeNaGrupniTrening(5);
+
+    expect(mockApiInstance.post).toHaveBeenCalledWith(
+      '/rezervacije/grupne/5/prijave',
+      {},
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('dohvata grupne treninge trenera', async () => {
+    const responseData = { treninzi: [] };
+    mockApiInstance.get.mockResolvedValue({ data: responseData });
+
+    const result = await getTrenerGrupniTreninzi();
+
+    expect(mockApiInstance.get).toHaveBeenCalledWith(
+      '/rezervacije/grupne/moje',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('dohvata sve grupne treninge za igračku pretragu', async () => {
+    const responseData = { treninzi: [] };
+    mockApiInstance.get.mockResolvedValue({ data: responseData });
+
+    const result = await getGrupniTreninzi();
+
+    expect(mockApiInstance.get).toHaveBeenCalledWith(
+      '/rezervacije/grupne/sve',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('dohvata sve timove', async () => {
+    const responseData = [{ timId: 3, naziv: 'Tim A' }];
+    mockApiInstance.get.mockResolvedValue({ data: responseData });
+
+    const result = await getAllTeams();
+
+    expect(mockApiInstance.get).toHaveBeenCalledWith(
+      '/teams',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('otkazuje grupni trening', async () => {
+    const responseData = { poruka: 'Uspješno otkazano' };
+    mockApiInstance.delete.mockResolvedValue({ data: responseData });
+
+    const result = await otkaziGrupniTrening(100);
+
+    expect(mockApiInstance.delete).toHaveBeenCalledWith(
+      '/rezervacije/grupne/100',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('odjavljuje se sa grupnog treninga', async () => {
+    const responseData = { poruka: 'Uspješno odjavljeno' };
+    mockApiInstance.delete.mockResolvedValue({ data: responseData });
+
+    const result = await odjaviSeSaGrupnogTreninga(100, 'Povreda');
+
+    expect(mockApiInstance.delete).toHaveBeenCalledWith(
+      '/rezervacije/grupne/100/prijave',
+      expect.objectContaining({
+        data: { razlog: 'Povreda' },
+        headers: { Authorization: 'Bearer token-123' }
+      })
+    );
+    expect(result).toEqual(responseData);
+  });
+
+  it('dohvata notifikacije trenera o odjavama', async () => {
+    const responseData = { notifikacije: [] };
+    mockApiInstance.get.mockResolvedValue({ data: responseData });
+
+    const result = await getTrenerNotifikacije();
+
+    expect(mockApiInstance.get).toHaveBeenCalledWith(
+      '/rezervacije/grupne/notifikacije',
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-123' } })
+    );
+    expect(result).toEqual(responseData);
   });
 });
