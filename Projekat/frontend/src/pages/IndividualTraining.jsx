@@ -106,7 +106,8 @@ export default function IndividualTraining() {
     setLoading(true);
     try {
       const response = await getFreeIndividualTerms();
-      setAllTerms(Array.isArray(response.termini) ? response.termini : []);
+      const podaci = Array.isArray(response) ? response : (response?.termini || []);
+      setAllTerms(podaci);
     } catch {
       showNotification('error', 'Neuspješno učitavanje termina.');
     } finally {
@@ -124,7 +125,7 @@ export default function IndividualTraining() {
     if (!selectedTerm) return;
     try {
       const response = await reserveIndividualTerm(selectedTerm.terminId);
-      if (response.status === 'POTVRDJENA') {
+      if (response?.status === 'POTVRDJENA') {
         showNotification('success', 'Uspješno ste rezervisali termin!');
       } else {
         showNotification('warning', 'Vaš zahtjev je poslat na čekanje i biće ručno pregledan od strane vlasnika objekta.');
@@ -193,7 +194,6 @@ export default function IndividualTraining() {
                 Pregledaj slobodne termine i rezerviši trening jednim klikom.
               </p>
             </div>
-            
           </div>
 
           {/* Notifikacija */}
@@ -272,8 +272,8 @@ export default function IndividualTraining() {
                       <div className="space-y-3">
                         {dayTerms.map((termin) => {
                           const isFree = termin.status === 'SLOBODAN';
-                          const isMyReservation = termin.jeMojaRezervacija;
-                          const isOccupied = termin.status === 'ZAUZET' && !isMyReservation;
+                          const isMyReservation = termin.jeMojaRezervacija || termin.status === 'POTVRDJENA';
+                          const isOccupied = (termin.status === 'ZAUZET' || termin.status === 'NA_CEKANJU') && !isMyReservation;
                           const isJoining = joiningWaitlistIds.includes(termin.terminId);
 
                           return (
@@ -306,7 +306,7 @@ export default function IndividualTraining() {
                                 {formatTime(termin.vrijemePocetka)}
                               </div>
                               <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
-                                {termin.sportskiObjekat?.naziv || 'Sportski objekat'}
+                                {termin.sportskiObjekat?.naziv || termin.objekat || 'Sportski objekat'}
                               </div>
                               {termin.tipTermina && (
                                 <div className="mt-0.5 text-[10px] text-slate-400">
@@ -368,7 +368,7 @@ export default function IndividualTraining() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 font-semibold uppercase tracking-wide">Objekat</span>
-                <span>{selectedTerm.sportskiObjekat?.naziv || 'Sportski objekat'}</span>
+                <span>{selectedTerm.sportskiObjekat?.naziv || selectedTerm.objekat || 'Sportski objekat'}</span>
               </div>
               {selectedTerm.tipTermina && (
                 <div className="flex justify-between">
