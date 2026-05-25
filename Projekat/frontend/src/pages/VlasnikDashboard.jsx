@@ -247,9 +247,7 @@ export default function VlasnikDashboard() {
     await loadRezervacije(pagination.page || 1);
   };
 
-  const handleTerenChange = (event) => {
-    setSelectedTerenId(event.target.value);
-  };
+
 
   const handleDateChange = (event) => {
     setSelectedDate(event.target.value);
