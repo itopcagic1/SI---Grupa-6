@@ -38,14 +38,19 @@ function statusClass(status) {
     : status || 'NA_CEKANJU';
   const classes = {
     POTVRDJENO: 'bg-green-50 text-green-700 border-green-200',
+    POTVRDJENA: 'bg-green-50 text-green-700 border-green-200',
+    CONFIRMED: 'bg-green-50 text-green-700 border-green-200',
     NA_CEKANJU: 'bg-amber-50 text-amber-800 border-amber-200',
+    PENDING: 'bg-amber-50 text-amber-800 border-amber-200',
     OTKAZANO: 'bg-red-50 text-red-700 border-red-200',
+    CANCELLED: 'bg-red-50 text-red-700 border-red-200',
   };
   return classes[normalized] || 'bg-slate-50 text-slate-700 border-slate-200';
 }
 
 function getApiErrorMessage(error, fallback) {
-  const code = error.response?.data?.greska;
+  const code = error.response?.data?.greska || error.response?.data?.error;
+
   const messages = {
     TOKEN_ISTEKAO: 'Sesija je istekla. Prijavite se ponovo.',
     NEOVLASTEN: 'Morate biti prijavljeni kao vlasnik.',
@@ -138,6 +143,8 @@ export default function VlasnikDashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingObjekti, setLoadingObjekti] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  
+  const [, setTimerTrigger] = useState(new Date());
 
   // Kolegicini statevi – odobravanje/odbijanje zahtjeva
   const [activeAction, setActiveAction] = useState(null);
@@ -489,58 +496,62 @@ export default function VlasnikDashboard() {
                     <th className="pb-4 pt-2 px-6">Datum i vrijeme</th>
                     <th className="pb-4 pt-2 px-6">Tip termina</th>
                     <th className="pb-4 pt-2 px-6">Status</th>
-                    {/* TASK-3.4 – nova kolona */}
-                    <th className="pb-4 pt-2 px-6">Akcija</th>
+                    <th className="pb-4 pt-2 px-6">Akcije</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-amber-50 text-sm">
-                  {rezervacije.map((rezervacija) => (
-                    <tr key={`${rezervacija.izvor}-${rezervacija.id}`} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-slate-800"><UserName zapis={rezervacija} /></div>
-                        <div className="text-xs text-slate-400 font-medium mt-1">
-                          {getStatusPouzdanosti(rezervacija)} · Prekršeno: {getBrojPrekrsaja(rezervacija)}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 font-semibold text-slate-600">{getTerenNaziv(rezervacija)}</td>
-                      <td className="py-4 px-6 font-semibold text-slate-700">
-                        {formatDateTime(getDatumVrijeme(rezervacija))}
-                      </td>
-                      <td className="py-4 px-6 font-semibold text-slate-600">
-                        {rezervacija.tipTermina || '-'}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex px-3 py-1 rounded-xl border text-[10px] font-black uppercase tracking-widest ${statusClass(rezervacija.status)}`}>
-                          {getDisplayStatus(rezervacija.status)}
-                        </span>
-                      </td>
+                  {rezervacije.map((rezervacija) => {
+                    // provjera da li dugme otkazivanja treba biti onemoguceno
+                    const termStart = rezervacija.datumVrijeme || rezervacija.vrijemePocetka;
+                    const isDisabled = isCancellationDisabled(termStart, rezervacija.status);
 
-                      {/* TASK-3.4/3.5 – dugme otkazivanja */}
-                      <td className="py-4 px-6">
-                        {normalizeStatus(rezervacija.status) === 'POTVRDJENO' ? (
+                    return (
+                      <tr key={`${rezervacija.izvor}-${rezervacija.id}`} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="font-bold text-slate-800">
+                            {rezervacija.korisnik?.punoIme || 'Nepoznat korisnik'}
+                          </div>
+                          <div className="text-xs text-slate-400 font-medium mt-1">
+                            {rezervacija.korisnik?.statusPouzdanosti || 'POUZDAN'} · Prekršeno: {rezervacija.korisnik?.brojPrekrsenihRezervacija ?? 0}
+                          </div>
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-600">
+                          {rezervacija.teren?.naziv || 'Nepoznat teren'}
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-700">
+                          {formatDateTime(termStart)}
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-600">
+                          {rezervacija.tipTermina || '-'}
+                        </td>
+
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex px-3 py-1 rounded-xl border text-[10px] font-black uppercase tracking-widest ${statusClass(rezervacija.status)}`}>
+                            {rezervacija.status || 'NA_CEKANJU'}
+                          </span>
+                        </td>
+
+                        {/*dugme otkazivanja*/}
+                        <td className="py-4 px-6">
                           <button
                             type="button"
-                            onClick={() => setModalOtkazivanje({ id: rezervacija.id, razlog: '' })}
-                            disabled={jeIstekloVrijeme(rezervacija.vrijemePocetka)}
-                            title={
-                              jeIstekloVrijeme(rezervacija.vrijemePocetka)
-                                ? 'Nije moguće otkazati unutar 24h prije termina'
-                                : 'Otkaži termin'
-                            }
-                            className={`px-3 py-2 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
-                              jeIstekloVrijeme(rezervacija.vrijemePocetka)
-                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                : 'bg-red-50 text-red-600 hover:bg-red-100 active:scale-95'
+                            disabled={isDisabled}
+                            onClick={() => handleCancelReservation(rezervacija.id)}
+                            className={`h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                              isDisabled
+                                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                                : 'bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 active:scale-95 shadow-sm'
                             }`}
                           >
-                            Otkaži termin
+                            Cancel Term
                           </button>
-                        ) : (
-                          <span className="text-slate-300 text-xs font-bold">–</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

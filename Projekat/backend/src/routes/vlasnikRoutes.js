@@ -5,6 +5,8 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 const vlasnikController = require('../controllers/vlasnikController');
 
+const { ownerCancelReservation } = require('../controllers/rezervacijaController');
+
 // GET /api/vlasnik/rezervacije
 router.get(
   '/rezervacije',
