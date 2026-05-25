@@ -101,3 +101,8 @@ export const getAllTeams = async () => {
   const response = await api.get('/teams', getAuthHeaders());
   return response.data;
 };
+
+export const getMojeRezervacije = async () => {
+  const response = await api.get('/rezervacije/moje', getAuthHeaders());
+  return response.data;
+};

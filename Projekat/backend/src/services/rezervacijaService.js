@@ -226,8 +226,65 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
   return { poruka: 'Rezervacija je uspješno otkazana.' };
 };
 
+const getMojeRezervacijeService = async (korisnikId) => {
+  const now = new Date();
+
+  const individualne = await prisma.rezervacija.findMany({
+    where: {
+      zahtjev: { korisnikId },
+      status: { in: ['POTVRDJENA', 'NA_CEKANJU'] },
+    },
+    include: {
+      terminObjekta: { include: { sportskiObjekat: true } },
+      zahtjev: true,
+    },
+  });
+
+  const grupne = await prisma.prijavaGrupnogTreninga.findMany({
+    where: { korisnikId },
+    include: {
+      grupniTrening: {
+        include: {
+          terminObjekta: { include: { sportskiObjekat: true } },
+          trener: { select: { punoIme: true } },
+        },
+      },
+    },
+  });
+
+  return [
+    ...individualne
+      .filter((r) => new Date(r.terminObjekta.vrijemePocetka) > now)
+      .map((r) => ({
+        tip: 'INDIVIDUALNI',
+        status: r.status,
+        datumKreiranja: r.datumKreiranja,
+        vrijemePocetka: r.terminObjekta.vrijemePocetka,
+        vrijemeZavrsetka: r.terminObjekta.vrijemeZavrsetka,
+        objekat: r.terminObjekta.sportskiObjekat?.naziv,
+        adresa: r.terminObjekta.sportskiObjekat?.adresa,
+        terminId: r.terminId,
+        rezervacijaId: r.rezervacijaId,
+      })),
+    ...grupne
+      .filter((p) => new Date(p.grupniTrening.terminObjekta.vrijemePocetka) > now)
+      .map((p) => ({
+        tip: 'GRUPNI',
+        status: 'POTVRDJENA',
+        datumKreiranja: p.datumPrijave,
+        vrijemePocetka: p.grupniTrening.terminObjekta.vrijemePocetka,
+        vrijemeZavrsetka: p.grupniTrening.terminObjekta.vrijemeZavrsetka,
+        objekat: p.grupniTrening.terminObjekta.sportskiObjekat?.naziv,
+        adresa: p.grupniTrening.terminObjekta.sportskiObjekat?.adresa,
+        trener: p.grupniTrening.trener?.punoIme,
+        treningId: p.grupniTrening.treningId,
+      })),
+  ].sort((a, b) => new Date(a.vrijemePocetka) - new Date(b.vrijemePocetka));
+};
+
 module.exports = {
   getAllTermsService,
   createIndividualReservationService,
   cancelIndividualReservationService,
+  getMojeRezervacijeService,
 };

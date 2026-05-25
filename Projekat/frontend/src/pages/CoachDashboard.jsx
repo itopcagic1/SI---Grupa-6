@@ -744,7 +744,7 @@ export default function CoachDashboard() {
                   if (confirmModal.onConfirm) confirmModal.onConfirm();
                   setConfirmModal({ open: false, title: '', message: '', onConfirm: null });
                 }}
-                className="flex-1 rounded-2xl bg-red-650 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-750 active:scale-95 font-bold"
+                className="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-700 active:scale-95 font-bold"
               >
                 Potvrdi
               </button>
