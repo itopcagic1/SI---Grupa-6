@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
+
 import {
   getVlasnikObjekti,
   getVlasnikRezervacije,
   verifikujZahtjevRezervacije,
+  otkaziRezervacijuVlasnik,
 } from '../api/vlasnikApi';
 
 const PENDING_STATUSES = ['NA_CEKANJU', 'CEKANJE'];
@@ -19,11 +21,8 @@ function todayInputValue() {
 
 function formatDateTime(value) {
   if (!value) return '-';
-
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return '-';
-
   return date.toLocaleString('bs-BA', {
     day: '2-digit',
     month: '2-digit',
@@ -37,19 +36,16 @@ function statusClass(status) {
   const normalized = PENDING_STATUSES.includes(normalizeStatus(status))
     ? 'NA_CEKANJU'
     : status || 'NA_CEKANJU';
-
   const classes = {
     POTVRDJENO: 'bg-green-50 text-green-700 border-green-200',
     NA_CEKANJU: 'bg-amber-50 text-amber-800 border-amber-200',
     OTKAZANO: 'bg-red-50 text-red-700 border-red-200',
   };
-
   return classes[normalized] || 'bg-slate-50 text-slate-700 border-slate-200';
 }
 
 function getApiErrorMessage(error, fallback) {
   const code = error.response?.data?.greska;
-
   const messages = {
     TOKEN_ISTEKAO: 'Sesija je istekla. Prijavite se ponovo.',
     NEOVLASTEN: 'Morate biti prijavljeni kao vlasnik.',
@@ -58,8 +54,9 @@ function getApiErrorMessage(error, fallback) {
     NEVALIDAN_DATUM: 'Odabrani datum nije validan.',
     NEVALIDNA_STRANICA: 'Broj stranice nije validan.',
     NEVALIDAN_LIMIT: 'Limit rezultata nije validan.',
+    ISTEKLO_VRIJEME_OTKAZIVANJA: 'Nije moguće otkazati rezervaciju unutar 24h prije termina.',
+    RAZLOG_OBAVEZAN: 'Razlog otkazivanja mora imati najmanje 10 karaktera.',
   };
-
   return messages[code] || error.response?.data?.poruka || fallback;
 }
 
@@ -101,10 +98,16 @@ function getDatumVrijeme(zapis) {
   return zapis?.datumVrijeme || zapis?.vrijemePocetka;
 }
 
+// TASK-3.5: Provjeri da li je manje od 24h do termina
+function jeIstekloVrijeme(vrijemePocetkaTermina) {
+  if (!vrijemePocetkaTermina) return true;
+  const saatiDo = (new Date(vrijemePocetkaTermina) - new Date()) / (1000 * 60 * 60);
+  return saatiDo < 24;
+}
+
 function UserName({ zapis }) {
   const nepouzdan = getStatusPouzdanosti(zapis) === 'NEPOUZDAN';
   const brojPrekrsaja = getBrojPrekrsaja(zapis);
-
   return (
     <span>
       {getKorisnikIme(zapis)}
@@ -135,13 +138,19 @@ export default function VlasnikDashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingObjekti, setLoadingObjekti] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+
+  // Kolegicini statevi – odobravanje/odbijanje zahtjeva
   const [activeAction, setActiveAction] = useState(null);
   const [rejectModalZahtjev, setRejectModalZahtjev] = useState(null);
   const [razlogOdbijanja, setRazlogOdbijanja] = useState('');
 
+  // TASK-3.4/3.5 – otkazivanje potvrđene rezervacije
+  const [otkazivanjeId, setOtkazivanjeId] = useState(null);
+  const [modalOtkazivanje, setModalOtkazivanje] = useState(null);
+
   const selectedTerenName = useMemo(() => {
     if (!selectedTerenId) return 'Svi tereni';
-    const found = objekti.find((objekat) => String(objekat.objekatId) === String(selectedTerenId));
+    const found = objekti.find((o) => String(o.objekatId) === String(selectedTerenId));
     return found?.naziv || 'Odabrani teren';
   }, [selectedTerenId, objekti]);
 
@@ -159,7 +168,6 @@ export default function VlasnikDashboard() {
 
   const loadObjekti = async () => {
     setLoadingObjekti(true);
-
     try {
       const response = await getVlasnikObjekti();
       setObjekti(Array.isArray(response) ? response : []);
@@ -173,7 +181,6 @@ export default function VlasnikDashboard() {
 
   const loadRezervacije = async (page = 1) => {
     setLoading(true);
-
     try {
       const response = await getVlasnikRezervacije({
         terenId: selectedTerenId,
@@ -181,67 +188,28 @@ export default function VlasnikDashboard() {
         page,
         limit: 15,
       });
-
       setRezervacije(Array.isArray(response.data) ? response.data : []);
-      setPagination(response.pagination || {
-        page,
-        limit: 15,
-        total: 0,
-        totalPages: 1,
-      });
-      setAnalytics(response.analytics || {
-        ukupnoRezervacijaDanas: 0,
-        zahtjeviNaCekanju: 0,
-      });
+      setPagination(response.pagination || { page, limit: 15, total: 0, totalPages: 1 });
+      setAnalytics(response.analytics || { ukupnoRezervacijaDanas: 0, zahtjeviNaCekanju: 0 });
     } catch (error) {
       showNotification('error', getApiErrorMessage(error, 'Nije moguće učitati rezervacije.'));
       setRezervacije([]);
-      setPagination({
-        page: 1,
-        limit: 15,
-        total: 0,
-        totalPages: 1,
-      });
+      setPagination({ page: 1, limit: 15, total: 0, totalPages: 1 });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadObjekti();
-  }, []);
-
-  useEffect(() => {
-    loadRezervacije(1);
-  }, [selectedTerenId, selectedDate]);
-
-  const handleTerenChange = (event) => {
-    setSelectedTerenId(event.target.value);
-  };
-
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
-  };
-
-  const handlePreviousPage = () => {
-    if (pagination.page > 1) {
-      loadRezervacije(pagination.page - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (pagination.page < pagination.totalPages) {
-      loadRezervacije(pagination.page + 1);
-    }
-  };
+  useEffect(() => { loadObjekti(); }, []);
+  useEffect(() => { loadRezervacije(1); }, [selectedTerenId, selectedDate]);
 
   const refreshCurrentPage = async () => {
     await loadRezervacije(pagination.page || 1);
   };
 
+  // --- Handleri kolegice ---
   const handleOdobriZahtjev = async (zahtjev) => {
     setActiveAction({ id: zahtjev.id, akcija: 'ODOBRI' });
-
     try {
       const response = await verifikujZahtjevRezervacije(zahtjev.id, { akcija: 'ODOBRI' });
       showNotification('success', response.message || 'Zahtjev je odobren.');
@@ -266,15 +234,12 @@ export default function VlasnikDashboard() {
 
   const handlePotvrdiOdbijanje = async () => {
     if (!rejectModalZahtjev || razlogOdbijanja.trim().length < 10) return;
-
     setActiveAction({ id: rejectModalZahtjev.id, akcija: 'ODBIJ' });
-
     try {
       const response = await verifikujZahtjevRezervacije(rejectModalZahtjev.id, {
         akcija: 'ODBIJ',
         razlogOdbijanja: razlogOdbijanja.trim(),
       });
-
       showNotification('success', response.message || 'Zahtjev je odbijen.');
       setRejectModalZahtjev(null);
       setRazlogOdbijanja('');
@@ -286,11 +251,29 @@ export default function VlasnikDashboard() {
     }
   };
 
+  // --- TASK-3.4/3.5 handleri ---
+  const handleOtkazivanje = async () => {
+    if (!modalOtkazivanje) return;
+    setOtkazivanjeId(modalOtkazivanje.id);
+    try {
+      await otkaziRezervacijuVlasnik(modalOtkazivanje.id, modalOtkazivanje.razlog);
+      showNotification('success', 'Rezervacija je uspješno otkazana.');
+      setModalOtkazivanje(null);
+      await refreshCurrentPage();
+    } catch (error) {
+      showNotification('error', getApiErrorMessage(error, 'Greška pri otkazivanju.'));
+    } finally {
+      setOtkazivanjeId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-amber-50/60 font-sans pb-12">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 pt-8">
+
+        {/* Naslov */}
         <div className="mb-8 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">
@@ -300,7 +283,6 @@ export default function VlasnikDashboard() {
               Pregled rezervacija, zahtjeva i popunjenosti za Vaše sportske objekte.
             </p>
           </div>
-
           <div className="bg-white border-2 border-amber-100 rounded-2xl px-4 py-3 shadow-sm">
             <div className="text-[10px] font-black uppercase tracking-widest text-amber-900/60">
               Trenutni filter
@@ -311,6 +293,7 @@ export default function VlasnikDashboard() {
           </div>
         </div>
 
+        {/* Notifikacija */}
         {statusMessage && (
           <div className={`mb-6 p-4 rounded-2xl border-2 font-bold text-sm shadow-sm ${
             statusMessage.type === 'success'
@@ -321,6 +304,7 @@ export default function VlasnikDashboard() {
           </div>
         )}
 
+        {/* Analytics kartice */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="bg-white rounded-[28px] border-2 border-amber-100 shadow-sm p-6">
             <div className="text-xs font-black uppercase tracking-widest text-amber-900/60">
@@ -333,7 +317,6 @@ export default function VlasnikDashboard() {
               Potvrđene i evidentirane rezervacije za današnji dan.
             </p>
           </div>
-
           <div className="bg-white rounded-[28px] border-2 border-amber-100 shadow-sm p-6">
             <div className="text-xs font-black uppercase tracking-widest text-amber-900/60">
               Zahtjevi na čekanju
@@ -347,17 +330,15 @@ export default function VlasnikDashboard() {
           </div>
         </section>
 
+        {/* Filteri */}
         <section className="bg-white rounded-[32px] border-2 border-amber-100 shadow-sm p-5 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-black text-amber-950 uppercase tracking-wide">
-                Filteri
-              </h2>
+              <h2 className="text-lg font-black text-amber-950 uppercase tracking-wide">Filteri</h2>
               <p className="text-sm font-medium text-slate-500 mt-1">
                 Promjena terena ili datuma automatski osvježava tabelu.
               </p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2 ml-1">
@@ -365,7 +346,7 @@ export default function VlasnikDashboard() {
                 </label>
                 <select
                   value={selectedTerenId}
-                  onChange={handleTerenChange}
+                  onChange={(e) => setSelectedTerenId(e.target.value)}
                   disabled={loadingObjekti}
                   className="w-full lg:w-72 px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-sm shadow-sm h-12"
                 >
@@ -377,7 +358,6 @@ export default function VlasnikDashboard() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2 ml-1">
                   Datum
@@ -385,7 +365,7 @@ export default function VlasnikDashboard() {
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={handleDateChange}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                   className="w-full lg:w-56 px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-sm shadow-sm h-12"
                 />
               </div>
@@ -393,6 +373,7 @@ export default function VlasnikDashboard() {
           </div>
         </section>
 
+        {/* Sekcija – zahtjevi nepouzdanih (kolegica TASK-2.4) */}
         <section className="bg-white rounded-[32px] border-2 border-red-100 shadow-sm p-6 mb-8 w-full overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
             <div>
@@ -409,9 +390,7 @@ export default function VlasnikDashboard() {
           </div>
 
           {loading ? (
-            <div className="py-8 text-center text-sm font-bold text-slate-400">
-              Učitavanje zahtjeva...
-            </div>
+            <div className="py-8 text-center text-sm font-bold text-slate-400">Učitavanje zahtjeva...</div>
           ) : pendingZahtjevi.length === 0 ? (
             <div className="py-8 text-center text-sm font-bold text-slate-400">
               Trenutno nema zahtjeva na čekanju.
@@ -428,35 +407,21 @@ export default function VlasnikDashboard() {
                     <th className="pb-4 pt-2 px-6 text-right">Akcije</th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-red-50 text-sm">
                   {pendingZahtjevi.map((zahtjev) => {
                     const odobriLoading = activeAction?.id === zahtjev.id && activeAction?.akcija === 'ODOBRI';
                     const odbijLoading = activeAction?.id === zahtjev.id && activeAction?.akcija === 'ODBIJ';
-
                     return (
                       <tr key={`pending-${zahtjev.id}`} className="hover:bg-red-50/40 transition-colors">
                         <td className="py-4 px-6">
-                          <div className="font-bold text-slate-800">
-                            <UserName zapis={zahtjev} />
-                          </div>
+                          <div className="font-bold text-slate-800"><UserName zapis={zahtjev} /></div>
                           <div className="text-xs text-slate-400 font-medium mt-1">
                             {getStatusPouzdanosti(zahtjev)} · Prekršeno: {getBrojPrekrsaja(zahtjev)}
                           </div>
                         </td>
-
-                        <td className="py-4 px-6 font-semibold text-slate-600">
-                          {getTerenNaziv(zahtjev)}
-                        </td>
-
-                        <td className="py-4 px-6 font-semibold text-slate-700">
-                          {formatDateTime(getDatumVrijeme(zahtjev))}
-                        </td>
-
-                        <td className="py-4 px-6 font-semibold text-slate-600">
-                          {zahtjev.tipTermina || '-'}
-                        </td>
-
+                        <td className="py-4 px-6 font-semibold text-slate-600">{getTerenNaziv(zahtjev)}</td>
+                        <td className="py-4 px-6 font-semibold text-slate-700">{formatDateTime(getDatumVrijeme(zahtjev))}</td>
+                        <td className="py-4 px-6 font-semibold text-slate-600">{zahtjev.tipTermina || '-'}</td>
                         <td className="py-4 px-6">
                           <div className="flex justify-end gap-2">
                             <button
@@ -486,6 +451,7 @@ export default function VlasnikDashboard() {
           )}
         </section>
 
+        {/* Sekcija – monitoring svih rezervacija */}
         <section className="bg-white rounded-[32px] border-2 border-amber-100 shadow-sm p-6 w-full overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
             <div>
@@ -496,7 +462,6 @@ export default function VlasnikDashboard() {
                 Ukupno pronađeno: {pagination.total ?? 0}
               </p>
             </div>
-
             <button
               type="button"
               onClick={() => loadRezervacije(pagination.page || 1)}
@@ -524,37 +489,55 @@ export default function VlasnikDashboard() {
                     <th className="pb-4 pt-2 px-6">Datum i vrijeme</th>
                     <th className="pb-4 pt-2 px-6">Tip termina</th>
                     <th className="pb-4 pt-2 px-6">Status</th>
+                    {/* TASK-3.4 – nova kolona */}
+                    <th className="pb-4 pt-2 px-6">Akcija</th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-amber-50 text-sm">
                   {rezervacije.map((rezervacija) => (
                     <tr key={`${rezervacija.izvor}-${rezervacija.id}`} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-4 px-6">
-                        <div className="font-bold text-slate-800">
-                          <UserName zapis={rezervacija} />
-                        </div>
+                        <div className="font-bold text-slate-800"><UserName zapis={rezervacija} /></div>
                         <div className="text-xs text-slate-400 font-medium mt-1">
                           {getStatusPouzdanosti(rezervacija)} · Prekršeno: {getBrojPrekrsaja(rezervacija)}
                         </div>
                       </td>
-
-                      <td className="py-4 px-6 font-semibold text-slate-600">
-                        {getTerenNaziv(rezervacija)}
-                      </td>
-
+                      <td className="py-4 px-6 font-semibold text-slate-600">{getTerenNaziv(rezervacija)}</td>
                       <td className="py-4 px-6 font-semibold text-slate-700">
                         {formatDateTime(getDatumVrijeme(rezervacija))}
                       </td>
-
                       <td className="py-4 px-6 font-semibold text-slate-600">
                         {rezervacija.tipTermina || '-'}
                       </td>
-
                       <td className="py-4 px-6">
                         <span className={`inline-flex px-3 py-1 rounded-xl border text-[10px] font-black uppercase tracking-widest ${statusClass(rezervacija.status)}`}>
                           {getDisplayStatus(rezervacija.status)}
                         </span>
+                      </td>
+
+                      {/* TASK-3.4/3.5 – dugme otkazivanja */}
+                      <td className="py-4 px-6">
+                        {normalizeStatus(rezervacija.status) === 'POTVRDJENO' ? (
+                          <button
+                            type="button"
+                            onClick={() => setModalOtkazivanje({ id: rezervacija.id, razlog: '' })}
+                            disabled={jeIstekloVrijeme(rezervacija.vrijemePocetka)}
+                            title={
+                              jeIstekloVrijeme(rezervacija.vrijemePocetka)
+                                ? 'Nije moguće otkazati unutar 24h prije termina'
+                                : 'Otkaži termin'
+                            }
+                            className={`px-3 py-2 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
+                              jeIstekloVrijeme(rezervacija.vrijemePocetka)
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-red-50 text-red-600 hover:bg-red-100 active:scale-95'
+                            }`}
+                          >
+                            Otkaži termin
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 text-xs font-bold">–</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -563,24 +546,23 @@ export default function VlasnikDashboard() {
             </div>
           )}
 
+          {/* Paginacija */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-5 border-t border-amber-100">
             <div className="text-xs font-black uppercase tracking-widest text-slate-400">
               Stranica {pagination.page || 1} od {pagination.totalPages || 1}
             </div>
-
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handlePreviousPage}
+                onClick={() => pagination.page > 1 && loadRezervacije(pagination.page - 1)}
                 disabled={loading || pagination.page <= 1}
                 className="px-4 py-2.5 bg-white border-2 border-amber-100 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-amber-50 transition-colors disabled:opacity-50"
               >
                 Prethodna
               </button>
-
               <button
                 type="button"
-                onClick={handleNextPage}
+                onClick={() => pagination.page < pagination.totalPages && loadRezervacije(pagination.page + 1)}
                 disabled={loading || pagination.page >= pagination.totalPages}
                 className="px-4 py-2.5 bg-white border-2 border-amber-100 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-amber-50 transition-colors disabled:opacity-50"
               >
@@ -591,14 +573,13 @@ export default function VlasnikDashboard() {
         </section>
       </main>
 
+      {/* Modal – odbijanje zahtjeva (kolegica TASK-2.5) */}
       {rejectModalZahtjev && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6">
           <div className="w-full max-w-xl rounded-[2rem] bg-white p-8 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">
-                  Odbij zahtjev
-                </h2>
+                <h2 className="text-2xl font-black text-slate-900">Odbij zahtjev</h2>
                 <p className="mt-2 text-sm font-semibold text-slate-500">
                   Unesite razlog odbijanja termina
                 </p>
@@ -612,7 +593,6 @@ export default function VlasnikDashboard() {
                 Zatvori
               </button>
             </div>
-
             <div className="mt-6 rounded-3xl border border-red-100 bg-red-50/50 p-4">
               <div className="text-sm font-bold text-slate-800">
                 <UserName zapis={rejectModalZahtjev} />
@@ -621,13 +601,12 @@ export default function VlasnikDashboard() {
                 {getTerenNaziv(rejectModalZahtjev)} · {formatDateTime(getDatumVrijeme(rejectModalZahtjev))}
               </div>
             </div>
-
             <label className="mt-5 block text-xs font-black uppercase tracking-widest text-slate-500">
               Razlog odbijanja
             </label>
             <textarea
               value={razlogOdbijanja}
-              onChange={(event) => setRazlogOdbijanja(event.target.value)}
+              onChange={(e) => setRazlogOdbijanja(e.target.value)}
               disabled={isActionRunning}
               rows={5}
               className="mt-2 w-full resize-none rounded-3xl border-2 border-slate-100 bg-white p-4 text-sm font-medium text-slate-700 outline-none transition-colors focus:border-red-400 disabled:opacity-60"
@@ -636,7 +615,6 @@ export default function VlasnikDashboard() {
             <div className="mt-2 text-xs font-bold text-slate-400">
               {razlogOdbijanja.trim().length}/10 karaktera
             </div>
-
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -653,6 +631,49 @@ export default function VlasnikDashboard() {
                 className="rounded-3xl bg-red-600 px-5 py-3 text-sm font-black uppercase tracking-widest text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {activeAction?.akcija === 'ODBIJ' ? 'Slanje...' : 'Potvrdi odbijanje'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TASK-3.4 – Modal za otkazivanje potvrđene rezervacije */}
+      {modalOtkazivanje && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md p-8">
+            <h2 className="text-xl font-black text-slate-800 mb-2">Otkazivanje rezervacije</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Unesite razlog otkazivanja. Korisnik će biti obaviješten.
+            </p>
+            <textarea
+              rows={4}
+              placeholder="Unesite razlog otkazivanja (min. 10 karaktera)..."
+              value={modalOtkazivanje.razlog}
+              onChange={(e) => setModalOtkazivanje((prev) => ({ ...prev, razlog: e.target.value }))}
+              className="w-full px-4 py-3 border-2 border-amber-100 rounded-2xl outline-none focus:border-orange-500 text-sm font-medium text-slate-700 resize-none"
+            />
+            <p className="text-xs text-slate-400 mt-1 mb-6">
+              {modalOtkazivanje.razlog.length}/10 karaktera minimum
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setModalOtkazivanje(null)}
+                disabled={otkazivanjeId === modalOtkazivanje.id}
+                className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                Odustani
+              </button>
+              <button
+                type="button"
+                onClick={handleOtkazivanje}
+                disabled={
+                  modalOtkazivanje.razlog.trim().length < 10 ||
+                  otkazivanjeId === modalOtkazivanje.id
+                }
+                className="flex-1 py-3 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {otkazivanjeId === modalOtkazivanje.id ? 'Otkazivanje...' : 'Potvrdi otkazivanje'}
               </button>
             </div>
           </div>

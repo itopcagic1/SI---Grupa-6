@@ -21,4 +21,11 @@ router.patch(
   vlasnikController.obradiZahtjevVerifikacije
 );
 
+router.post(
+  '/rezervacije/:id/otkazivanje',
+  authenticateToken,
+  requireRole('VLASNIK'),
+  vlasnikController.otkaziRezervacijuVlasnik
+);
+
 module.exports = router;
