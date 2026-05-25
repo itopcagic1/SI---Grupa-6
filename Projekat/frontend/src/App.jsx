@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Homepage from './pages/Homepage';
 import Register from './pages/Register';
@@ -23,6 +22,7 @@ import MojePrijave from './pages/MojePrijave';
 import PrijavaEkipe from './pages/PrijavaEkipe';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import RealtimeNotifications from './components/RealtimeNotifications.jsx';
 
 import Tabela from './pages/Tabela';
 import StatistikaIgraca from './pages/StatistikaIgraca';
@@ -41,6 +41,7 @@ import VlasnikDashboard from './pages/VlasnikDashboard';
 function App() {
   return (
     <Router>
+      <RealtimeNotifications />
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/register" element={<Register />} />

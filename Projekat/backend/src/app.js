@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
@@ -18,6 +19,8 @@ const statistikaRoutes = require('./routes/statistikaRoutes');
 const facilityRoutes = require('./routes/facilityRoutes');
 const rezervacijaRoutes = require('./routes/rezervacijaRoutes');
 const vlasnikRoutes = require('./routes/vlasnikRoutes');
+const listaCekanjaRoutes = require('./routes/listaCekanjaRoutes');
+const { initializeSocket } = require('./websocket');
 
 
 const app = express();
@@ -55,14 +58,20 @@ app.use('/api/takmicenja', tabelaRoutes);
 app.use('/api', statistikaRoutes);
 app.use('/api', facilityRoutes);
 app.use('/api', rezervacijaRoutes);
+app.use('/api', listaCekanjaRoutes);
 app.use('/api/vlasnik', vlasnikRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server radi na portu ${PORT}`);
-});
+if (require.main === module) {
+  const server = http.createServer(app);
+  initializeSocket(server);
+
+  server.listen(PORT, () => {
+    console.log(`Server radi na portu ${PORT}`);
+  });
+}
 
 module.exports = app;

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { getFreeIndividualTerms, reserveIndividualTerm, cancelIndividualTerm } from '../api/reservationApi';
+import {
+  getFreeIndividualTerms,
+  reserveIndividualTerm,
+  cancelIndividualTerm,
+  joinWaitlist,
+} from '../api/reservationApi';
 
 const DAY_LABELS = ['NED', 'PON', 'UTO', 'SRI', 'ČET', 'PET', 'SUB'];
 
@@ -80,6 +85,7 @@ export default function IndividualTraining() {
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
+  const [joiningWaitlistIds, setJoiningWaitlistIds] = useState([]);
 
   const korisnik = localStorage.getItem('korisnik')
     ? JSON.parse(localStorage.getItem('korisnik'))
@@ -116,7 +122,7 @@ export default function IndividualTraining() {
     try {
       const response = await getFreeIndividualTerms();
       setAllTerms(Array.isArray(response.termini) ? response.termini : []);
-    } catch (err) {
+    } catch {
       showNotification('error', 'Neuspješno učitavanje termina.');
     } finally {
       setLoading(false);
@@ -124,7 +130,9 @@ export default function IndividualTraining() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTerms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -176,6 +184,21 @@ export default function IndividualTraining() {
       loadTerms();
     } catch (err) {
       setError(err.response?.data?.poruka || 'Otkazivanje nije uspjelo.');
+    }
+  };
+
+  const handleJoinWaitlist = async (termin) => {
+    setJoiningWaitlistIds((current) => [...current, termin.terminId]);
+    try {
+      await joinWaitlist(termin.terminId);
+      setAllTerms((current) => current.map((item) => (
+        item.terminId === termin.terminId ? { ...item, naListiCekanja: true } : item
+      )));
+      showNotification('success', 'Prijavljeni ste na listu cekanja za ovaj termin.');
+    } catch (err) {
+      showNotification('error', err.response?.data?.poruka || 'Prijava na listu cekanja nije uspjela.');
+    } finally {
+      setJoiningWaitlistIds((current) => current.filter((id) => id !== termin.terminId));
     }
   };
 
@@ -240,6 +263,10 @@ export default function IndividualTraining() {
               <span className="inline-block w-3 h-3 rounded-full bg-blue-200 border border-blue-400"></span>
               Vaša rezervacija
             </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>
+              Zauzeto
+            </span>
           </div>
 
           {/* Navigacija sedmica */}
@@ -288,20 +315,26 @@ export default function IndividualTraining() {
                     <div className="space-y-3">
                       {dayTerms.map((termin) => {
                         const isFree = termin.status === 'SLOBODAN';
-                        const isMyReservation = termin.status === 'ZAUZET';
+                        const isMyReservation = termin.jeMojaRezervacija;
+                        const isOccupied = termin.status === 'ZAUZET' && !isMyReservation;
+                        const isJoining = joiningWaitlistIds.includes(termin.terminId);
 
                         return (
                           <button
                             key={termin.terminId}
                             type="button"
+                            disabled={isOccupied && (termin.naListiCekanja || isJoining)}
                             onClick={() => {
                               if (isFree) openReservationModal(termin);
-                              else if (isMyReservation) openCancelModal(termin);
+                              if (isMyReservation) openCancelModal(termin);
+                              if (isOccupied && !termin.naListiCekanja) handleJoinWaitlist(termin);
                             }}
                             className={`w-full rounded-2xl border p-3 text-left shadow-sm transition
                               ${isFree
                                 ? 'border-green-200 bg-white hover:border-green-400 hover:bg-green-50 cursor-pointer'
-                                : 'border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 cursor-pointer'
+                                : isMyReservation
+                                ? 'border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 cursor-pointer'
+                                : 'border-amber-200 bg-amber-50 hover:border-amber-400 hover:bg-amber-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75'
                               }`}
                           >
                             {/* Labela gore */}
@@ -310,10 +343,12 @@ export default function IndividualTraining() {
                                 className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide
                                   ${isFree
                                     ? 'bg-green-100 text-green-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                    : isMyReservation
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-amber-100 text-amber-800'
                                   }`}
                               >
-                                {isFree ? 'Slobodno' : 'Rezervisano'}
+                                {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : 'Zauzeto'}
                               </span>
                             </div>
 
@@ -335,6 +370,15 @@ export default function IndividualTraining() {
                             {isMyReservation && (
                               <div className="mt-2 text-xs text-blue-500 font-medium">
                                 Kliknite za otkazivanje
+                              </div>
+                            )}
+                            {isOccupied && (
+                              <div className="mt-2 text-xs text-amber-700 font-semibold">
+                                {termin.naListiCekanja
+                                  ? 'Nalazite se na listi cekanja'
+                                  : isJoining
+                                  ? 'Prijava u toku...'
+                                  : 'Prijavi me na listu cekanja'}
                               </div>
                             )}
                           </button>

@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { notifyTerminOslobodjen } = require('./listaCekanjaNotifier');
 
 const SLOBODAN = 'SLOBODAN';
 const REZERVISAN = 'ZAUZET';
@@ -25,24 +26,43 @@ function serviceError(message, status = 400, code = 'NEOVLASTEN') {
 const getAllTermsService = async (korisnikId) => {
   const now = new Date();
 
-  const mojRezervacije = await prisma.rezervacija.findMany({
-    where: {
-      zahtjev: { korisnikId },
-      status: 'POTVRDJENA',
-    },
-    select: { terminId: true },
-  });
+  const [mojRezervacije, mojeStavkeListeCekanja] = await Promise.all([
+    prisma.rezervacija.findMany({
+      where: {
+        zahtjev: { korisnikId },
+        status: 'POTVRDJENA',
+      },
+      select: { terminId: true },
+    }),
+    prisma.stavkaListeCekanja?.findMany
+      ? prisma.stavkaListeCekanja.findMany({
+        where: {
+          zahtjev: { korisnikId },
+          OR: [
+            { statusStavke: null },
+            { statusStavke: 'AKTIVNA' },
+            { statusStavke: 'ACTIVE' },
+          ],
+        },
+        select: {
+          zahtjev: {
+            select: { terminId: true },
+          },
+        },
+      })
+      : Promise.resolve([]),
+  ]);
 
-  const mojiTerminIds = mojRezervacije.map((r) => r.terminId);
-
-  return prisma.terminObjekta.findMany({
+  const mojiTerminIdsArray = mojRezervacije.map((r) => r.terminId);
+  const termini = await prisma.terminObjekta.findMany({
     where: {
       vrijemePocetka: { gt: now },
       OR: [
         { status: SLOBODAN },
+        { status: REZERVISAN },
         {
           status: REZERVISAN,
-          terminId: { in: mojiTerminIds },
+          terminId: { in: mojiTerminIdsArray },
         },
       ],
     },
@@ -53,6 +73,17 @@ const getAllTermsService = async (korisnikId) => {
       },
     },
   });
+
+  const mojiTerminIds = new Set(mojiTerminIdsArray);
+  const terminiNaListiCekanja = new Set(
+    mojeStavkeListeCekanja.map((stavka) => stavka.zahtjev.terminId)
+  );
+
+  return termini.map((termin) => ({
+    ...termin,
+    jeMojaRezervacija: mojiTerminIds.has(termin.terminId),
+    naListiCekanja: terminiNaListiCekanja.has(termin.terminId),
+  }));
 };
 
 const assertNotDuplicateReservation = async (terminId, korisnikId) => {
@@ -189,6 +220,8 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
       data: { status: SLOBODAN },
     });
   });
+
+  await notifyTerminOslobodjen(terminId);
 
   return { poruka: 'Rezervacija je uspješno otkazana.' };
 };

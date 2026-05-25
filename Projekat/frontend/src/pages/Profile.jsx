@@ -1,9 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { getMyWaitlistTerms, leaveWaitlist } from '../api/reservationApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString('bs-BA', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 
 const Profile = () => {
     const [user, setUser] = useState(null);
@@ -14,15 +24,12 @@ const Profile = () => {
         potvrda: ''
     });
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [waitlistItems, setWaitlistItems] = useState([]);
+    const [waitlistLoading, setWaitlistLoading] = useState(false);
+    const [removingWaitlistId, setRemovingWaitlistId] = useState(null);
 
-    const navigate = useNavigate();
     const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
-    const isAdmin = korisnikData?.trenutnaUloga === 'ADMINISTRATOR' || korisnikData?.trenutnaUloga === 'ADMIN';
-    const isTrainer = korisnikData?.trenutnaUloga === 'TRENER';
-
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+    const isPlayer = korisnikData?.trenutnaUloga === 'IGRAC' || korisnikData?.uloga === 'IGRAC';
 
     const fetchProfile = async () => {
         try {
@@ -31,7 +38,7 @@ const Profile = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(res.data.korisnik);
-        } catch (err) {
+        } catch {
             setMessage({ type: 'error', text: 'Greška pri učitavanju profila' });
         } finally {
             setLoading(false);
@@ -56,11 +63,37 @@ const Profile = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('korisnik');
-        navigate('/');
+    const fetchWaitlist = async () => {
+        setWaitlistLoading(true);
+        try {
+            const data = await getMyWaitlistTerms();
+            setWaitlistItems(Array.isArray(data.stavke) ? data.stavke : []);
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.poruka || 'Greška pri učitavanju liste čekanja.' });
+        } finally {
+            setWaitlistLoading(false);
+        }
     };
+
+    const handleLeaveWaitlist = async (terminId) => {
+        setRemovingWaitlistId(terminId);
+        try {
+            await leaveWaitlist(terminId);
+            setWaitlistItems((current) => current.filter((item) => item.termin.terminId !== terminId));
+            setMessage({ type: 'success', text: 'Uklonjeni ste sa liste čekanja.' });
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.poruka || 'Uklanjanje sa liste čekanja nije uspjelo.' });
+        } finally {
+            setRemovingWaitlistId(null);
+        }
+    };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchProfile();
+        if (isPlayer) fetchWaitlist();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (loading) {
         return <div className="min-h-screen bg-amber-50 flex items-center justify-center text-amber-500 font-medium">Učitavanje podataka...</div>;
@@ -199,6 +232,65 @@ const Profile = () => {
                                 </div>
                             )}
                         </div>
+
+                        {isPlayer && (
+                        <div className="mt-8 bg-white rounded-3xl border border-amber-100 p-8 shadow-sm">
+                            <div className="flex items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-amber-950">Termini na kojima čekam</h3>
+                                    <p className="text-sm text-slate-500 mt-1">Aktivne prijave na liste čekanja.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={fetchWaitlist}
+                                    disabled={waitlistLoading}
+                                    className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-2 text-xs font-black uppercase tracking-widest text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+                                >
+                                    Osvježi
+                                </button>
+                            </div>
+
+                            {waitlistLoading ? (
+                                <div className="rounded-2xl border border-dashed border-amber-100 p-5 text-center text-sm font-semibold text-amber-500">
+                                    Učitavanje liste čekanja...
+                                </div>
+                            ) : waitlistItems.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-amber-100 p-5 text-center text-sm font-semibold text-slate-400">
+                                    Trenutno niste na listi čekanja ni za jedan termin.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {waitlistItems.map((item) => (
+                                        <div key={item.stavkaId} className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <div className="text-sm font-black text-slate-800">
+                                                        {formatDateTime(item.termin.vrijemePocetka)}
+                                                    </div>
+                                                    <div className="mt-1 text-xs font-semibold text-slate-500">
+                                                        {item.termin.sportskiObjekat?.naziv || 'Sportski objekat'}
+                                                        {item.termin.sportskiObjekat?.adresa ? `, ${item.termin.sportskiObjekat.adresa}` : ''}
+                                                    </div>
+                                                    <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+                                                        Redni broj: {item.redniBroj}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleLeaveWaitlist(item.termin.terminId)}
+                                                    disabled={removingWaitlistId === item.termin.terminId}
+                                                    className="h-10 w-10 shrink-0 rounded-full border border-red-100 bg-white text-sm font-black text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                                                    aria-label="Ukloni sa liste čekanja"
+                                                >
+                                                    X
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        )}
                     </div>
                 </div>
             </div>
