@@ -226,3 +226,135 @@
 | UI | Prikazuje grešku ako učitavanje podataka ne uspije | `prikazuje grešku ako učitavanje ne uspije` | PASS |
 
 ---
+
+# Modul: Real-time lista čekanja i notifikacije za oslobođene termine (Mehdi Zaimović)
+
+## Sumarna statistika pokrivenosti testova
+
+* **Backend Unit Testovi (Servis - `rezervacijaService.test.js`):** 10 relevantnih testnih scenarija za reservation flow koji TASK-7 koristi — **Svi uspješni (100% PASS)**
+* **Backend Unit Testovi (Kontroler - `rezervacijaController.test.js`):** 6 relevantnih testnih scenarija — **Svi uspješni (100% PASS)**
+* **Backend Integracijski Testovi (Rute - `rezervacijaRoutes.test.js`):** 4 relevantna integracijska scenarija — **Svi uspješni (100% PASS)**
+* **Frontend API/UI Testovi (`reservationApi.test.js`, `IndividualTraining.test.jsx`):** 15 relevantnih scenarija definisano, ali izvršavanje trenutno blokirano zbog Vitest setup path problema — **BLOCKED**
+* **Frontend ESLint Verifikacija:** ciljane datoteke uspješno prošle lint provjeru — **PASS**
+* **Frontend Production Build (`npm run build`):** trenutno blokiran zbog lokalnog Vite/Rolldown path problema — **BLOCKED**
+
+---
+
+## Detaljni Matrični Prikaz Izvršenih Testova
+
+### BACKEND UNIT TESTOVI — SERVIS (`rezervacijaService.test.js`)
+
+| Nivo | AC / Opis                                                                                                | Test koji pokriva                                                                      | Rezultat |
+| :--- | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- | :------- |
+| Unit | Dohvat termina vraća buduće slobodne termine i korisnikove rezervisane termine                           | `getAllTermsService vraća slobodne i korisnikove rezervisane termine`                  | PASS     |
+| Unit | Korisnik vidi vlastite zauzete termine unutar rezultata dohvata termina                                  | `getAllTermsService uključuje korisnikove zauzete termine`                             | PASS     |
+| Unit | Pouzdan igrač može odmah rezervisati slobodan termin uz kreiranje rezervacije i promjenu statusa termina | `createIndividualReservationService kreira potvrđenu rezervaciju ako je igrač pouzdan` | PASS     |
+| Unit | Nepouzdan igrač dobija zahtjev sa statusom `NA_CEKANJU` umjesto direktne rezervacije                     | `createIndividualReservationService kreira zahtjev ako igrač nije pouzdan`             | PASS     |
+| Unit | Sistem odbija rezervaciju nepostojećeg ili nedostupnog termina                                           | `createIndividualReservationService baca grešku kada termin ne postoji`                | PASS     |
+| Unit | Validacija odbija neispravan `terminId` format                                                           | `createIndividualReservationService baca grešku za neispravan terminId`                | PASS     |
+| Unit | Sistem sprječava duplu aktivnu rezervaciju ili zahtjev za isti termin                                    | `createIndividualReservationService baca grešku za duplu rezervaciju`                  | PASS     |
+| Unit | Otkazivanje rezervacije oslobađa termin i ažurira status rezervacije                                     | `cancelIndividualReservationService uspješno otkazuje rezervaciju`                     | PASS     |
+| Unit | Otkazivanje bez aktivne rezervacije vraća grešku                                                         | `cancelIndividualReservationService baca grešku kada rezervacija ne postoji`           | PASS     |
+| Unit | Sistem blokira otkazivanje termina koji je već prošao ili započeo                                        | `cancelIndividualReservationService baca grešku za termin koji je već prošao`          | PASS     |
+
+---
+
+### BACKEND UNIT TESTOVI — KONTROLER (`rezervacijaController.test.js`)
+
+| Nivo | AC / Opis                                                                       | Test koji pokriva                                                           | Rezultat |
+| :--- | :------------------------------------------------------------------------------ | :-------------------------------------------------------------------------- | :------- |
+| Unit | Kontroler vraća listu termina u odgovoru `{ termini }`                          | `getFreeIndividualTerms vraća termine`                                      | PASS     |
+| Unit | Kontroler vraća `500 SERVER_ERROR` kada servis baci grešku                      | `getFreeIndividualTerms vraća 500 pri grešci servisa`                       | PASS     |
+| Unit | Uspješna rezervacija vraća status `POTVRDJENA`                                  | `kreirajIndividualnuRezervaciju vraća potvrdu kada je rezervacija uspješna` | PASS     |
+| Unit | Nepouzdan korisnik dobija status `NA_CEKANJU`                                   | `kreirajIndividualnuRezervaciju vraća NA_CEKANJU za nepouzdanog igrača`     | PASS     |
+| Unit | Greške servisa se mapiraju na odgovarajući HTTP status i error code             | `kreirajIndividualnuRezervaciju vraća grešku pri neuspjehu servisa`         | PASS     |
+| Unit | Kontroler poziva servis za otkazivanje sa `terminId` i `korisnikId` parametrima | `otkaziIndividualnuRezervaciju vraća potvrdu otkazivanja`                   | PASS     |
+
+---
+
+### BACKEND INTEGRACIJSKI TESTOVI — RUTE (`rezervacijaRoutes.test.js`)
+
+| Nivo              | AC / Opis                                                                      | Test koji pokriva                                                | Rezultat |
+| :---------------- | :----------------------------------------------------------------------------- | :--------------------------------------------------------------- | :------- |
+| Integracijski/API | Igrač može dohvatiti individualne termine preko zaštićene rute                 | `GET /api/rezervacije/slobodni/individualni - success for IGRAC` | PASS     |
+| Integracijski/API | Trener nema pristup individualnim terminima za igrača i dobija `403 Forbidden` | `GET /api/rezervacije/slobodni/individualni - 403 for TRENER`    | PASS     |
+| Integracijski/API | Igrač može kreirati individualnu rezervaciju preko API rute                    | `POST /api/rezervacije/individualne/:id - success for IGRAC`     | PASS     |
+| Integracijski/API | Igrač može otkazati individualnu rezervaciju preko API rute                    | `DELETE /api/rezervacije/individualne/:id - success for IGRAC`   | PASS     |
+
+---
+
+### FRONTEND API TESTOVI (`reservationApi.test.js`)
+
+| Nivo | AC / Opis                                                                            | Test koji pokriva                                                 | Rezultat |
+| :--- | :----------------------------------------------------------------------------------- | :---------------------------------------------------------------- | :------- |
+| API  | Frontend API poziva ispravan endpoint za dohvat termina i šalje Authorization header | `dohvati slobodne individualne termine`                           | BLOCKED  |
+| API  | API wrapper propagira grešku pri neuspješnom dohvatu termina                         | `baca grešku kada getFreeIndividualTerms ne uspije`               | BLOCKED  |
+| API  | Frontend API poziva ispravan POST endpoint za rezervaciju termina                    | `rezerviše individualni termin sa autorizacijom`                  | BLOCKED  |
+| API  | `terminId` se ispravno ugrađuje u URL rezervacije                                    | `reserveIndividualTerm šalje ispravan terminId u URL`             | BLOCKED  |
+| API  | API wrapper propagira grešku pri neuspješnoj rezervaciji                             | `baca grešku kada reserveIndividualTerm ne uspije`                | BLOCKED  |
+| API  | Frontend API poziva ispravan DELETE endpoint za otkazivanje termina                  | `otkazuje individualni termin sa autorizacijom`                   | BLOCKED  |
+| API  | API wrapper propagira grešku pri neuspješnom otkazivanju                             | `baca grešku kada cancelIndividualTerm ne uspije`                 | BLOCKED  |
+| API  | Authorization header koristi token iz `localStorage`                                 | `koristi token iz localStorage za Authorization header`           | BLOCKED  |
+| API  | Definisano ponašanje kada token ne postoji (`Bearer null`)                           | `šalje Authorization: Bearer null kada token nije u localStorage` | BLOCKED  |
+
+---
+
+### FRONTEND UI TESTOVI (`IndividualTraining.test.jsx`)
+
+| Nivo    | AC / Opis                                                                      | Test koji pokriva                                                   | Rezultat |
+| :------ | :----------------------------------------------------------------------------- | :------------------------------------------------------------------ | :------- |
+| UI      | Igrač vidi slobodne termine i može otvoriti modal za rezervaciju               | `prikazuje slobodne termine i otvara modal za rezervaciju`          | BLOCKED  |
+| UI      | Potvrda rezervacije poziva API i prikazuje success poruku                      | `potvrđuje rezervaciju i prikazuje uspjeh`                          | BLOCKED  |
+| UI      | Kada backend vrati `NA_CEKANJU`, UI prikazuje upozorenje za zahtjev na čekanju | `prikazuje upozorenje za zahtjev na čekanju`                        | BLOCKED  |
+| UI      | UI prikazuje grešku kada rezervacija ne uspije                                 | `prikazuje poruku o grešci kada rezervacija ne uspije`              | BLOCKED  |
+| UI      | Rezervisani termin otvara modal za otkazivanje                                 | `otvara modal za otkazivanje za termin koji je korisnik rezervisao` | BLOCKED  |
+| UI/Auth | Korisnik koji nije igrač vidi zabranu pristupa stranici                        | `prikazuje poruku kada korisnik nije igrač`                         | BLOCKED  |
+
+---
+
+### BUILD / VERIFIKACIJA
+
+| Nivo        | AC / Opis                                                    | Komanda / Provjera                                                                                                                                                        | Rezultat |
+| :---------- | :----------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------- |
+| Build       | Relevantni backend reservation testovi moraju uspješno proći | `npm test -- --runInBand tests\unit\services\rezervacijaService.test.js tests\unit\controllers\rezervacijaController.test.js tests\integration\rezervacijaRoutes.test.js` | PASS     |
+| Build       | Ciljani frontend fajlovi prolaze ESLint provjeru             | `npx eslint src\App.jsx src\components\RealtimeNotifications.jsx src\pages\IndividualTraining.jsx src\pages\Profile.jsx src\api\reservationApi.js`                        | PASS     |
+| Build       | Frontend production build                                    | `npm run build`                                                                                                                                                           | BLOCKED  |
+| UI/API Test | Frontend API i UI testovi reservation flow-a                 | `npm test -- src\api\__tests__\reservationApi.test.js src\pages\__tests__\IndividualTraining.test.jsx`                                                                    | BLOCKED  |
+
+---
+
+## Edge Caseovi Pokriveni Testovima
+
+| Edge Case                                                | Pokrivenost                             |
+| :------------------------------------------------------- | :-------------------------------------- |
+| Authorization — samo IGRAC može individualne rezervacije | Pokriveno integracijskim testovima      |
+| Forbidden access za TRENER ulogu                         | Pokriveno integracijskim testovima      |
+| Invalid input — nevalidan `terminId`                     | Pokriveno servis testovima              |
+| Nedostupan ili nepostojeći termin                        | Pokriveno servis i kontroler testovima  |
+| Dupla rezervacija / aktivan zahtjev                      | Pokriveno servis testovima              |
+| Nepouzdan korisnik / `NA_CEKANJU` flow                   | Pokriveno servis i kontroler testovima  |
+| Otkazivanje bez aktivne rezervacije                      | Pokriveno servis testovima              |
+| Otkazivanje termina koji je već prošao                   | Pokriveno servis testovima              |
+| API error propagation na frontend strani                 | Testovi postoje ali su trenutno BLOCKED |
+| Forbidden frontend pristup za ne-igrača                  | UI test postoji ali je trenutno BLOCKED |
+
+---
+
+## Coverage Gap za TASK-7
+
+Nova TASK-7 funkcionalnost trenutno nije kompletno pokrivena automatizovanim testovima. Nedostaju dedicated testovi za:
+
+* `listaCekanjaService`
+* `listaCekanjaRoutes`
+* `listaCekanjaNotifier`
+* Socket.IO auth i room emit helper
+* `joinWaitlist`
+* `leaveWaitlist`
+* `getMyWaitlistTerms`
+* UI stanje “Prijavi me na listu čekanja”
+* UI stanje “Nalazite se na listi čekanja”
+* Profil sekciju “Termini na kojima čekam”
+* Real-time toast/notifikaciju za oslobođeni termin
+* Duplicate waitlist prijave
+* Race/conflict scenario za waitlist transakciju
+* Status konflikt validaciju (`ZAUZET` termin uslov)
