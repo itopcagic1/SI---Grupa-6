@@ -28,6 +28,21 @@ export const cancelIndividualTerm = async (terminId) => {
   return response.data;
 };
 
+export const joinWaitlist = async (terminId) => {
+  const response = await api.post(`/liste-cekanja/termini/${terminId}`, {}, getAuthHeaders());
+  return response.data;
+};
+
+export const leaveWaitlist = async (terminId) => {
+  const response = await api.delete(`/liste-cekanja/termini/${terminId}`, getAuthHeaders());
+  return response.data;
+};
+
+export const getMyWaitlistTerms = async () => {
+  const response = await api.get('/liste-cekanja/moje', getAuthHeaders());
+  return response.data;
+};
+
 // --- Grupne rezervacije (Developer 5) ---
 
 export const kreirajGrupniTrening = async (terminId, maksimalanBrojIgraca, timId = null) => {

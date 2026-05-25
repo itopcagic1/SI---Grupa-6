@@ -14,7 +14,13 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getVlasnikRezervacije = async ({ terenId, datumOd, page = 1, limit = 15 }) => {
+export const getVlasnikRezervacije = async ({
+  terenId,
+  datumOd,
+  datumDo,
+  page = 1,
+  limit = 15,
+}) => {
   const params = {
     page,
     limit,
@@ -22,6 +28,7 @@ export const getVlasnikRezervacije = async ({ terenId, datumOd, page = 1, limit 
 
   if (terenId) params.terenId = terenId;
   if (datumOd) params.datumOd = datumOd;
+  if (datumDo) params.datumDo = datumDo;
 
   const response = await api.get('/vlasnik/rezervacije', {
     ...getAuthHeaders(),
