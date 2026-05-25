@@ -11,6 +11,22 @@ function formatTime(d) {
   return new Date(d).toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' });
 }
 
+// --- TASK-6.6: Pomoćna JavaScript funkcija za provjeru preostalog vremena ---
+function jeUnutar24Sata(datumTerminaString) {
+  if (!datumTerminaString) return false;
+  const sada = new Date();
+  const pocetakTermina = new Date(datumTerminaString);
+  
+  // Razlika u milisekundama
+  const razlikaUMilisekundama = pocetakTermina.getTime() - sada.getTime();
+  
+  // Pretvaramo milisekunde u sate (1 sat = 1000ms * 60s * 60m)
+  const preostaloSati = razlikaUMilisekundama / (1000 * 60 * 60);
+  
+  // Vraća true ako je termin u budućnosti, ali je ostalo manje od 24 sata do njega
+  return preostaloSati > 0 && preostaloSati < 24;
+}
+
 export default function MojeRezervacije() {
   const [rezervacije, setRezervacije] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,206 +44,147 @@ export default function MojeRezervacije() {
     setLoading(true);
     try {
       const data = await getMojeRezervacije();
-      setRezervacije(data.rezervacije || []);
-    } catch {
-      showNotification('error', 'Greška pri učitavanju rezervacija.');
+      setRezervacije(data.rezervacije || data);
+    } catch (err) {
+      showNotification('error', err.message || 'Greška pri učitavanju.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
-
-  const openCancel = (item) => {
-    setCancelReason('');
-    setConfirmModal({ open: true, item });
-  };
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleCancel = async () => {
-    const { item } = confirmModal;
+    if (!confirmModal.item) return;
     setSubmitting(true);
     try {
-      if (item.tip === 'INDIVIDUALNI') {
-        await cancelIndividualTerm(item.terminId);
+      if (confirmModal.item.tip === 'INDIVIDUALNI') {
+        // Za individualni termin prosjeđujemo ID termina (ili rezervacije zavisno od tvog API-ja)
+        await cancelIndividualTerm(confirmModal.item.id);
+        showNotification('success', 'Uspješno otkazan individualni termin.');
       } else {
-        await odjaviSeSaGrupnogTreninga(item.treningId, cancelReason);
+        await odjaviSeSaGrupnogTreninga(confirmModal.item.id, cancelReason);
+        showNotification('success', 'Uspješno ste se odjavili sa grupnog treninga.');
       }
-      showNotification('success', 'Rezervacija je uspješno otkazana.');
       setConfirmModal({ open: false, item: null });
+      setCancelReason('');
       load();
     } catch (err) {
-      showNotification('error', err.response?.data?.poruka || 'Otkazivanje nije uspjelo.');
+      showNotification('error', err.message || 'Greška pri otkazivanju.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const under24h = (vrijemePocetka) =>
-    new Date(vrijemePocetka) - new Date() < 24 * 60 * 60 * 1000;
-
-  const statusBadge = (status) => {
-    const map = {
-      POTVRDJENA: 'bg-green-50 text-green-700 border-green-200',
-      NA_CEKANJU: 'bg-amber-50 text-amber-700 border-amber-200',
-      OTKAZANA: 'bg-red-50 text-red-700 border-red-200',
-    };
-    const label = {
-      POTVRDJENA: 'Potvrđena',
-      NA_CEKANJU: 'Na čekanju',
-      OTKAZANA: 'Otkazana',
-    };
-    return (
-      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${map[status] || 'bg-slate-50 text-slate-500 border-slate-200'}`}>
-        {label[status] || status}
-      </span>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-amber-50/60 font-sans pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-800">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <div className="space-y-8">
 
-          {/* Header */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b-2 border-amber-100 pb-6">
-            <div>
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-                Moje <span className="text-orange-600">rezervacije</span>
-              </h1>
-              <p className="mt-1 text-slate-500 text-sm font-medium">
-                Pregled svih nadolazećih termina
-              </p>
-            </div>
-            <div className="rounded-2xl bg-orange-50 px-5 py-3 text-orange-950 shadow-sm text-sm border-2 border-orange-100/50 font-bold">
-              Nadolazećih termina: <span className="text-orange-600 ml-1">{rezervacije.length}</span>
-            </div>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-black uppercase tracking-wider text-slate-900 mb-2">
+          Moje Rezervacije
+        </h1>
+        <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-8">
+          Pregled svih tvojih predstojećih termina i treninga
+        </p>
+
+        {notification && (
+          <div className={`mb-6 p-4 rounded-2xl border-2 text-xs font-bold ${
+            notification.type === 'success' 
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
+              : 'bg-red-50 border-red-100 text-red-800'
+          }`}>
+            {notification.message}
           </div>
+        )}
 
-          {/* Notifikacija */}
-          {notification && (
-            <div className={`rounded-2xl border-2 px-4 py-3.5 text-sm font-bold shadow-sm ${
-              notification.type === 'success'
-                ? 'bg-green-50 border-green-200 text-green-800'
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-              {notification.message}
-            </div>
-          )}
-
-          {/* Lista */}
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto" />
-            </div>
-          ) : rezervacije.length === 0 ? (
-            <div className="rounded-[2.5rem] border border-dashed border-amber-200 bg-amber-50/10 p-12 text-center text-slate-400 font-medium">
-              Nemate nadolazećih rezervacija.
-            </div>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {rezervacije.map((r, i) => (
-                <div key={i} className="rounded-[2.5rem] border-2 border-amber-100 bg-white p-6 shadow-sm flex flex-col justify-between hover:shadow-xl transition-all duration-300">
-                  <div className="space-y-3">
-
-                    {/* Tip + Status */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
-                        r.tip === 'INDIVIDUALNI'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-purple-50 text-purple-700 border-purple-200'
-                      }`}>
-                        {r.tip === 'INDIVIDUALNI' ? '👤 Individualni' : '👥 Grupni'}
+        {loading ? (
+          <div className="text-center py-12 text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">
+            Učitavanje rezervacija...
+          </div>
+        ) : rezervacije.length === 0 ? (
+          <div className="bg-white border-2 border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+              Nemate predstojećih rezervacija.
+            </p>
+          </div>
+        ) : (
+          /* TASK-6.4: Korisnički ekran "Moje rezervacije" u obliku liste/kartica */
+          <div className="grid gap-4">
+            {rezervacije.map((item) => {
+              const isIndividual = item.tip === 'INDIVIDUALNI';
+              return (
+                <div key={item.id} className="bg-white border-2 border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-2xl font-black text-center min-w-[64px] ${
+                      isIndividual ? 'bg-orange-50 text-orange-600' : 'bg-sky-50 text-sky-600'
+                    }`}>
+                      <span className="block text-xs uppercase tracking-widest font-bold">
+                        {isIndividual ? 'Indiv' : 'Grupni'}
                       </span>
-                      {statusBadge(r.status)}
+                      <span className="block text-lg mt-0.5">
+                        {formatTime(item.start || item.datum)}
+                      </span>
                     </div>
 
-                    {/* Objekat */}
                     <div>
-                      <div className="text-xs font-black uppercase tracking-widest text-orange-600">
-                        {r.objekat || 'Sportski objekat'}
-                      </div>
-                      {r.adresa && (
-                        <div className="text-[10px] text-slate-400 font-medium mt-0.5">{r.adresa}</div>
+                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                        {isIndividual ? 'Individualni trening' : (item.naziv || 'Grupni trening')}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                        {formatDate(item.start || item.datum)}
+                      </p>
+                      {item.vlasnikRazlog && (
+                        <p className="text-xs text-red-600 font-bold mt-1 bg-red-50 border border-red-100 px-2 py-1 rounded-xl inline-block">
+                          Otkazano od strane vlasnika: {item.vlasnikRazlog}
+                        </p>
                       )}
                     </div>
-
-                    {/* Datum i Vrijeme */}
-                    <div className="rounded-2xl bg-amber-50/40 border border-amber-100 p-3 space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400 font-semibold uppercase tracking-wide">Datum</span>
-                        <span className="font-black text-slate-800">{formatDate(r.vrijemePocetka)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400 font-semibold uppercase tracking-wide">Vrijeme</span>
-                        <span className="font-black text-slate-800">
-                          {formatTime(r.vrijemePocetka)} – {formatTime(r.vrijemeZavrsetka)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400 font-semibold uppercase tracking-wide">Rezervisano</span>
-                        <span className="font-bold text-slate-500">{formatDate(r.datumKreiranja)}</span>
-                      </div>
-                    </div>
-
-                    {/* Trener (samo grupni) */}
-                    {r.tip === 'GRUPNI' && r.trener && (
-                      <div className="flex items-center gap-2 bg-amber-50/30 rounded-2xl p-2.5 border border-amber-100/50">
-                        <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-black text-xs border border-orange-200">
-                          {r.trener.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Trener</div>
-                          <div className="text-xs font-bold text-slate-700">{r.trener}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Upozorenje 24h */}
-                    {under24h(r.vrijemePocetka) && (
-                      <div className="rounded-2xl bg-red-50 border-2 border-red-100 px-3 py-2 text-[10px] font-black text-red-700 leading-relaxed">
-                        ⚠️ Otkazivanje unutar 24h dodjeljuje 1 prekršajni poen!
-                      </div>
-                    )}
                   </div>
 
-                  {/* Dugme za otkazivanje */}
+                  {/* TASK-6.5: Crveno dugme "Otkaži termin" pored svake rezervacije */}
                   <button
                     type="button"
-                    onClick={() => openCancel(r)}
-                    className="mt-5 w-full rounded-2xl border-2 border-red-100 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-red-600 shadow-sm transition hover:border-red-400 hover:bg-red-50/20"
+                    onClick={() => setConfirmModal({ open: true, item })}
+                    className="sm:self-center px-5 py-3 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 text-center"
                   >
                     Otkaži termin
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-        </div>
-      </main>
-
-      {/* Confirm Modal */}
+      {/* POTVRDNI MODALNI PROZOR */}
       {confirmModal.open && confirmModal.item && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 px-4 py-6">
-          <div className="w-full max-w-md rounded-[2.5rem] bg-white p-8 shadow-2xl border-2 border-amber-100 space-y-6">
-            <div>
-              <h3 className="text-xl font-black text-slate-800">Otkaži rezervaciju</h3>
-              <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
-                Da li ste sigurni da želite otkazati ovaj termin?
-              </p>
-              {under24h(confirmModal.item.vrijemePocetka) && (
-                <div className="mt-3 rounded-2xl bg-red-50 border-2 border-red-100 p-3 text-xs font-black text-red-700 leading-relaxed">
-                  ⚠️ Pažnja: Otkazujete termin unutar 24 sata prije početka. Ova akcija će Vam dodijeliti 1 prekršajni poen. Ukoliko sakupite 3 prekršaja, Vaš profil će biti označen kao nepouzdan.
-                </div>
-              )}
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border-2 border-slate-100 rounded-3xl p-6 max-w-md w-full shadow-xl animate-scale-up">
+            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider mb-2">
+              Otkazivanje termina
+            </h2>
+            
+            {/* Osnovno pitanje iz TASK-6.5 */}
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+              Da li ste sigurni da želite otkazati ovaj termin?
+            </p>
 
-            {/* Razlog za grupni */}
+            {/* --- TASK-6.6: Dinamičko crveno upozorenje ako je ostalo manje od 24 sata --- */}
+            {confirmModal.item.tip === 'INDIVIDUALNI' && jeUnutar24Sata(confirmModal.item.start) && (
+              <div className="mb-5 rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-xs text-red-800 font-black uppercase tracking-wide leading-relaxed shadow-sm animate-pulse">
+                Pažnja: Otkazujete termin unutar 24 sata prije njegovog početka. 
+                Ova akcija će Vam dodijeliti 1 prekršajni poen. 
+                Ukoliko sakupite 3 prekršaja, Vaš profil će biti označen kao nepouzdan.
+              </div>
+            )}
+
             {confirmModal.item.tip === 'GRUPNI' && (
-              <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-amber-900/60 mb-2">
-                  Razlog odjave (obavezno)
+              <div className="mb-4">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">
+                  Razlog odjave (Obavezno za grupne treninge)
                 </label>
                 <textarea
                   rows="3"
@@ -242,8 +199,11 @@ export default function MojeRezervacije() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setConfirmModal({ open: false, item: null })}
-                className="flex-1 rounded-2xl bg-amber-50 border border-amber-200 py-3 text-xs font-black uppercase tracking-wider text-amber-900 transition hover:bg-amber-100"
+                onClick={() => {
+                  setConfirmModal({ open: false, item: null });
+                  setCancelReason('');
+                }}
+                className="flex-1 rounded-2xl bg-amber-50 border border-amber-200 py-3 text-xs font-black uppercase tracking-wider text-amber-900 transition hover:bg-amber-100 font-bold"
               >
                 Odustani
               </button>
@@ -251,7 +211,7 @@ export default function MojeRezervacije() {
                 type="button"
                 disabled={submitting || (confirmModal.item.tip === 'GRUPNI' && !cancelReason.trim())}
                 onClick={handleCancel}
-                className="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
               >
                 {submitting ? 'Otkazivanje...' : 'Potvrdi otkazivanje'}
               </button>

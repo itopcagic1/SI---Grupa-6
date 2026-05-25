@@ -150,7 +150,8 @@ export default function VlasnikDashboard() {
   const [loadingObjekti, setLoadingObjekti] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   
-  const [, setTimerTrigger] = useState(new Date());
+  // POPRAVLJENO: Dodana je podvlaka (_) kako destructuring niza ne bi bacao sintaksnu gresku
+  const [_, setTimerTrigger] = useState(new Date());
 
   // Kolegicini statevi – odobravanje/odbijanje zahtjeva
   const [activeAction, setActiveAction] = useState(null);
@@ -286,6 +287,25 @@ export default function VlasnikDashboard() {
     } finally {
       setOtkazivanjeId(null);
     }
+  };
+
+  // --- Ovdje su dodate 3 funkcije koje su nedostajale podacima iz tabele ---
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
+
+  const handleCancelReservation = (id) => {
+    setModalOtkazivanje({
+      id: id,
+      razlog: ''
+    });
+  };
+
+  const isCancellationDisabled = (vrijemePocetkaTermina, status) => {
+    if (normalizeStatus(status) === 'OTKAZANO' || normalizeStatus(status) === 'CANCELLED') {
+      return true;
+    }
+    return jeIstekloVrijeme(vrijemePocetkaTermina);
   };
 
   return (
@@ -533,7 +553,6 @@ export default function VlasnikDashboard() {
                 </thead>
                 <tbody className="divide-y divide-amber-50 text-sm">
                   {rezervacije.map((rezervacija) => {
-                    // provjera da li dugme otkazivanja treba biti onemoguceno
                     const termStart = rezervacija.datumVrijeme || rezervacija.vrijemePocetka;
                     const isDisabled = isCancellationDisabled(termStart, rezervacija.status);
 
