@@ -4,6 +4,8 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 const { reliabilityMiddleware } = require('../middleware/reliabilityMiddleware');
+
+// POPRAVLJENO: Sve funkcije su sada uredno uvezene unutar jednog bloka i zatvorene sa }}
 const {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
@@ -15,8 +17,14 @@ const {
   otkaziGrupniTrening,
   odjaviSeSaGrupnogTreninga,
   getTrenerNotifikacije,
+  getMojeRezervacije,
+  ownerApproveCancellationRequest, 
+  ownerRejectCancellationRequest,    
+  getOwnerPendingRequests            
 } = require('../controllers/rezervacijaController');
-const { getMojeRezervacije } = require('../controllers/rezervacijaController');
+
+// --- Individualne rezervacije (Igrač) ---
+
 router.get(
   '/rezervacije/slobodni/individualni',
   authenticateToken,
@@ -46,7 +54,7 @@ router.get(
   getMojeRezervacije
 );
 
-// --- Grupne rezervacije (Developer 5) ---
+// --- Grupne rezervacije (Trener i Igrač) ---
 
 router.post(
   '/rezervacije/grupne/:id',
@@ -95,6 +103,28 @@ router.get(
   authenticateToken,
   requireRole('TRENER'),
   getTrenerNotifikacije
+);
+
+
+router.get(
+  '/rezervacije/vlasnik/na-cekanju',
+  authenticateToken,
+  requireRole('VLASNIK'),
+  getOwnerPendingRequests
+);
+
+router.post(
+  '/vlasnik/rezervacije/:id/odobri-otkazivanje',
+  authenticateToken,
+  requireRole('VLASNIK'), 
+  ownerApproveCancellationRequest
+);
+
+router.post(
+  '/vlasnik/rezervacije/:id/odbij-otkazivanje',
+  authenticateToken,
+  requireRole('VLASNIK'),
+  ownerRejectCancellationRequest
 );
 
 module.exports = router;
