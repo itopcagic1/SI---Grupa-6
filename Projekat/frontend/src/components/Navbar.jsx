@@ -136,12 +136,9 @@ const Navbar = () => {
 
           {isPlayer && (
             <>
-              <Link to="/rezervacije/individualne" className={navLinkClass('/rezervacije/individualne')}>
-                Individualni treninzi
-              </Link>
-              <Link to="/rezervacije/grupne" className={navLinkClass('/rezervacije/grupne')}>
-                Grupni treninzi
-              </Link>
+              <Link to="/player" className={navLinkClass('/player')}>
+      Moji treninzi
+    </Link>
             </>
           )}
 
