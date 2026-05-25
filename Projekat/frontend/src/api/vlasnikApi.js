@@ -35,3 +35,21 @@ export const getVlasnikObjekti = async () => {
   const response = await api.get('/objekti', getAuthHeaders());
   return response.data;
 };
+
+export const verifikujZahtjevRezervacije = async (id, payload) => {
+  const response = await api.patch(
+    `/vlasnik/zahtjevi/${id}/verifikacija`,
+    payload,
+    getAuthHeaders()
+  );
+
+  return response.data;
+};
+
+export const otkaziRezervacijuVlasnik = async (rezervacijaId, razlog) => {
+  const response = await api.post(
+    `/vlasnik/rezervacije/${rezervacijaId}/otkazivanje`,
+    { razlog }
+  );
+  return response.data;
+};

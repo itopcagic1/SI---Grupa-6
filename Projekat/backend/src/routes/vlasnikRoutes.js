@@ -15,11 +15,19 @@ router.get(
   vlasnikController.dohvatiSveRezervacije
 );
 
+// PATCH /api/vlasnik/zahtjevi/:id/verifikacija
+router.patch(
+  '/zahtjevi/:id/verifikacija',
+  authenticateToken,
+  requireRole('VLASNIK'),
+  vlasnikController.obradiZahtjevVerifikacije
+);
+
 router.post(
   '/rezervacije/:id/otkazivanje',
   authenticateToken,
   requireRole('VLASNIK'),
-  ownerCancelReservation
+  vlasnikController.otkaziRezervacijuVlasnik
 );
 
 module.exports = router;
