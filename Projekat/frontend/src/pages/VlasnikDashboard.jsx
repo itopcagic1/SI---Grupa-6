@@ -248,11 +248,6 @@ export default function VlasnikDashboard() {
   };
 
 
-
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
-  };
-
   // --- Handleri za odobravanje/odbijanje zahtjeva ---
   const handleOdobriZahtjev = async (zahtjev) => {
     setActiveAction({ id: zahtjev.id, akcija: 'ODOBRI' });
