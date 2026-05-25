@@ -67,3 +67,40 @@ Pomoć oko CSS stilizacije za textarea polje unutar modala kako bi se vizuelno u
 
 **Ko je koristio alat:**
 Ilma Hindija
+
+## Zapis 3
+
+**Datum:** 25.05.2026.
+
+**Sprint broj:** 9
+
+**Alat koji je korišten:** Claude 
+
+**Svrha korištenja:**
+Implementacija ekrana "Moje rezervacije" za igrača i spajanje svih igračkih ekrana u jedan PlayerDashboard.
+
+**Kratak opis zadatka ili upita:**
+Kreiranje backend rute, servisa i kontrolera za dohvatanje svih nadolazećih rezervacija prijavljenog igrača (individualnih i grupnih), te izrada odgovarajućeg frontend ekrana. Nakon toga, spajanje tri odvojena ekrana (IndividualTraining, GroupTrainingsBrowse, MojeRezervacije) u jedan PlayerDashboard komponent.
+
+**Šta je AI predložio ili generisao:**
+- Kompletan `getMojeRezervacijeService` servis koji dohvata i individualne rezervacije i grupne prijave, filtrira samo nadolazeće i sortira po datumu.
+- Kontroler `getMojeRezervacije` i rutu `GET /rezervacije/moje` sa odgovarajućim middlewareima.
+- Frontend komponentu `MojeRezervacije.jsx` sa karticama, statusnim bedžovima i modalima za otkazivanje.
+- Spojeni `PlayerDashboard.jsx` sa sve tri sekcije na jednom ekranu i jednom globalnom notifikacijom.
+- Dijagnostiku i rješavanje grešaka: `MODULE_NOT_FOUND`, `EADDRINUSE`, `socket.io-client` nije instaliran, `prisma generate` nije pokrenut.
+
+**Šta je tim (korisnik) prihvatio:**
+- Strukturu backend servisa sa JavaScript filterom umjesto Prisma nested where filtera zbog stabilnosti.
+- Izmjene u `App.jsx` i `Navbar.jsx` za integraciju novog ekrana.
+
+**Šta je tim (korisnik) izmijenio:**
+- Kompletnu frontend komponentu PlayerDashboard sa stilovima konzistentnim sa ostatkom aplikacije (amber/orange tema).
+
+**Šta je tim (korisnik) odbacio:**
+- Odvojene stranice `IndividualTraining.jsx`, `GroupTrainingsBrowse.jsx` i `MojeRezervacije.jsx` kao zasebne navbar stavke, zamijenjene jednom "Moj dashboard" stavkom.
+
+**Rizici, problemi ili greške koje su uočene:**
+- Nested Prisma `where` filter na relaciji `grupniTrening.terminObjekta.vrijemePocetka` nije radio pouzdano pa je filter prebačen u JavaScript.
+
+**Ko je koristio alat:**
+Irma Topčagić
