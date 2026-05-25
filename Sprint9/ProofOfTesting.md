@@ -1,6 +1,6 @@
-# Dokaz o Testiranju (Proof of Testing) - Sprint 9
+# Proof of Testing - Sprint 9
 
-## Modul: Upravljanje grupnim treninzima i kapacitetom (Developer 5 - Ilma Hindija)
+## Modul: Upravljanje grupnim treninzima i kapacitetom (Ilma Hindija)
 
 ### Sumarna statistika pokrivenosti testova
 * **Unit Testovi (Servis - `grupneRezervacijeService.test.js`):** 9 testnih scenarija — **Svi uspješni (100% PASS)**
@@ -65,8 +65,10 @@
 | Unit | Slanje DELETE zahtjeva sa priloženim razlogom za odjavu sa treninga | `odjaviSeSaGrupnogTreninga -> odjavljuje se sa grupnog treninga` | PASS |
 | Unit | Slanje GET zahtjeva za dohvatanje notifikacija trenera o odjavama igrača | `getTrenerNotifikacije -> dohvata notifikacije trenera o odjavama` | PASS |
 | Unit | Slanje GET zahtjeva za listanje svih timova trenera | `getAllTeams -> dohvata sve timove` | PASS |
+
 ---
-## Modul: Ručna verifikacija i uslovne rezervacije (Developer 2 - Semir Jamaković)
+
+## Modul: Ručna verifikacija i uslovne rezervacije (Semir Jamaković)
 
 ### Sumarna statistika pokrivenosti testova
 * **Backend Unit Testovi (Servis - `rezervacijaService.test.js`):** status pending zahtjeva za nepouzdane korisnike usaglašen na `NA_CEKANJU` — **Svi relevantni testovi uspješni (PASS)**
@@ -122,12 +124,105 @@
 
 | Nivo | AC / Opis | Test koji pokriva | Rezultat |
 | :--- | :--- | :--- | :--- |
-| UI | Dashboard prikazuje posebnu sekciju “Zahtjevi nepouzdanih korisnika na čekanju” | `prikazuje posebnu sekciju za pending zahtjeve nepouzdanih korisnika` | PASS |
+| UI | Dashboard prikazuje posebnu sekciju "Zahtjevi nepouzdanih korisnika na čekanju" | `prikazuje posebnu sekciju za pending zahtjeve nepouzdanih korisnika` | PASS |
 | UI | Pending zahtjevi se filtriraju po `izvor === 'ZAHTJEV_ZA_REZERVACIJU'` i statusu `NA_CEKANJU` uz fallback za `CEKANJE` | `prikazuje posebnu sekciju za pending zahtjeve nepouzdanih korisnika` | PASS |
 | UI | Nepouzdan korisnik se prikazuje uz crveno upozorenje i broj prekršaja | `prikazuje posebnu sekciju za pending zahtjeve nepouzdanih korisnika` | PASS |
-| UI | Klik na dugme “Odobri” poziva API sa `{ akcija: 'ODOBRI' }` i osvježava dashboard | `šalje ODOBRI akciju i osvježava dashboard` | PASS |
-| UI | Klik na dugme “Odbij” otvara modal sa tekstom “Unesite razlog odbijanja termina” | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
-| UI | Dugme “Potvrdi odbijanje” je disabled dok razlog nema najmanje 10 karaktera | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
+| UI | Klik na dugme "Odobri" poziva API sa `{ akcija: 'ODOBRI' }` i osvježava dashboard | `šalje ODOBRI akciju i osvježava dashboard` | PASS |
+| UI | Klik na dugme "Odbij" otvara modal sa tekstom "Unesite razlog odbijanja termina" | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
+| UI | Dugme "Potvrdi odbijanje" je disabled dok razlog nema najmanje 10 karaktera | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
 | UI | Validan razlog šalje API payload `{ akcija: 'ODBIJ', razlogOdbijanja: '<razlog>' }` | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
+
+---
+
+## Modul: Vlastiti kalendar i pregled rezervacija igrača (Irma Topčagić)
+
+### Sumarna statistika pokrivenosti testova
+* **Backend Unit Testovi (Servis - `rezervacijaService.test.js`):** 12 testnih scenarija za `getAllTermsService`, `createIndividualReservationService`, `cancelIndividualReservationService` i `getMojeRezervacijeService` — **Svi uspješni (100% PASS)**
+* **Backend Integracijski Testovi (Rute - `rezervacijaRoutes.test.js`):** 14 testnih scenarija za sve rute rezervacija uključujući `GET /api/rezervacije/moje` — **Svi uspješni (100% PASS)**
+* **Frontend UI Testovi (Komponenta - `PlayerDashboard.test.jsx`):** 27 testnih scenarija za sve tri sekcije dashboarda — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### BACKEND UNIT TESTOVI — SERVIS (`rezervacijaService.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Vraća termine i označava `jeMojaRezervacija=true` za korisnikove termine | `getAllTermsService vraća slobodne i korisnikove rezervisane termine` | PASS |
+| Unit | Označava `naListiCekanja=true` kada je korisnik na listi čekanja | `getAllTermsService označava naListiCekanja=true kada je korisnik na listi čekanja` | PASS |
+| Unit | Vraća praznu listu kada nema termina | `getAllTermsService vraća praznu listu kada nema termina` | PASS |
+| Unit | Kreira potvrđenu rezervaciju za pouzdanog korisnika i vraća `REZERVISANO` | `createIndividualReservationService kreira potvrđenu rezervaciju ako je igrač pouzdan` | PASS |
+| Unit | Kreira zahtjev `NA_CEKANJU` za nepouzdanog korisnika bez direktne rezervacije | `createIndividualReservationService kreira zahtjev ako igrač nije pouzdan` | PASS |
+| Unit | Baca grešku `TERMIN_NIJE_DOSTUPAN` ako termin nije slobodan | `createIndividualReservationService baca grešku kada termin ne postoji` | PASS |
+| Unit | Baca grešku ako termin ne postoji u bazi | `createIndividualReservationService baca grešku kada termin ne postoji` | PASS |
+| Unit | Baca grešku `DUPLI_TERMIN` ako korisnik već ima aktivnu rezervaciju | `createIndividualReservationService baca grešku za duplu rezervaciju` | PASS |
+| Unit | Baca grešku `NEVALIDAN_ID` za nevažeći `terminId` format | `createIndividualReservationService baca grešku za neispravan terminId` | PASS |
+| Unit | Uspješno otkazuje rezervaciju i oslobađa termin | `cancelIndividualReservationService uspješno otkazuje rezervaciju` | PASS |
+| Unit | Baca grešku `REZERVACIJA_NIJE_PRONADJENA` ako rezervacija ne postoji | `cancelIndividualReservationService baca grešku kada rezervacija ne postoji` | PASS |
+| Unit | Baca grešku `TERMIN_VEC_PROSAO` ako je termin već prošao | `cancelIndividualReservationService baca grešku za termin koji je već prošao` | PASS |
+| Unit | Vraća sortirane individualne i grupne rezervacije za korisnika | `getMojeRezervacijeService vraća sortirane individualne i grupne rezervacije` | PASS |
+| Unit | Filtrira prošle termine i vraća samo nadolazeće | `getMojeRezervacijeService filtrira prošle termine i vraća samo nadolazeće` | PASS |
+| Unit | Vraća praznu listu ako nema rezervacija | `getMojeRezervacijeService vraća praznu listu ako nema rezervacija` | PASS |
+
+### BACKEND INTEGRACIJSKI TESTOVI — RUTE (`rezervacijaRoutes.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Integracijski | Uspješan dohvat slobodnih individualnih termina za ulogu IGRAC | `GET /api/rezervacije/slobodni/individualni - success for IGRAC` | PASS |
+| Integracijski | Blokiranje pristupa za neovlaštenu ulogu TRENER | `GET /api/rezervacije/slobodni/individualni - 403 for TRENER` | PASS |
+| Integracijski | Uspješno kreiranje individualne rezervacije za ulogu IGRAC | `POST /api/rezervacije/individualne/:id - success for IGRAC` | PASS |
+| Integracijski | Uspješno otkazivanje individualne rezervacije za ulogu IGRAC | `DELETE /api/rezervacije/individualne/:id - success for IGRAC` | PASS |
+| Integracijski | Uspješan dohvat nadolazećih rezervacija prijavljenog korisnika | `GET /api/rezervacije/moje - success for IGRAC` | PASS |
+| Integracijski | Blokiranje dohvata rezervacija bez tokena | `GET /api/rezervacije/moje - 401 bez tokena` | PASS |
+
+### FRONTEND UI TESTOVI — KOMPONENTA (`PlayerDashboard.test.jsx`)
+
+#### Pristup i zaglavlje (3 testa)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikazuje poruku o odbijenom pristupu za neulogovane korisnike | `prikazuje poruku o odbijenom pristupu za neulogovane korisnike` | PASS |
+| UI | Prikazuje dashboard sa naslovom za prijavljenog igrača | `prikazuje dashboard za igrača` | PASS |
+| UI | Prikazuje broj nadolazećih rezervacija u headeru | `prikazuje broj nadolazećih rezervacija u headeru` | PASS |
+
+#### Individualni treninzi (8 testova)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikazuje sekciju Individualni treninzi | `prikazuje sekciju Individualni treninzi` | PASS |
+| UI | Prikazuje dropdown za odabir sportskog objekta | `prikazuje dropdown za odabir sportskog objekta` | PASS |
+| UI | Prikazuje placeholder tekst kada objekat nije odabran | `prikazuje placeholder tekst kada objekat nije odabran` | PASS |
+| UI | Prikazuje sedmičnu mrežu termina nakon odabira objekta | `prikazuje sedmicu i termine nakon odabira objekta` | PASS |
+| UI | Prikazuje navigacijske gumbe za kretanje kroz sedmice | `prikazuje navigacijske gumbe za sedmice` | PASS |
+| UI | Otvara modal za potvrdu rezervacije na klik slobodnog termina | `otvara modal za rezervaciju na klik slobodnog termina` | PASS |
+| UI | Zatvara modal na klik dugmeta Odustani | `zatvara modal na klik Odustani` | PASS |
+| UI | Poziva `reserveIndividualTerm` sa ispravnim `terminId` na potvrdu | `poziva reserveIndividualTerm na potvrdu rezervacije` | PASS |
+
+#### Grupni treninzi (7 testova)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikazuje sekciju Grupni treninzi | `prikazuje sekciju Grupni treninzi` | PASS |
+| UI | Prikazuje dostupan grupni trening sa imenom trenera i objektom | `prikazuje dostupan grupni trening` | PASS |
+| UI | Prikazuje dugme Prijavi se za slobodan trening | `prikazuje dugme Prijavi se za slobodan trening` | PASS |
+| UI | Poziva `prijaviSeNaGrupniTrening` sa ispravnim ID-em na klik | `poziva prijaviSeNaGrupniTrening na klik Prijavi se` | PASS |
+| UI | Prikazuje status Prijavljeni ste i dugme Odjavi se kada je korisnik prijavljen | `prikazuje Odjavi se i Prijavljeni ste kada je korisnik prijavljen` | PASS |
+| UI | Prikazuje Popunjeno i onemogućava prijavu kada je dostignut kapacitet | `prikazuje Popunjeno kada je trening pun` | PASS |
+| UI | Prikazuje empty state poruku kada nema dostupnih grupnih treninga | `prikazuje empty state kada nema grupnih treninga` | PASS |
+
+#### Moje rezervacije (9 testova)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI | Prikazuje sekciju Moje rezervacije | `prikazuje sekciju Moje rezervacije` | PASS |
+| UI | Prikazuje individualnu rezervaciju sa ispravnim tipom i objektom | `prikazuje individualnu rezervaciju sa ispravnim tipom` | PASS |
+| UI | Prikazuje grupnu rezervaciju sa imenom trenera | `prikazuje grupnu rezervaciju sa imenom trenera` | PASS |
+| UI | Prikazuje dugme Otkaži termin za svaku rezervaciju | `prikazuje dugme Otkaži termin za svaku rezervaciju` | PASS |
+| UI | Otvara modal za otkazivanje na klik Otkaži termin | `otvara modal za otkazivanje na klik Otkaži termin` | PASS |
+| UI | Poziva `cancelIndividualTerm` sa ispravnim `terminId` na potvrdu otkazivanja | `poziva cancelIndividualTerm na potvrdu otkazivanja individualnog termina` | PASS |
+| UI | Zahtijeva unos razloga odjave za grupni trening i onemogućava potvrdu bez njega | `zahtijeva razlog odjave za grupni trening` | PASS |
+| UI | Prikazuje empty state poruku kada nema nadolazećih rezervacija | `prikazuje empty state kada nema rezervacija` | PASS |
+| UI | Prikazuje grešku ako učitavanje podataka ne uspije | `prikazuje grešku ako učitavanje ne uspije` | PASS |
 
 ---

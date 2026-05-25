@@ -25,7 +25,8 @@ jest.mock('../../src/controllers/rezervacijaController', () => ({
   getGrupniTreninzi: jest.fn((req, res) => res.status(200).json([])),
   otkaziGrupniTrening: jest.fn((req, res) => res.status(200).json({ poruka: 'Trening otkazan' })),
   odjaviSeSaGrupnogTreninga: jest.fn((req, res) => res.status(200).json({ poruka: 'Odjava uspješna' })),
-  getTrenerNotifikacije: jest.fn((req, res) => res.status(200).json([]))
+  getTrenerNotifikacije: jest.fn((req, res) => res.status(200).json([])),
+  getMojeRezervacije: jest.fn((req, res) => res.status(200).json({ rezervacije: [] })),
 }));
 
 const rezervacijaRoutes = require('../../src/routes/rezervacijaRoutes');
@@ -64,7 +65,7 @@ describe('Rezervacija i Grupni Trening integration tests', () => {
       const res = await request(app)
         .get('/api/rezervacije/slobodni/individualni')
         .set('Authorization', `Bearer ${tokenFor('IGRAC')}`);
-      
+
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('slobodniTermini');
     });
@@ -73,7 +74,7 @@ describe('Rezervacija i Grupni Trening integration tests', () => {
       const res = await request(app)
         .get('/api/rezervacije/slobodni/individualni')
         .set('Authorization', `Bearer ${tokenFor('TRENER')}`);
-      
+
       expect(res.status).toBe(403);
     });
 
@@ -93,6 +94,22 @@ describe('Rezervacija i Grupni Trening integration tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.poruka).toBe('Rezervacija otkazana');
+    });
+
+    test('GET /api/rezervacije/moje - success for IGRAC', async () => {
+      const res = await request(app)
+        .get('/api/rezervacije/moje')
+        .set('Authorization', `Bearer ${tokenFor('IGRAC')}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('rezervacije');
+    });
+
+    test('GET /api/rezervacije/moje - 401 bez tokena', async () => {
+      const res = await request(app)
+        .get('/api/rezervacije/moje');
+
+      expect(res.status).toBe(401);
     });
   });
 
