@@ -16,7 +16,7 @@ const {
   odjaviSeSaGrupnogTreninga,
   getTrenerNotifikacije,
 } = require('../controllers/rezervacijaController');
-
+const { getMojeRezervacije } = require('../controllers/rezervacijaController');
 router.get(
   '/rezervacije/slobodni/individualni',
   authenticateToken,
@@ -37,6 +37,13 @@ router.delete(
   authenticateToken,
   requireRole('IGRAC'),
   otkaziIndividualnuRezervaciju
+);
+
+router.get(
+  '/rezervacije/moje',
+  authenticateToken,
+  requireRole('IGRAC'),
+  getMojeRezervacije
 );
 
 // --- Grupne rezervacije (Developer 5) ---

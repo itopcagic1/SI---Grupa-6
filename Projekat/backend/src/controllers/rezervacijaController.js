@@ -3,7 +3,7 @@ const {
   createIndividualReservationService,
   cancelIndividualReservationService,
 } = require('../services/rezervacijaService');
-
+const { getMojeRezervacijeService } = require('../services/rezervacijaService');
 const {
   kreirajGrupniTreningService,
   prijaviSeNaGrupniTreningService,
@@ -173,6 +173,21 @@ const getTrenerNotifikacije = async (req, res) => {
   }
 };
 
+
+
+const getMojeRezervacije = async (req, res) => {
+  try {
+    const rezervacije = await getMojeRezervacijeService(req.user.korisnikId);
+    res.json({ rezervacije });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      greska: error.code || 'SERVER_ERROR',
+      poruka: error.message || 'Greška pri dohvatanju rezervacija.',
+    });
+  }
+};
+
+
 module.exports = {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
@@ -184,4 +199,5 @@ module.exports = {
   otkaziGrupniTrening,
   odjaviSeSaGrupnogTreninga,
   getTrenerNotifikacije,
+  getMojeRezervacije,
 };

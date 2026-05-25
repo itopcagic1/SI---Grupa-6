@@ -16,6 +16,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Rezultati from './pages/Rezultati';
 import Raspored from './pages/Raspored';
+import PlayerDashboard from './pages/PlayerDashboard';
 
 import Profile from './pages/Profile';
 import MojePrijave from './pages/MojePrijave';
@@ -36,6 +37,8 @@ import CoachDashboard from './pages/CoachDashboard';
 import GroupTrainingsBrowse from './pages/GroupTrainingsBrowse';
 
 import VlasnikDashboard from './pages/VlasnikDashboard';
+
+import MojeRezervacije from './pages/MojeRezervacije';
 
 
 function App() {
@@ -141,6 +144,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/player" element={<ProtectedRoute><PlayerDashboard /></ProtectedRoute>} />
+        <Route
+  path="/moje-rezervacije"
+  element={
+    <ProtectedRoute>
+      <MojeRezervacije />
+    </ProtectedRoute>
+  }
+/>
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
