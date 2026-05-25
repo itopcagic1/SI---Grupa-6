@@ -142,8 +142,8 @@ Korišten je AI alat za pomoć oko definisanja i pisanja testova za Developer 3 
 **Šta je tim (korisnik) izmijenio:**
 - Testovi su prilagođeni stvarnoj strukturi backend test foldera u projektu.
 - Nazivi test fajlova su usklađeni sa postojećim naming convention pravilima:
-  - `rezervacijaController.developer3.test.js`
-  - `vlasnikRoutes.developer3.test.js`
+  - `rezervacijaController.queue.test.js`
+  - `vlasnikRoutes.otkazivanje.test.js`
 - Testovi su ograničeni samo na one scenarije koji se mogu stabilno testirati bez izmjene produkcijskog koda.
 
 **Šta je tim (korisnik) odbacio:**
