@@ -1,10 +1,24 @@
 const prisma = require('../config/db');
 
+const PENDING_STATUSES = ['NA_CEKANJU', 'CEKANJE'];
+const SLOBODAN = 'SLOBODAN';
+const ZAUZET = 'ZAUZET';
+
 function serviceError(message, status = 400, code = 'GRESKA') {
   const error = new Error(message);
   error.status = status;
   error.code = code;
   return error;
+}
+
+function parsePositiveId(value, fieldName) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw serviceError(`${fieldName} mora biti pozitivan cijeli broj.`, 400, 'NEVALIDAN_ID');
+  }
+
+  return parsed;
 }
 
 function parseOptionalPositiveId(value, fieldName) {
@@ -98,6 +112,35 @@ function normalizujTipTermina(tipTermina) {
   if (tip.includes('INDIVID')) return 'Individualni';
 
   return tipTermina;
+}
+
+function assertVlasnik(korisnik) {
+  if (!korisnik || korisnik.uloga !== 'VLASNIK') {
+    throw serviceError('Pristup dozvoljen samo vlasnicima.', 403, 'ZABRANJEN_PRISTUP');
+  }
+}
+
+function assertZahtjevPripadaVlasniku(zahtjev, vlasnikId) {
+  const zahtjevVlasnikId = zahtjev?.terminObjekta?.sportskiObjekat?.vlasnikId;
+
+  if (zahtjevVlasnikId !== vlasnikId) {
+    throw serviceError('Ne možete obraditi zahtjev za tuđi sportski objekat.', 403, 'ZABRANJEN_PRISTUP');
+  }
+}
+
+function assertPendingZahtjev(zahtjev) {
+  if (!PENDING_STATUSES.includes(zahtjev.status)) {
+    throw serviceError('Zahtjev više nije na čekanju i ne može se ponovo obraditi.', 409, 'ZAHTJEV_NIJE_PENDING');
+  }
+}
+
+function napraviNotifikaciju({ korisnikId, tipNotifikacije, sadrzajPoruke }) {
+  return {
+    korisnikId,
+    tipNotifikacije,
+    sadrzajPoruke,
+    status: 'NEPROCITANO',
+  };
 }
 
 function mapirajRezervaciju(rezervacija) {
@@ -206,7 +249,7 @@ async function izracunajAnalitiku(vlasnikId) {
 
   const zahtjeviNaCekanju = await prisma.zahtjevZaRezervaciju.count({
     where: {
-      status: 'CEKANJE',
+      status: { in: ['NA_CEKANJU', 'CEKANJE'] },
       terminObjekta: {
         sportskiObjekat: {
           vlasnikId,
@@ -222,9 +265,7 @@ async function izracunajAnalitiku(vlasnikId) {
 }
 
 const dohvatiSveRezervacijeService = async (korisnik, query) => {
-  if (!korisnik || korisnik.uloga !== 'VLASNIK') {
-    throw serviceError('Pristup dozvoljen samo vlasnicima.', 403, 'ZABRANJEN_PRISTUP');
-  }
+  assertVlasnik(korisnik);
 
   const vlasnikId = korisnik.korisnikId;
   const terenId = parseOptionalPositiveId(query.terenId, 'terenId');
@@ -281,7 +322,7 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
 
   const zahtjeviNaCekanju = await prisma.zahtjevZaRezervaciju.findMany({
     where: {
-      status: 'CEKANJE',
+      status: { in: ['NA_CEKANJU', 'CEKANJE'] },
       terminObjekta: terminWhere,
     },
     include: {
@@ -336,6 +377,200 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
   };
 };
 
+async function dohvatiZahtjevZaObradu(tx, zahtjevId) {
+  const zahtjev = await tx.zahtjevZaRezervaciju.findUnique({
+    where: { zahtjevId },
+    include: {
+      korisnik: {
+        select: {
+          korisnikId: true,
+          punoIme: true,
+          email: true,
+        },
+      },
+      terminObjekta: {
+        include: {
+          sportskiObjekat: {
+            select: {
+              objekatId: true,
+              naziv: true,
+              vlasnikId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!zahtjev) {
+    throw serviceError('Zahtjev nije pronađen.', 404, 'ZAHTJEV_NIJE_PRONADJEN');
+  }
+
+  return zahtjev;
+}
+
+async function odobriZahtjev(tx, zahtjev, vlasnikId) {
+  if (zahtjev.terminObjekta.status !== SLOBODAN) {
+    throw serviceError('Termin više nije slobodan.', 409, 'TERMIN_NIJE_SLOBODAN');
+  }
+
+  const postojecaRezervacija = await tx.rezervacija.findFirst({
+    where: {
+      terminId: zahtjev.terminId,
+      status: 'POTVRDJENA',
+    },
+  });
+
+  if (postojecaRezervacija) {
+    throw serviceError('Termin već ima potvrđenu rezervaciju.', 409, 'TERMIN_NIJE_SLOBODAN');
+  }
+
+  const datumObrade = new Date();
+
+  const azuriranZahtjev = await tx.zahtjevZaRezervaciju.update({
+    where: { zahtjevId: zahtjev.zahtjevId },
+    data: {
+      status: 'ODOBRENO',
+      datumObrade,
+      razlogOdbijanja: null,
+      obradioKorisnikId: vlasnikId,
+    },
+    include: {
+      korisnik: {
+        select: {
+          korisnikId: true,
+          punoIme: true,
+          email: true,
+        },
+      },
+      terminObjekta: {
+        include: {
+          sportskiObjekat: {
+            select: {
+              objekatId: true,
+              naziv: true,
+              vlasnikId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const rezervacija = await tx.rezervacija.create({
+    data: {
+      zahtjevId: zahtjev.zahtjevId,
+      terminId: zahtjev.terminId,
+      status: 'POTVRDJENA',
+      datumPotvrde: datumObrade,
+    },
+  });
+
+  await tx.terminObjekta.update({
+    where: { terminId: zahtjev.terminId },
+    data: { status: ZAUZET },
+  });
+
+  await tx.notifikacija.create({
+    data: napraviNotifikaciju({
+      korisnikId: zahtjev.korisnikId,
+      tipNotifikacije: 'ZAHTJEV_REZERVACIJE_ODOBREN',
+      sadrzajPoruke: 'Vaš zahtjev za rezervaciju termina je odobren.',
+    }),
+  });
+
+  return {
+    message: 'Zahtjev je odobren.',
+    zahtjev: azuriranZahtjev,
+    rezervacija,
+  };
+}
+
+async function odbijZahtjev(tx, zahtjev, vlasnikId, razlogOdbijanja) {
+  const razlog = String(razlogOdbijanja || '').trim();
+
+  if (razlog.length < 10) {
+    throw serviceError('Razlog odbijanja mora imati najmanje 10 karaktera.', 400, 'NEVALIDAN_RAZLOG_ODBIJANJA');
+  }
+
+  const datumObrade = new Date();
+
+  const azuriranZahtjev = await tx.zahtjevZaRezervaciju.update({
+    where: { zahtjevId: zahtjev.zahtjevId },
+    data: {
+      status: 'ODBIJENO',
+      datumObrade,
+      razlogOdbijanja: razlog,
+      obradioKorisnikId: vlasnikId,
+    },
+    include: {
+      korisnik: {
+        select: {
+          korisnikId: true,
+          punoIme: true,
+          email: true,
+        },
+      },
+      terminObjekta: {
+        include: {
+          sportskiObjekat: {
+            select: {
+              objekatId: true,
+              naziv: true,
+              vlasnikId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (zahtjev.terminObjekta.status === 'ZAKLJUCAN') {
+    await tx.terminObjekta.update({
+      where: { terminId: zahtjev.terminId },
+      data: { status: SLOBODAN },
+    });
+  }
+
+  await tx.notifikacija.create({
+    data: napraviNotifikaciju({
+      korisnikId: zahtjev.korisnikId,
+      tipNotifikacije: 'ZAHTJEV_REZERVACIJE_ODBIJEN',
+      sadrzajPoruke: `Vaš zahtjev za rezervaciju termina je odbijen. Razlog: ${razlog}`,
+    }),
+  });
+
+  return {
+    message: 'Zahtjev je odbijen.',
+    zahtjev: azuriranZahtjev,
+  };
+}
+
+const obradiZahtjevVerifikacijeService = async (korisnik, zahtjevIdValue, body = {}) => {
+  assertVlasnik(korisnik);
+
+  const zahtjevId = parsePositiveId(zahtjevIdValue, 'zahtjevId');
+  const akcija = String(body.akcija || '').toUpperCase();
+
+  if (!['ODOBRI', 'ODBIJ'].includes(akcija)) {
+    throw serviceError('Akcija mora biti ODOBRI ili ODBIJ.', 400, 'NEISPRAVNA_AKCIJA');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const zahtjev = await dohvatiZahtjevZaObradu(tx, zahtjevId);
+
+    assertZahtjevPripadaVlasniku(zahtjev, korisnik.korisnikId);
+    assertPendingZahtjev(zahtjev);
+
+    if (akcija === 'ODOBRI') {
+      return odobriZahtjev(tx, zahtjev, korisnik.korisnikId);
+    }
+
+    return odbijZahtjev(tx, zahtjev, korisnik.korisnikId, body.razlogOdbijanja);
+  });
+};
+
 module.exports = {
   dohvatiSveRezervacijeService,
+  obradiZahtjevVerifikacijeService,
 };

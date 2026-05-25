@@ -155,7 +155,7 @@ describe('Rezervacija Service', () => {
       zahtjevId: 5,
       terminId: 60,
       korisnikId: 9,
-      status: 'CEKANJE',
+      status: 'NA_CEKANJU',
     });
 
     const rezultat = await createIndividualReservationService('60', { korisnikId: 9 }, false);
@@ -167,7 +167,7 @@ describe('Rezervacija Service', () => {
         data: expect.objectContaining({
           terminId: 60,
           korisnikId: 9,
-          status: 'CEKANJE',
+          status: 'NA_CEKANJU',
         }),
       })
     );
@@ -197,7 +197,7 @@ describe('Rezervacija Service', () => {
     });
     mockPrisma.zahtjevZaRezervaciju.findFirst.mockResolvedValue({
       zahtjevId: 3,
-      status: 'CEKANJE',
+      status: 'NA_CEKANJU',
     });
 
     await expect(
