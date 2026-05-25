@@ -7,9 +7,330 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// KORISNICI I AUTENTIFIKACIJA
-// ==========================================
+model Korisnik {
+  korisnikId                Int                          @id @default(autoincrement())
+  punoIme                   String?
+  email                     String                       @unique
+  lozinkaHash               String
+  datumKreiranja            DateTime                     @default(now())
+  brojPreksrenihRezervacija Int                          @default(0)
+  statusPouzdanosti         String?
+  uloga                     Uloga                        @default(NAVIJAC)
+  datumObrade               DateTime?
+  datumZahtjeva             DateTime?
+  documents                 String[]
+  razlogOdbijanja           String?
+  refreshToken              String?
+  statusUloge               String?
+  trazenaUloga              Uloga?
+  resetToken                String?
+  resetTokenExpires         DateTime?
+  razlogBlokiranja          String?
+  clanstvaUTimovima         ClanstvoTima[]
+  grupniTreninzi            GrupniTrening[]              @relation("TrenerTreninga")
+  notifikacije              Notifikacija[]
+  omiljeniTimovi            OmiljeniTim[]
+  prijaveGrupnogTreninga    PrijavaGrupnogTreninga[]     @relation("IgracPrijavljen")
+  otkazaneRezervacije       Rezervacija[]                @relation("OtkazaoKorisnik")
+  uneseniRezultati          RezultatUtakmice[]
+  vlasnikSportskihObjekata  SportskiObjekat[]
+  statistikeIgraca          StatistikaIgracaNaUtakmici[]
+  organizovanaTakmicenja    Takmicenje[]
+  prijaveNaTakmicenja       UcesceUTakmicenju[]
+  zahtjeviZaRezervaciju     ZahtjevZaRezervaciju[]
+  obradjeniZahtjevi         ZahtjevZaRezervaciju[]       @relation("ObradioKorisnik")
+}
+
+model Sport {
+  sportId          Int             @id @default(autoincrement())
+  naziv            String          @unique
+  opis             String?
+  jeTimskiSport    Boolean         @default(true)
+  takmicenja       Takmicenje[]
+  timovi           Tim[]
+  tipoviStatistike TipStatistike[]
+}
+
+model Tim {
+  timId                 Int                          @id @default(autoincrement())
+  naziv                 String
+  sportId               Int
+  opis                  String?
+  logoUrl               String?
+  status                String?
+  clanstvaUcesnika      ClanstvoTima[]
+  korisniciKojiPrate    OmiljeniTim[]
+  plasmaniNaTabelama    PlasmanNaTabeli[]
+  statistikeIgraca      StatistikaIgracaNaUtakmici[]
+  statistikeTima        StatistikaTimaNaUtakmici[]
+  sport                 Sport                        @relation(fields: [sportId], references: [sportId])
+  ucescaUTakmicenjima   UcesceUTakmicenju[]
+  domaceUtakmice        Utakmica[]                   @relation("DomaciTim")
+  gostujuceUtakmice     Utakmica[]                   @relation("GostujuciTim")
+  zahtjeviZaRezervaciju ZahtjevZaRezervaciju[]
+}
+
+model ClanstvoTima {
+  clanstvoTimaId     Int      @id @default(autoincrement())
+  timId              Int
+  korisnikId         Int
+  ulogaUTimu         String?
+  datumPridruzivanja DateTime @default(now())
+  status             String?
+  korisnik           Korisnik @relation(fields: [korisnikId], references: [korisnikId])
+  tim                Tim      @relation(fields: [timId], references: [timId])
+
+  @@unique([korisnikId, timId])
+}
+
+model OmiljeniTim {
+  omiljeniTimId     Int      @id @default(autoincrement())
+  korisnikId        Int
+  timId             Int
+  datumDodavanja    DateTime @default(now())
+  napomenaKorisnika String?
+  korisnik          Korisnik @relation(fields: [korisnikId], references: [korisnikId])
+  tim               Tim      @relation(fields: [timId], references: [timId])
+
+  @@unique([korisnikId, timId])
+}
+
+model Takmicenje {
+  takmicenjeId       Int                 @id @default(autoincrement())
+  naziv              String
+  sezona             String?
+  sportId            Int
+  organizatorId      Int
+  status             String?
+  opis               String?
+  datumPocetka       DateTime?
+  datumZavrsetka     DateTime?
+  tipTakmicenja      String?
+  aiPredikcije       AIPredikcija[]
+  plasmaniNaTabeli   PlasmanNaTabeli[]
+  organizator        Korisnik            @relation(fields: [organizatorId], references: [korisnikId])
+  sport              Sport               @relation(fields: [sportId], references: [sportId])
+  ucesniciTakmicenja UcesceUTakmicenju[]
+  utakmice           Utakmica[]
+}
+
+model Utakmica {
+  utakmicaId       Int                          @id @default(autoincrement())
+  takmicenjeId     Int
+  domaciTimId      Int
+  gostujuciTimId   Int
+  objekatId        Int?
+  vrijemePocetka   DateTime
+  vrijemeZavrsetka DateTime?
+  status           String?
+  lokacijaOpis     String?
+  aiPredikcije     AIPredikcija[]
+  rezultatUtakmice RezultatUtakmice?
+  statistikeIgraca StatistikaIgracaNaUtakmici[]
+  statistikeTimova StatistikaTimaNaUtakmici[]
+  domaciTim        Tim                          @relation("DomaciTim", fields: [domaciTimId], references: [timId])
+  gostujuciTim     Tim                          @relation("GostujuciTim", fields: [gostujuciTimId], references: [timId])
+  sportskiObjekat  SportskiObjekat?             @relation(fields: [objekatId], references: [objekatId])
+  takmicenje       Takmicenje                   @relation(fields: [takmicenjeId], references: [takmicenjeId])
+}
+
+model RezultatUtakmice {
+  rezultatUtakmiceId Int      @id @default(autoincrement())
+  utakmicaId         Int      @unique
+  rezultatDomacin    Int
+  rezultatGost       Int
+  unioKorisnikId     Int
+  datumUnosa         DateTime @default(now())
+  unioKorisnik       Korisnik @relation(fields: [unioKorisnikId], references: [korisnikId])
+  utakmica           Utakmica @relation(fields: [utakmicaId], references: [utakmicaId])
+}
+
+model PlasmanNaTabeli {
+  plasmanNaTabeliId Int        @id @default(autoincrement())
+  timId             Int
+  takmicenjeId      Int
+  brojPobjeda       Int        @default(0)
+  brojNerijesenih   Int        @default(0)
+  brojPoraza        Int        @default(0)
+  ukupniBodovi      Int        @default(0)
+  trenutnaPozicija  Int?
+  takmicenje        Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
+  tim               Tim        @relation(fields: [timId], references: [timId])
+
+  @@unique([timId, takmicenjeId])
+}
+
+model UcesceUTakmicenju {
+  ucesceUTakmicenjuId Int        @id @default(autoincrement())
+  takmicenjeId        Int
+  timId               Int
+  prijavioKorisnikId  Int
+  statusPrijave       String?
+  datumPrijave        DateTime   @default(now())
+  datumOdobrenja      DateTime?
+  prijavioKorisnik    Korisnik   @relation(fields: [prijavioKorisnikId], references: [korisnikId])
+  takmicenje          Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
+  tim                 Tim        @relation(fields: [timId], references: [timId])
+}
+
+model TipStatistike {
+  tipStatistikeId     Int                          @id @default(autoincrement())
+  sportId             Int
+  nazivStatistike     String
+  sport               Sport                        @relation(fields: [sportId], references: [sportId])
+  vrijednostiZaIgraca VrijednostStatistikeIgraca[]
+  vrijednostiZaTim    VrijednostStatistikeTima[]
+}
+
+model StatistikaTimaNaUtakmici {
+  statistikaTimaId Int                        @id @default(autoincrement())
+  utakmicaId       Int
+  timId            Int
+  tim              Tim                        @relation(fields: [timId], references: [timId])
+  utakmica         Utakmica                   @relation(fields: [utakmicaId], references: [utakmicaId])
+  vrijednosti      VrijednostStatistikeTima[]
+}
+
+model VrijednostStatistikeTima {
+  vrijednostId     Int                      @id @default(autoincrement())
+  statistikaTimaId Int
+  tipStatistikeId  Int
+  vrijednost       Float
+  statistikaTima   StatistikaTimaNaUtakmici @relation(fields: [statistikaTimaId], references: [statistikaTimaId])
+  tipStatistike    TipStatistike            @relation(fields: [tipStatistikeId], references: [tipStatistikeId])
+}
+
+model StatistikaIgracaNaUtakmici {
+  statistikaIgracaId Int                          @id @default(autoincrement())
+  utakmicaId         Int
+  timId              Int
+  korisnikId         Int
+  korisnik           Korisnik                     @relation(fields: [korisnikId], references: [korisnikId])
+  tim                Tim                          @relation(fields: [timId], references: [timId])
+  utakmica           Utakmica                     @relation(fields: [utakmicaId], references: [utakmicaId])
+  vrijednosti        VrijednostStatistikeIgraca[]
+}
+
+model VrijednostStatistikeIgraca {
+  vrijednostId       Int                        @id @default(autoincrement())
+  statistikaIgracaId Int
+  tipStatistikeId    Int
+  vrijednost         Float
+  statistikaIgraca   StatistikaIgracaNaUtakmici @relation(fields: [statistikaIgracaId], references: [statistikaIgracaId])
+  tipStatistike      TipStatistike              @relation(fields: [tipStatistikeId], references: [tipStatistikeId])
+}
+
+model SportskiObjekat {
+  objekatId      Int             @id @default(autoincrement())
+  vlasnikId      Int
+  naziv          String
+  adresa         String?
+  opis           String?
+  kapacitet      Int?
+  status         String?
+  vlasnik        Korisnik        @relation(fields: [vlasnikId], references: [korisnikId])
+  terminiObjekta TerminObjekta[]
+  utakmice       Utakmica[]
+}
+
+model TerminObjekta {
+  terminId              Int                    @id @default(autoincrement())
+  objekatId             Int
+  vrijemePocetka        DateTime
+  vrijemeZavrsetka      DateTime
+  tipTermina            String?
+  status                String?
+  grupniTrening         GrupniTrening?
+  potvrdjeneRezervacije Rezervacija[]
+  sportskiObjekat       SportskiObjekat        @relation(fields: [objekatId], references: [objekatId])
+  zahtjeviZaRezervaciju ZahtjevZaRezervaciju[]
+}
+
+model ZahtjevZaRezervaciju {
+  zahtjevId          Int                  @id @default(autoincrement())
+  terminId           Int
+  korisnikId         Int
+  timId              Int?
+  status             String?
+  datumSlanja        DateTime             @default(now())
+  datumObrade        DateTime?
+  razlogOdbijanja    String?
+  obradioKorisnikId  Int?
+  rezervacije        Rezervacija[]
+  stavkeListeCekanja StavkaListeCekanja[]
+  korisnik           Korisnik             @relation(fields: [korisnikId], references: [korisnikId])
+  administrator      Korisnik?            @relation("ObradioKorisnik", fields: [obradioKorisnikId], references: [korisnikId])
+  terminObjekta      TerminObjekta        @relation(fields: [terminId], references: [terminId])
+  tim                Tim?                 @relation(fields: [timId], references: [timId])
+}
+
+model Rezervacija {
+  rezervacijaId        Int                  @id @default(autoincrement())
+  zahtjevId            Int
+  terminId             Int
+  status               String?
+  datumKreiranja       DateTime             @default(now())
+  datumPotvrde         DateTime?
+  datumOtkazivanja     DateTime?
+  razlogOtkazivanja    String?
+  otkazaoKorisnikId    Int?
+  korisnikKojiOtkazuje Korisnik?            @relation("OtkazaoKorisnik", fields: [otkazaoKorisnikId], references: [korisnikId])
+  terminObjekta        TerminObjekta        @relation(fields: [terminId], references: [terminId])
+  zahtjev              ZahtjevZaRezervaciju @relation(fields: [zahtjevId], references: [zahtjevId])
+}
+
+model StavkaListeCekanja {
+  stavkaId       Int                  @id @default(autoincrement())
+  zahtjevId      Int
+  redniBroj      Int
+  datumDodavanja DateTime             @default(now())
+  statusStavke   String?
+  zahtjev        ZahtjevZaRezervaciju @relation(fields: [zahtjevId], references: [zahtjevId])
+}
+
+model GrupniTrening {
+  treningId            Int                      @id @default(autoincrement())
+  terminId             Int                      @unique
+  trenerId             Int
+  maksimalanBrojIgraca Int
+  terminObjekta        TerminObjekta            @relation(fields: [terminId], references: [terminId], onDelete: Cascade)
+  trener               Korisnik                 @relation("TrenerTreninga", fields: [trenerId], references: [korisnikId])
+  prijave              PrijavaGrupnogTreninga[]
+}
+
+model PrijavaGrupnogTreninga {
+  prijavaId     Int           @id @default(autoincrement())
+  treningId     Int
+  korisnikId    Int
+  datumPrijave  DateTime      @default(now())
+  korisnik      Korisnik      @relation("IgracPrijavljen", fields: [korisnikId], references: [korisnikId], onDelete: Cascade)
+  grupniTrening GrupniTrening @relation(fields: [treningId], references: [treningId], onDelete: Cascade)
+
+  @@unique([treningId, korisnikId])
+}
+
+model AIPredikcija {
+  predikcijaId        Int        @id @default(autoincrement())
+  takmicenjeId        Int
+  utakmicaId          Int
+  predvidjeniIshod    String?
+  vjerovatnoca        Float?
+  detaljnoObjasnjenje String?
+  vrijemeGenerisanja  DateTime   @default(now())
+  takmicenje          Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
+  utakmica            Utakmica   @relation(fields: [utakmicaId], references: [utakmicaId])
+}
+
+model Notifikacija {
+  notifikacijaId  Int       @id @default(autoincrement())
+  korisnikId      Int
+  tipNotifikacije String?
+  sadrzajPoruke   String?
+  status          String?
+  vrijemeSlanja   DateTime  @default(now())
+  vrijemeCitanja  DateTime?
+  korisnik        Korisnik  @relation(fields: [korisnikId], references: [korisnikId])
+}
 
 enum Uloga {
   ADMINISTRATOR
@@ -18,361 +339,4 @@ enum Uloga {
   IGRAC
   VLASNIK
   NAVIJAC
-}
-model Korisnik {
-  korisnikId                 Int       @id @default(autoincrement())
-  punoIme                    String?
-  email                      String    @unique
-  lozinkaHash                String   
-  datumKreiranja             DateTime  @default(now())
-  brojPreksrenihRezervacija  Int       @default(0)
-  statusPouzdanosti          String?
-  razlogBlokiranja           String?
-  uloga          Uloga    @default(NAVIJAC)
-  trazenaUloga               Uloga?
-  statusUloge                String?
-  datumZahtjeva              DateTime?
-  datumObrade                DateTime?
-  razlogOdbijanja            String?
-  refreshToken               String?
-  documents                  String[]
-  resetToken         String?
-  resetTokenExpires  DateTime?
-
-  // Relacije
-  organizovanaTakmicenja     Takmicenje[]
-  vlasnikSportskihObjekata   SportskiObjekat[]
-  omiljeniTimovi             OmiljeniTim[]
-  notifikacije               Notifikacija[]
-  clanstvaUTimovima          ClanstvoTima[]
-  zahtjeviZaRezervaciju      ZahtjevZaRezervaciju[]
-  obradjeniZahtjevi          ZahtjevZaRezervaciju[]       @relation("ObradioKorisnik")
-  otkazaneRezervacije        Rezervacija[]                @relation("OtkazaoKorisnik")
-  prijaveNaTakmicenja        UcesceUTakmicenju[]
-  statistikeIgraca           StatistikaIgracaNaUtakmici[]
-  uneseniRezultati           RezultatUtakmice[]
-  grupniTreninzi             GrupniTrening[]              @relation("TrenerTreninga")
-  prijaveGrupnogTreninga     PrijavaGrupnogTreninga[]     @relation("IgracPrijavljen")
-}
-
-// ==========================================
-// SPORTOVI I TIMOVI
-// ==========================================
-
-model Sport {
-  sportId      Int             @id @default(autoincrement())
-  naziv        String          @unique
-  opis         String?
-  jeTimskiSport Boolean        @default(true)
-
-  timovi          Tim[]
-  takmicenja      Takmicenje[]
-  tipoviStatistike TipStatistike[]
-}
-
-model Tim {
-  timId           Int     @id @default(autoincrement())
-  naziv           String
-  sportId         Int
-  sport           Sport   @relation(fields: [sportId], references: [sportId])
-  opis            String?
-  logoUrl         String?
-  status          String?
-
-  // Relacije
-  clanstvaUcesnika     ClanstvoTima[]
-  korisniciKojiPrate   OmiljeniTim[]
-  plasmaniNaTabelama   PlasmanNaTabeli[]
-  ucescaUTakmicenjima  UcesceUTakmicenju[]
-  domaceUtakmice       Utakmica[]                   @relation("DomaciTim")
-  gostujuceUtakmice    Utakmica[]                   @relation("GostujuciTim")
-  statistikeTima       StatistikaTimaNaUtakmici[]
-  zahtjeviZaRezervaciju ZahtjevZaRezervaciju[]
-  statistikeIgraca     StatistikaIgracaNaUtakmici[]
-}
-
-model ClanstvoTima {
-  clanstvoTimaId     Int      @id @default(autoincrement())
-  timId              Int
-  tim                Tim      @relation(fields: [timId], references: [timId])
-  korisnikId         Int
-  korisnik           Korisnik @relation(fields: [korisnikId], references: [korisnikId])
-  ulogaUTimu         String?
-  datumPridruzivanja DateTime @default(now())
-  status             String?
-
-  @@unique([korisnikId,timId])
-}
-
-model OmiljeniTim {
-  omiljeniTimId    Int      @id @default(autoincrement())
-  korisnikId       Int
-  korisnik         Korisnik @relation(fields: [korisnikId], references: [korisnikId])
-  timId            Int
-  tim              Tim      @relation(fields: [timId], references: [timId])
-  datumDodavanja   DateTime @default(now())
-  napomenaKorisnika String?
-
-  @@unique([korisnikId,timId])
-}
-
-// ==========================================
-// TAKMIČENJA I UTAKMICE
-// ==========================================
-
-model Takmicenje {
-  takmicenjeId      Int       @id @default(autoincrement())
-  naziv             String
-  sezona            String?
-  sportId           Int
-  sport             Sport     @relation(fields: [sportId], references: [sportId])
-  organizatorId     Int
-  organizator       Korisnik  @relation(fields: [organizatorId], references: [korisnikId])
-  status            String?
-  opis              String?
-  datumPocetka      DateTime?
-  datumZavrsetka    DateTime?
-  tipTakmicenja     String?
-
-  utakmice           Utakmica[]
-  plasmaniNaTabeli   PlasmanNaTabeli[]
-  ucesniciTakmicenja UcesceUTakmicenju[]
-  aiPredikcije       AIPredikcija[]
-}
-
-model Utakmica {
-  utakmicaId       Int              @id @default(autoincrement())
-  takmicenjeId     Int
-  takmicenje       Takmicenje       @relation(fields: [takmicenjeId], references: [takmicenjeId])
-  domaciTimId      Int
-  domaciTim        Tim              @relation("DomaciTim", fields: [domaciTimId], references: [timId])
-  gostujuciTimId   Int
-  gostujuciTim     Tim              @relation("GostujuciTim", fields: [gostujuciTimId], references: [timId])
-  objekatId        Int?
-  sportskiObjekat  SportskiObjekat? @relation(fields: [objekatId], references: [objekatId])
-  vrijemePocetka   DateTime
-  vrijemeZavrsetka DateTime?
-  status           String?
-  lokacijaOpis     String?
-
-  rezultatUtakmice RezultatUtakmice?
-  statistikeTimova StatistikaTimaNaUtakmici[]
-  statistikeIgraca StatistikaIgracaNaUtakmici[]
-  aiPredikcije     AIPredikcija[]
-}
-
-model RezultatUtakmice {
-  rezultatUtakmiceId Int      @id @default(autoincrement())
-  utakmicaId         Int      @unique
-  utakmica           Utakmica @relation(fields: [utakmicaId], references: [utakmicaId])
-  rezultatDomacin    Int
-  rezultatGost       Int
-  unioKorisnikId     Int
-  unioKorisnik       Korisnik @relation(fields: [unioKorisnikId], references: [korisnikId])
-  datumUnosa         DateTime @default(now())
-}
-
-model PlasmanNaTabeli {
-  plasmanNaTabeliId Int        @id @default(autoincrement())
-  timId             Int        
-  tim               Tim        @relation(fields: [timId], references: [timId])
-  takmicenjeId      Int
-  takmicenje        Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
-  brojPobjeda       Int        @default(0)
-  brojNerijesenih   Int        @default(0)
-  brojPoraza        Int        @default(0)
-  ukupniBodovi      Int        @default(0)
-  trenutnaPozicija  Int?
-
-  @@unique([timId, takmicenjeId])
-}
-
-model UcesceUTakmicenju {
-  ucesceUTakmicenjuId Int        @id @default(autoincrement())
-  takmicenjeId        Int
-  takmicenje          Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
-  timId               Int
-  tim                 Tim        @relation(fields: [timId], references: [timId])
-  prijavioKorisnikId  Int
-  prijavioKorisnik    Korisnik   @relation(fields: [prijavioKorisnikId], references: [korisnikId])
-  statusPrijave       String?
-  datumPrijave        DateTime   @default(now())
-  datumOdobrenja      DateTime?
-}
-
-// ==========================================
-// STATISTIKA
-// ==========================================
-
-model TipStatistike {
-  tipStatistikeId Int   @id @default(autoincrement())
-  sportId         Int
-  sport           Sport @relation(fields: [sportId], references: [sportId])
-  nazivStatistike String
-
-  vrijednostiZaTim   VrijednostStatistikeTima[]
-  vrijednostiZaIgraca VrijednostStatistikeIgraca[]
-}
-
-model StatistikaTimaNaUtakmici {
-  statistikaTimaId Int      @id @default(autoincrement())
-  utakmicaId       Int
-  utakmica         Utakmica @relation(fields: [utakmicaId], references: [utakmicaId])
-  timId            Int
-  tim              Tim      @relation(fields: [timId], references: [timId])
-
-  vrijednosti VrijednostStatistikeTima[]
-}
-
-model VrijednostStatistikeTima {
-  vrijednostId     Int                      @id @default(autoincrement())
-  statistikaTimaId Int
-  statistikaTima   StatistikaTimaNaUtakmici @relation(fields: [statistikaTimaId], references: [statistikaTimaId])
-  tipStatistikeId  Int
-  tipStatistike    TipStatistike            @relation(fields: [tipStatistikeId], references: [tipStatistikeId])
-  vrijednost       Float
-}
-
-model StatistikaIgracaNaUtakmici {
-  statistikaIgracaId Int      @id @default(autoincrement())
-  utakmicaId         Int
-  utakmica           Utakmica @relation(fields: [utakmicaId], references: [utakmicaId])
-  timId              Int
-  tim                Tim      @relation(fields: [timId], references: [timId])
-  korisnikId         Int
-  korisnik           Korisnik @relation(fields: [korisnikId], references: [korisnikId])
-
-  vrijednosti VrijednostStatistikeIgraca[]
-}
-
-model VrijednostStatistikeIgraca {
-  vrijednostId       Int                        @id @default(autoincrement())
-  statistikaIgracaId Int
-  statistikaIgraca   StatistikaIgracaNaUtakmici @relation(fields: [statistikaIgracaId], references: [statistikaIgracaId])
-  tipStatistikeId    Int
-  tipStatistike      TipStatistike              @relation(fields: [tipStatistikeId], references: [tipStatistikeId])
-  vrijednost         Float
-}
-
-// ==========================================
-// OBJEKTI I REZERVACIJE
-// ==========================================
-
-model SportskiObjekat {
-  objekatId Int      @id @default(autoincrement())
-  vlasnikId Int
-  vlasnik   Korisnik @relation(fields: [vlasnikId], references: [korisnikId])
-  naziv     String
-  adresa    String?
-  opis      String?
-  kapacitet Int?
-  status    String?
-
-  utakmice       Utakmica[]
-  terminiObjekta TerminObjekta[]
-}
-
-model TerminObjekta {
-  terminId         Int             @id @default(autoincrement())
-  objekatId        Int
-  sportskiObjekat  SportskiObjekat @relation(fields: [objekatId], references: [objekatId])
-  vrijemePocetka   DateTime
-  vrijemeZavrsetka DateTime
-  tipTermina       String?
-  status           String?
-
-  zahtjeviZaRezervaciju ZahtjevZaRezervaciju[]
-  potvrdjeneRezervacije Rezervacija[]
-  grupniTrening         GrupniTrening?
-}
-
-model ZahtjevZaRezervaciju {
-  zahtjevId        Int           @id @default(autoincrement())
-  terminId         Int
-  terminObjekta    TerminObjekta @relation(fields: [terminId], references: [terminId])
-  korisnikId       Int
-  korisnik         Korisnik      @relation(fields: [korisnikId], references: [korisnikId])
-  timId            Int?
-  tim              Tim?          @relation(fields: [timId], references: [timId])
-  status           String?
-  datumSlanja      DateTime      @default(now())
-  datumObrade      DateTime?
-  razlogOdbijanja  String?
-  obradioKorisnikId Int?
-  administrator    Korisnik?     @relation("ObradioKorisnik", fields: [obradioKorisnikId], references: [korisnikId])
-
-  rezervacije        Rezervacija[]
-  stavkeListeCekanja StavkaListeCekanja[]
-}
-
-model Rezervacija {
-  rezervacijaId    Int                  @id @default(autoincrement())
-  zahtjevId        Int
-  zahtjev          ZahtjevZaRezervaciju @relation(fields: [zahtjevId], references: [zahtjevId])
-  terminId         Int
-  terminObjekta    TerminObjekta        @relation(fields: [terminId], references: [terminId])
-  status           String?
-  datumKreiranja   DateTime             @default(now())
-  datumPotvrde     DateTime?
-  datumOtkazivanja DateTime?
-  razlogOtkazivanja String?
-  otkazaoKorisnikId Int?
-  korisnikKojiOtkazuje Korisnik?        @relation("OtkazaoKorisnik", fields: [otkazaoKorisnikId], references: [korisnikId])
-}
-
-model StavkaListeCekanja {
-  stavkaId         Int                  @id @default(autoincrement())
-  zahtjevId        Int
-  zahtjev          ZahtjevZaRezervaciju @relation(fields: [zahtjevId], references: [zahtjevId])
-  redniBroj        Int
-  datumDodavanja   DateTime             @default(now())
-  statusStavke     String?
-}
-
-model GrupniTrening {
-  treningId             Int                      @id @default(autoincrement())
-  terminId              Int                      @unique
-  terminObjekta         TerminObjekta            @relation(fields: [terminId], references: [terminId], onDelete: Cascade)
-  trenerId              Int
-  trener                Korisnik                 @relation("TrenerTreninga", fields: [trenerId], references: [korisnikId])
-  maksimalanBrojIgraca  Int
-  prijave               PrijavaGrupnogTreninga[]
-}
-
-model PrijavaGrupnogTreninga {
-  prijavaId             Int            @id @default(autoincrement())
-  treningId             Int
-  grupniTrening         GrupniTrening  @relation(fields: [treningId], references: [treningId], onDelete: Cascade)
-  korisnikId            Int
-  korisnik              Korisnik       @relation("IgracPrijavljen", fields: [korisnikId], references: [korisnikId], onDelete: Cascade)
-  datumPrijave          DateTime       @default(now())
-
-  @@unique([treningId, korisnikId])
-}
-
-// ==========================================
-// OSTALO (AI, NOTIFIKACIJE)
-// ==========================================
-
-model AIPredikcija {
-  predikcijaId       Int        @id @default(autoincrement())
-  takmicenjeId       Int
-  takmicenje         Takmicenje @relation(fields: [takmicenjeId], references: [takmicenjeId])
-  utakmicaId         Int
-  utakmica           Utakmica   @relation(fields: [utakmicaId], references: [utakmicaId])
-  predvidjeniIshod   String?
-  vjerovatnoca       Float?
-  detaljnoObjasnjenje String?
-  vrijemeGenerisanja DateTime   @default(now())
-}
-
-model Notifikacija {
-  notifikacijaId Int      @id @default(autoincrement())
-  korisnikId     Int
-  korisnik       Korisnik @relation(fields: [korisnikId], references: [korisnikId])
-  tipNotifikacije String?
-  sadrzajPoruke  String?
-  status         String?
-  vrijemeSlanja  DateTime @default(now())
-  vrijemeCitanja DateTime?
 }
