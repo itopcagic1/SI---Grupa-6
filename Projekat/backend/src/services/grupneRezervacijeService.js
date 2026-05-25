@@ -44,7 +44,7 @@ const kreirajGrupniTreningService = async (terminIdValue, trenerId, maksimalanBr
     where: {
       terminId,
       korisnikId: trenerId,
-      status: { in: ['CEKANJE', 'ODOBRENO'] },
+      status: { in: ['NA_CEKANJU', 'CEKANJE', 'ODOBRENO'] },
     },
   });
 

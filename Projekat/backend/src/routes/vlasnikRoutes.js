@@ -13,4 +13,12 @@ router.get(
   vlasnikController.dohvatiSveRezervacije
 );
 
+// PATCH /api/vlasnik/zahtjevi/:id/verifikacija
+router.patch(
+  '/zahtjevi/:id/verifikacija',
+  authenticateToken,
+  requireRole('VLASNIK'),
+  vlasnikController.obradiZahtjevVerifikacije
+);
+
 module.exports = router;

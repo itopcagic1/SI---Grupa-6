@@ -60,7 +60,7 @@ const assertNotDuplicateReservation = async (terminId, korisnikId) => {
     where: {
       korisnikId,
       terminId,
-      status: { in: ['CEKANJE', 'ODOBRENO'] },
+      status: { in: ['NA_CEKANJU', 'CEKANJE', 'ODOBRENO'] },
     },
   });
 
@@ -129,7 +129,7 @@ const createIndividualReservationService = async (terminIdValue, korisnik, isTru
     data: {
       terminId,
       korisnikId: korisnik.korisnikId,
-      status: 'CEKANJE',
+      status: 'NA_CEKANJU',
       datumSlanja: new Date(),
     },
   });
