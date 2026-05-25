@@ -104,3 +104,53 @@ Kreiranje backend rute, servisa i kontrolera za dohvatanje svih nadolazećih rez
 
 **Ko je koristio alat:**
 Irma Topčagić
+
+## Zapis 4
+
+**Datum:** 25.05.2026.
+
+**Sprint broj:** 9
+
+**Alat koji je korišten:** Claude
+
+**Svrha korištenja:**
+Konsultacija oko implementacije real-time liste čekanja za individualne termine i Socket.IO notifikacija za oslobođene termine.
+
+**Kratak opis zadatka ili upita:**
+Kako organizovati backend i frontend arhitekturu za funkcionalnost liste čekanja gdje se korisnici mogu prijaviti na zauzet termin, automatski dobiti real-time notifikaciju kada termin postane slobodan, te imati pregled svih termina na kojima čekaju unutar profila korisnika.
+
+**Šta je AI predložio ili generisao:**
+
+* Prijedlog strukture `listaCekanjaService` servisa sa metodama za prijavu, odjavu i dohvat waitlist termina.
+* Primjer Socket.IO emit logike za slanje događaja korisnicima kada se termin oslobodi.
+* Backend rute za `join waitlist`, `leave waitlist` i `get my waitlist terms`.
+* Frontend API helper funkcije za komunikaciju sa waitlist endpointima.
+* Ideju za real-time toast/notifikaciju unutar React aplikacije korištenjem globalnog socket listenera.
+* Primjer UI stanja za dugme “Prijavi me na listu čekanja” i prikaz statusa “Nalazite se na listi čekanja”.
+
+**Šta je tim (korisnik) prihvatio:**
+
+* Koncept odvojene waitlist tabele i servisnog sloja za upravljanje listom čekanja.
+* Korištenje Socket.IO room-ova po korisniku radi ciljane distribucije notifikacija.
+* Integraciju real-time notifikacija u postojeći PlayerDashboard/Profile flow.
+
+**Šta je tim (korisnik) izmijenio:**
+
+* Prilagođena je validacija tako da se korisnik može prijaviti na listu čekanja isključivo za termine sa statusom `ZAUZET`.
+* Dodana je provjera za sprečavanje duplih waitlist prijava za isti termin.
+* Modifikovana je frontend logika kako bi se UI stanje sinhronizovalo nakon prijave/odjave bez refresh-a stranice.
+* Prilagođen je izgled toast notifikacija postojećoj amber/orange temi aplikacije.
+
+**Šta je tim (korisnik) odbacio:**
+
+* Globalni broadcast svih oslobođenih termina svim konektovanim korisnicima zbog nepotrebnog mrežnog opterećenja i sigurnosnih razloga.
+* Korištenje polling pristupa za provjeru oslobođenih termina, zamijenjeno Socket.IO eventima.
+
+**Rizici, problemi ili greške koje su uočene:**
+
+* AI je inicijalno predložio emitovanje događaja svim korisnicima umjesto samo korisnicima koji se nalaze na listi čekanja za konkretan termin.
+* Uočena je potreba za dodatnom transakcijskom zaštitom kako bi se izbjegli race condition scenariji kod simultanog oslobađanja termina i prijava na listu čekanja.
+* Frontend testovi za novu funkcionalnost nisu mogli biti izvršeni zbog postojećeg Vitest setup path problema.
+
+**Ko je koristio alat:**
+Mehdi Zaimović
