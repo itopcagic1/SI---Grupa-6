@@ -9,6 +9,7 @@ import {
   prijaviSeNaGrupniTrening,
   odjaviSeSaGrupnogTreninga,
   getMojeRezervacije,
+  getAllFacilities,
 } from '../api/reservationApi';
 
 const DAY_LABELS = ['NED', 'PON', 'UTO', 'SRI', 'ČET', 'PET', 'SUB'];
@@ -85,6 +86,8 @@ export default function PlayerDashboard() {
 
   // --- Individualni ---
   const [allTerms, setAllTerms] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [joiningWaitlistIds, setJoiningWaitlistIds] = useState([]);
@@ -117,23 +120,32 @@ export default function PlayerDashboard() {
   const todayWeekStart = useMemo(() => getWeekStart(new Date()), []);
   const currentWeekStart = useMemo(() => addDays(todayWeekStart, weekOffset * 7), [todayWeekStart, weekOffset]);
   const weekDays = useMemo(() => getWeekDays(currentWeekStart), [currentWeekStart]);
+
   const weekTerms = useMemo(() => {
     const weekEnd = addDays(currentWeekStart, 7);
     return allTerms.filter((t) => {
       const d = new Date(t.vrijemePocetka);
-      return d >= currentWeekStart && d < weekEnd;
+      const inWeek = d >= currentWeekStart && d < weekEnd;
+      const matchesFacility = !selectedFacilityId ||
+        String(t.sportskiObjekat?.objekatId) === String(selectedFacilityId);
+      return inWeek && matchesFacility;
     });
-  }, [allTerms, currentWeekStart]);
+  }, [allTerms, currentWeekStart, selectedFacilityId]);
+
   const groupedTerms = useMemo(() => groupTermsByDay(weekTerms), [weekTerms]);
 
   // --- Load functions ---
   const loadTerms = async () => {
     setLoadingTerms(true);
     try {
-      const response = await getFreeIndividualTerms();
-      setAllTerms(Array.isArray(response.termini) ? response.termini : []);
+      const [termsResponse, facsResponse] = await Promise.all([
+        getFreeIndividualTerms(),
+        getAllFacilities(),
+      ]);
+      setAllTerms(Array.isArray(termsResponse.termini) ? termsResponse.termini : []);
+      setFacilities(Array.isArray(facsResponse) ? facsResponse : []);
     } catch {
-      showNotification('error', 'Greška pri učitavanju individualnih termina.');
+      showNotification('error', 'Greška pri učitavanju termina.');
     } finally {
       setLoadingTerms(false);
     }
@@ -328,98 +340,120 @@ export default function PlayerDashboard() {
 
           {/* ===== SEKCIJA 1: Individualni treninzi ===== */}
           <div className="bg-white rounded-[32px] border-2 border-amber-100 shadow-sm p-6 space-y-6">
-            <div>
-              <h2 className="text-xl font-black text-amber-950 uppercase tracking-wide">Individualni treninzi</h2>
-              <p className="text-xs text-slate-400 font-medium">Pregledaj slobodne termine i rezerviši jednim klikom.</p>
-            </div>
-
-            {/* Legenda */}
-            <div className="flex items-center gap-4 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-green-200 border border-green-400"></span>Slobodno</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-blue-200 border border-blue-400"></span>Vaša rezervacija</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>Zauzeto</span>
-            </div>
-
-            {/* Navigacija sedmica */}
-            <div className="flex items-center justify-between gap-4 border-t border-amber-50 pt-4">
-              <button type="button" onClick={() => setWeekOffset((w) => w - 1)} disabled={weekOffset === 0}
-                className="rounded-2xl border-2 border-amber-100 bg-white px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
-                ← Prethodna
-              </button>
-              <div className="text-center">
-                <div className="text-sm font-black text-slate-700">
-                  {weekOffset === 0 ? 'TRENUTNA SEDMICA' : weekOffset === 1 ? 'SLJEDEĆA SEDMICA' : `ZA ${weekOffset} SEDMICA`}
-                </div>
-                <div className="text-xs text-slate-400 font-semibold mt-0.5">{formatWeekRange(currentWeekStart)}</div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-amber-950 uppercase tracking-wide">Individualni treninzi</h2>
+                <p className="text-xs text-slate-400 font-medium">Odaberite objekat i rezervišite slobodan termin.</p>
               </div>
-              <button type="button" onClick={() => setWeekOffset((w) => w + 1)}
-                className="rounded-2xl border-2 border-amber-100 bg-white px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:bg-slate-50">
-                Sljedeća →
-              </button>
+              <div className="w-full md:w-80">
+                <select
+                  value={selectedFacilityId}
+                  onChange={(e) => { setSelectedFacilityId(e.target.value); setWeekOffset(0); }}
+                  className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-sm shadow-sm h-12"
+                >
+                  <option value="">-- Odaberite sportski objekat --</option>
+                  {facilities.map((f) => (
+                    <option key={f.objekatId} value={f.objekatId}>{f.naziv}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Grid sedmice */}
-            <div className="grid gap-4 lg:grid-cols-7">
-              {weekDays.map((day) => {
-                const dayKey = formatDate(day.date.toISOString());
-                const dayTerms = groupedTerms[dayKey] || [];
-                return (
-                  <div key={day.key} className="rounded-3xl border border-amber-100 bg-amber-50/20 p-4">
-                    <div className="mb-4 text-xs font-black uppercase tracking-wider text-amber-900/60 border-b border-amber-100/50 pb-2">
-                      {getDayLabel(day.date)}
+            {selectedFacilityId ? (
+              <div className="space-y-6">
+                {/* Legenda */}
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-green-200 border border-green-400"></span>Slobodno</span>
+                  <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-blue-200 border border-blue-400"></span>Vaša rezervacija</span>
+                  <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>Zauzeto</span>
+                </div>
+
+                {/* Navigacija sedmica */}
+                <div className="flex items-center justify-between gap-4 border-t border-amber-50 pt-4">
+                  <button type="button" onClick={() => setWeekOffset((w) => w - 1)} disabled={weekOffset === 0}
+                    className="rounded-2xl border-2 border-amber-100 bg-white px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                    ← Prethodna
+                  </button>
+                  <div className="text-center">
+                    <div className="text-sm font-black text-slate-700">
+                      {weekOffset === 0 ? 'TRENUTNA SEDMICA' : weekOffset === 1 ? 'SLJEDEĆA SEDMICA' : `ZA ${weekOffset} SEDMICA`}
                     </div>
-                    {loadingTerms ? (
-                      <div className="text-xs text-slate-400 font-bold text-center py-4">Učitavanje...</div>
-                    ) : dayTerms.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-amber-200 bg-white p-4 text-xs text-slate-400 text-center font-medium">Nema termina</div>
-                    ) : (
-                      <div className="space-y-3">
-                        {dayTerms.map((termin) => {
-                          const isFree = termin.status === 'SLOBODAN';
-                          const isMyReservation = termin.jeMojaRezervacija;
-                          const isOccupied = termin.status === 'ZAUZET' && !isMyReservation;
-                          const isJoining = joiningWaitlistIds.includes(termin.terminId);
-                          return (
-                            <button key={termin.terminId} type="button"
-                              disabled={isOccupied && (termin.naListiCekanja || isJoining)}
-                              onClick={() => {
-                                if (isFree) openTermModal(termin, 'reserve');
-                                if (isMyReservation) openTermModal(termin, 'cancel');
-                                if (isOccupied && !termin.naListiCekanja) handleJoinWaitlist(termin);
-                              }}
-                              className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition
-                                ${isFree ? 'border-green-100 bg-white hover:border-green-400 hover:bg-green-50/30 cursor-pointer'
-                                : isMyReservation ? 'border-blue-100 bg-blue-50/30 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
-                                : 'border-orange-100 bg-orange-50/25 hover:border-orange-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75'}`}
-                            >
-                              <div className="mb-2">
-                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border
-                                  ${isFree ? 'bg-green-50 text-green-700 border-green-100'
-                                  : isMyReservation ? 'bg-blue-50 text-blue-700 border-blue-100'
-                                  : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
-                                  {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : 'Zauzeto'}
-                                </span>
-                              </div>
-                              <div className="font-bold text-slate-900 text-sm">{formatTime(termin.vrijemePocetka)}</div>
-                              <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
-                                {termin.sportskiObjekat?.naziv || 'Sportski objekat'}
-                              </div>
-                              {termin.tipTermina && <div className="mt-0.5 text-[10px] text-slate-400">{tipTerminaLabel(termin.tipTermina)}</div>}
-                              {isMyReservation && <div className="mt-2 text-[10px] text-blue-500 font-black uppercase tracking-wide">Kliknite za otkazivanje</div>}
-                              {isOccupied && (
-                                <div className="mt-2 text-[10px] text-orange-700 font-black uppercase tracking-wide">
-                                  {termin.naListiCekanja ? 'Na listi čekanja' : isJoining ? 'Prijava u toku...' : 'Prijavi me na listu čekanja'}
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <div className="text-xs text-slate-400 font-semibold mt-0.5">{formatWeekRange(currentWeekStart)}</div>
                   </div>
-                );
-              })}
-            </div>
+                  <button type="button" onClick={() => setWeekOffset((w) => w + 1)}
+                    className="rounded-2xl border-2 border-amber-100 bg-white px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:bg-slate-50">
+                    Sljedeća →
+                  </button>
+                </div>
+
+                {/* Grid sedmice */}
+                <div className="grid gap-4 lg:grid-cols-7">
+                  {weekDays.map((day) => {
+                    const dayKey = formatDate(day.date.toISOString());
+                    const dayTerms = groupedTerms[dayKey] || [];
+                    return (
+                      <div key={day.key} className="rounded-3xl border border-amber-100 bg-amber-50/20 p-4">
+                        <div className="mb-4 text-xs font-black uppercase tracking-wider text-amber-900/60 border-b border-amber-100/50 pb-2">
+                          {getDayLabel(day.date)}
+                        </div>
+                        {loadingTerms ? (
+                          <div className="text-xs text-slate-400 font-bold text-center py-4">Učitavanje...</div>
+                        ) : dayTerms.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-amber-200 bg-white p-4 text-xs text-slate-400 text-center font-medium">Nema termina</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {dayTerms.map((termin) => {
+                              const isFree = termin.status === 'SLOBODAN';
+                              const isMyReservation = termin.jeMojaRezervacija;
+                              const isOccupied = termin.status === 'ZAUZET' && !isMyReservation;
+                              const isJoining = joiningWaitlistIds.includes(termin.terminId);
+                              return (
+                                <button key={termin.terminId} type="button"
+                                  disabled={isOccupied && (termin.naListiCekanja || isJoining)}
+                                  onClick={() => {
+                                    if (isFree) openTermModal(termin, 'reserve');
+                                    if (isMyReservation) openTermModal(termin, 'cancel');
+                                    if (isOccupied && !termin.naListiCekanja) handleJoinWaitlist(termin);
+                                  }}
+                                  className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition
+                                    ${isFree ? 'border-green-100 bg-white hover:border-green-400 hover:bg-green-50/30 cursor-pointer'
+                                    : isMyReservation ? 'border-blue-100 bg-blue-50/30 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+                                    : 'border-orange-100 bg-orange-50/25 hover:border-orange-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75'}`}
+                                >
+                                  <div className="mb-2">
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border
+                                      ${isFree ? 'bg-green-50 text-green-700 border-green-100'
+                                      : isMyReservation ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                      : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                                      {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : 'Zauzeto'}
+                                    </span>
+                                  </div>
+                                  <div className="font-bold text-slate-900 text-sm">{formatTime(termin.vrijemePocetka)}</div>
+                                  <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
+                                    {termin.sportskiObjekat?.naziv || 'Sportski objekat'}
+                                  </div>
+                                  {termin.tipTermina && <div className="mt-0.5 text-[10px] text-slate-400">{tipTerminaLabel(termin.tipTermina)}</div>}
+                                  {isMyReservation && <div className="mt-2 text-[10px] text-blue-500 font-black uppercase tracking-wide">Kliknite za otkazivanje</div>}
+                                  {isOccupied && (
+                                    <div className="mt-2 text-[10px] text-orange-700 font-black uppercase tracking-wide">
+                                      {termin.naListiCekanja ? 'Na listi čekanja' : isJoining ? 'Prijava u toku...' : 'Prijavi me na listu čekanja'}
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-[2rem] border border-dashed border-amber-200 bg-amber-50/10 p-12 text-center text-slate-400 font-medium">
+                Odaberite sportski objekat iz padajućeg menija iznad kako biste vidjeli slobodne termine.
+              </div>
+            )}
           </div>
 
           {/* ===== SEKCIJA 2: Grupni treninzi ===== */}
