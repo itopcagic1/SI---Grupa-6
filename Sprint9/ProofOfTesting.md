@@ -358,3 +358,28 @@ Nova TASK-7 funkcionalnost trenutno nije kompletno pokrivena automatizovanim tes
 * Duplicate waitlist prijave
 * Race/conflict scenario za waitlist transakciju
 * Status konflikt validaciju (`ZAUZET` termin uslov)
+
+---
+
+## Modul: Frontend API testovi za individualne rezervacije igrača (Amna Kerla)
+
+### Sumarna statistika pokrivenosti testova
+* **Frontend API Testovi (`reservationApi.test.js`):** 9 testnih scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### FRONTEND API TESTOVI (`reservationApi.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Slanje GET zahtjeva na ispravan endpoint za slobodne individualne termine sa Authorization headerom | `dohvati slobodne individualne termine` | PASS |
+| Unit | Bacanje greške kada `getFreeIndividualTerms` ne uspije zbog mrežne greške | `baca grešku kada getFreeIndividualTerms ne uspije` | PASS |
+| Unit | Slanje POST zahtjeva na ispravan endpoint za individualnu rezervaciju sa Authorization headerom | `rezerviše individualni termin sa autorizacijom` | PASS |
+| Unit | Ispravan `terminId` se ugrađuje u URL POST zahtjeva za rezervaciju | `reserveIndividualTerm šalje ispravan terminId u URL` | PASS |
+| Unit | Bacanje greške kada `reserveIndividualTerm` ne uspije | `baca grešku kada reserveIndividualTerm ne uspije` | PASS |
+| Unit | Slanje DELETE zahtjeva na ispravan endpoint za otkazivanje individualne rezervacije sa Authorization headerom | `otkazuje individualni termin sa autorizacijom` | PASS |
+| Unit | Bacanje greške kada `cancelIndividualTerm` ne uspije | `baca grešku kada cancelIndividualTerm ne uspije` | PASS |
+| Unit | Authorization header ispravno koristi token pohranjen u `localStorage` | `koristi token iz localStorage za Authorization header` | PASS |
+| Unit | Slanje `Authorization: Bearer null` kada token nije prisutan u `localStorage` | `šalje Authorization: Bearer null kada token nije u localStorage` | PASS |

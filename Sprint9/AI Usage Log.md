@@ -154,3 +154,42 @@ Kako organizovati backend i frontend arhitekturu za funkcionalnost liste čekanj
 
 **Ko je koristio alat:**
 Mehdi Zaimović
+
+
+## Zapis 5
+
+**Datum:** 25.05.2026.
+
+**Sprint broj:** 9
+
+**Alat koji je korišten:** Claude
+
+**Svrha korištenja:**
+Pomoć pri generisanju testova za frontend API funkcije individualnih rezervacija, te pri povezivanju ruta za uspješno zakazivanje i otkazivanje individualnih termina.
+
+**Kratak opis zadatka ili upita:**
+Generisanje unit testova za API funkcije `getFreeIndividualTerms`, `reserveIndividualTerm` i `cancelIndividualTerm` uz provjeru Authorization headera, ispravnih endpointa i propagacije grešaka. Pored toga, konsultacija oko ispravnog povezivanja ruta na backendu za zakazivanje i otkazivanje individualnih termina od strane igrača.
+
+**Šta je AI predložio ili generisao:**
+- Kompletnu strukturu test suite-a u Vitestu sa `vi.mock` za Axios instancu i `beforeEach` resetovanjem.
+- Testne scenarije za svaku od tri API funkcije, uključujući happy path i error path slučajeve.
+- Testove za provjeru da se token iz `localStorage` ispravno koristi u Authorization headeru, uključujući edge case kada token nije prisutan (`Bearer null`).
+- Prijedlog za organizaciju ruta i middleware redoslijeda za zakazivanje i otkazivanje individualnih termina.
+
+**Šta je tim (korisnik) prihvatio:**
+- Strukturu test suite-a i raspored testnih scenarija po grupama (`getFreeIndividualTerms`, `reserveIndividualTerm`, `cancelIndividualTerm`).
+- Pristup testiranja Authorization headera iz `localStorage`.
+
+**Šta je tim (korisnik) izmijenio:**
+- Prilagođeni su konkretni URL endpointi i nazivi funkcija specifičnim konvencijama projekta.
+- Dodani su specifični `terminId` vrijednosti i poruke grešaka usklađene sa backendom projekta.
+- Prilagođen je test za `Bearer null` slučaj prema stvarnom ponašanju implementacije.
+
+**Šta je tim (korisnik) odbacio:**
+- Nije bilo značajnih odbačenih prijedloga.
+
+**Rizici, problemi ili greške koje su uočene:**
+- Nije uočena nijedna greška u finalnoj implementaciji testova.
+
+**Ko je koristio alat:**
+Amna Kerla
