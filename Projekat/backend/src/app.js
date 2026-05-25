@@ -19,6 +19,7 @@ const facilityRoutes = require('./routes/facilityRoutes');
 const rezervacijaRoutes = require('./routes/rezervacijaRoutes');
 const vlasnikRoutes = require('./routes/vlasnikRoutes');
 
+require('./workers/reservationWorker');
 
 const app = express();
 

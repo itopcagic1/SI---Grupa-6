@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { getVlasnikObjekti, getVlasnikRezervacije } from '../api/vlasnikApi';
+import { differenceInHours } from 'date-fns';
 
 function pad(value) {
   return String(value).padStart(2, '0');
@@ -32,15 +33,19 @@ function statusClass(status) {
 
   const classes = {
     POTVRDJENO: 'bg-green-50 text-green-700 border-green-200',
+    POTVRDJENA: 'bg-green-50 text-green-700 border-green-200',
+    CONFIRMED: 'bg-green-50 text-green-700 border-green-200',
     NA_CEKANJU: 'bg-amber-50 text-amber-800 border-amber-200',
+    PENDING: 'bg-amber-50 text-amber-800 border-amber-200',
     OTKAZANO: 'bg-red-50 text-red-700 border-red-200',
+    CANCELLED: 'bg-red-50 text-red-700 border-red-200',
   };
 
   return classes[normalized] || 'bg-slate-50 text-slate-700 border-slate-200';
 }
 
 function getApiErrorMessage(error, fallback) {
-  const code = error.response?.data?.greska;
+  const code = error.response?.data?.greska || error.response?.data?.error;
 
   const messages = {
     TOKEN_ISTEKAO: 'Sesija je istekla. Prijavite se ponovo.',
@@ -50,9 +55,11 @@ function getApiErrorMessage(error, fallback) {
     NEVALIDAN_DATUM: 'Odabrani datum nije validan.',
     NEVALIDNA_STRANICA: 'Broj stranice nije validan.',
     NEVALIDAN_LIMIT: 'Limit rezultata nije validan.',
+    VALIDATION_ERROR: 'Razlog otkazivanja je obavezan.',
+    FORBIDDEN: 'Zabranjeno. Otkazivanje je moguće najkasnije 24h prije termina.',
   };
 
-  return messages[code] || error.response?.data?.poruka || fallback;
+  return messages[code] || error.response?.data?.message || error.response?.data?.poruka || fallback;
 }
 
 export default function VlasnikDashboard() {
@@ -73,6 +80,8 @@ export default function VlasnikDashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingObjekti, setLoadingObjekti] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  
+  const [, setTimerTrigger] = useState(new Date());
 
   const selectedTerenName = useMemo(() => {
     if (!selectedTerenId) return 'Svi tereni';
@@ -142,6 +151,57 @@ export default function VlasnikDashboard() {
   useEffect(() => {
     loadRezervacije(1);
   }, [selectedTerenId, selectedDate]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTrigger(new Date());
+    }, 60000); 
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const isCancellationDisabled = (termStartTime, status) => {
+    const activeStatus = status || '';
+    if (activeStatus !== 'POTVRDJENO' && activeStatus !== 'POTVRDJENA' && activeStatus !== 'CONFIRMED') {
+      return true; 
+    }
+
+    const now = new Date();
+    const termDate = new Date(termStartTime);
+    const hoursLeft = differenceInHours(termDate, now);
+
+    return hoursLeft < 24; 
+  };
+
+  const handleCancelReservation = async (reservationId) => {
+    const reason = prompt("Please enter the mandatory reason for cancellation:");
+    
+    if (!reason || reason.trim() === "") {
+      alert("Cancellation aborted. A reason is required!");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/vlasnik/rezervacije/${reservationId}/otkazivanje`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw { response: { data } }; 
+      }
+
+      showNotification('success', 'Rezervacija je uspješno otkazana.');
+      loadRezervacije(pagination.page || 1); 
+    } catch (error) {
+      showNotification('error', getApiErrorMessage(error, 'Nije moguće otkazati rezervaciju.'));
+    }
+  };
 
   const handleTerenChange = (event) => {
     setSelectedTerenId(event.target.value);
@@ -308,40 +368,63 @@ export default function VlasnikDashboard() {
                     <th className="pb-4 pt-2 px-6">Datum i vrijeme</th>
                     <th className="pb-4 pt-2 px-6">Tip termina</th>
                     <th className="pb-4 pt-2 px-6">Status</th>
+                    <th className="pb-4 pt-2 px-6">Akcije</th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-amber-50 text-sm">
-                  {rezervacije.map((rezervacija) => (
-                    <tr key={`${rezervacija.izvor}-${rezervacija.id}`} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-slate-800">
-                          {rezervacija.korisnik?.punoIme || 'Nepoznat korisnik'}
-                        </div>
-                        <div className="text-xs text-slate-400 font-medium mt-1">
-                          {rezervacija.korisnik?.statusPouzdanosti || 'POUZDAN'} · Prekršeno: {rezervacija.korisnik?.brojPrekrsenihRezervacija ?? 0}
-                        </div>
-                      </td>
+                  {rezervacije.map((rezervacija) => {
+                    // provjera da li dugme otkazivanja treba biti onemoguceno
+                    const termStart = rezervacija.datumVrijeme || rezervacija.vrijemePocetka;
+                    const isDisabled = isCancellationDisabled(termStart, rezervacija.status);
 
-                      <td className="py-4 px-6 font-semibold text-slate-600">
-                        {rezervacija.teren?.naziv || 'Nepoznat teren'}
-                      </td>
+                    return (
+                      <tr key={`${rezervacija.izvor}-${rezervacija.id}`} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="font-bold text-slate-800">
+                            {rezervacija.korisnik?.punoIme || 'Nepoznat korisnik'}
+                          </div>
+                          <div className="text-xs text-slate-400 font-medium mt-1">
+                            {rezervacija.korisnik?.statusPouzdanosti || 'POUZDAN'} · Prekršeno: {rezervacija.korisnik?.brojPrekrsenihRezervacija ?? 0}
+                          </div>
+                        </td>
 
-                      <td className="py-4 px-6 font-semibold text-slate-700">
-                        {formatDateTime(rezervacija.datumVrijeme || rezervacija.vrijemePocetka)}
-                      </td>
+                        <td className="py-4 px-6 font-semibold text-slate-600">
+                          {rezervacija.teren?.naziv || 'Nepoznat teren'}
+                        </td>
 
-                      <td className="py-4 px-6 font-semibold text-slate-600">
-                        {rezervacija.tipTermina || '-'}
-                      </td>
+                        <td className="py-4 px-6 font-semibold text-slate-700">
+                          {formatDateTime(termStart)}
+                        </td>
 
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex px-3 py-1 rounded-xl border text-[10px] font-black uppercase tracking-widest ${statusClass(rezervacija.status)}`}>
-                          {rezervacija.status || 'NA_CEKANJU'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-4 px-6 font-semibold text-slate-600">
+                          {rezervacija.tipTermina || '-'}
+                        </td>
+
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex px-3 py-1 rounded-xl border text-[10px] font-black uppercase tracking-widest ${statusClass(rezervacija.status)}`}>
+                            {rezervacija.status || 'NA_CEKANJU'}
+                          </span>
+                        </td>
+
+                        {/*dugme otkazivanja*/}
+                        <td className="py-4 px-6">
+                          <button
+                            type="button"
+                            disabled={isDisabled}
+                            onClick={() => handleCancelReservation(rezervacija.id)}
+                            className={`h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                              isDisabled
+                                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                                : 'bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 active:scale-95 shadow-sm'
+                            }`}
+                          >
+                            Cancel Term
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
