@@ -131,3 +131,41 @@
 | UI | Validan razlog šalje API payload `{ akcija: 'ODBIJ', razlogOdbijanja: '<razlog>' }` | `otvara ODBIJ modal i ne dozvoljava potvrdu prije 10 karaktera` | PASS |
 
 ---
+
+---
+## Modul: Automatizacija, tajmeri i vlasnička otkazivanja (Developer 3 - Zeir Mašić)
+
+### Sumarna statistika pokrivenosti testova
+* **Backend Unit Testovi (Kontroler - `rezervacijaController.queue.test.js`):** 1 testni scenarij za BullMQ delayed job pri kreiranju pending rezervacije — **Uspješan (100% PASS)**
+* **Backend Unit Testovi (Rute - `vlasnikRoutes.otkazivanje.test.js`):** 2 testna scenarija za vlasničku rutu otkazivanja i zaštitu vlasničkom rolom — **Svi uspješni (100% PASS)**
+* **Frontend Regresioni Testovi (`VlasnikDashboard.test.jsx`):** postojeći frontend test suite pokrenut kao regresiona provjera dashboarda — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### BACKEND UNIT TESTOVI - KONTROLER (`rezervacijaController.queue.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Kada se za nepouzdanog korisnika kreira zahtjev sa statusom `NA_CEKANJU`, sistem dodaje BullMQ delayed job za automatsku obradu nakon 60 minuta | `kreirajIndividualnuRezervaciju dodaje timeout job za NA_CEKANJU rezervaciju` | PASS |
+| Unit | BullMQ job se dodaje sa ispravnim payloadom koji sadrži `reservationId` i `termId` | `expect(queue.add).toHaveBeenCalledWith(... { reservationId, termId } ...)` | PASS |
+| Unit | BullMQ job koristi odlaganje od tačno 60 minuta | `expect(... delay: 60 * 60 * 1000 ...)` | PASS |
+| Unit | Test ne koristi pravi Redis/BullMQ servis nego mockovane zavisnosti | Mockovani `queue`, PrismaClient, rezervacioni servis i timeout calculator | PASS |
+
+### BACKEND UNIT TESTOVI - RUTE (`vlasnikRoutes.otkazivanje.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Ruta `POST /api/vlasnik/rezervacije/:id/otkazivanje` je registrovana na vlasničkom routeru | `POST /api/vlasnik/rezervacije/:id/otkazivanje je registrovan...` | PASS |
+| Unit | Ruta za vlasničko otkazivanje koristi zaštitu vlasničkom rolom `VLASNIK` | `expect(requireRole).toHaveBeenCalledWith('VLASNIK')` | PASS |
+| Unit | Neovlašten pristup ruti za vlasničko otkazivanje vraća `403 Forbidden` kada role middleware zabrani pristup | `POST /api/vlasnik/rezervacije/:id/otkazivanje vraća 403 za neovlaštenu ulogu` | PASS |
+
+### DODATNA REGRESIONA PROVJERA - FRONTEND (`VlasnikDashboard.test.jsx`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI / Regresija | Postojeći dashboard test suite se i dalje uspješno izvršava nakon dodavanja Developer 3 testova | `npm test -- src/pages/__tests__/VlasnikDashboard.test.jsx` | PASS |
+| UI / Regresija | Potvrđeno da dodani backend testovi nisu narušili postojeće frontend testove dashboarda | `VlasnikDashboard.test.jsx - 1 passed, 3 tests passed` | PASS |
+
+---
