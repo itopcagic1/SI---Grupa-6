@@ -13,7 +13,7 @@ Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 9, sa f
 | **5** | US-17 | **Rezervacioni tok za trenere i upravljanje kapacitetom** | Ilma Hindija | Done | Kreiranje grupnog treninga s limitom (2–30), blokada prijave kad je kapacitet pun |
 | **6** | US-19 | **Korisničko otkazivanje i kazneni sistem** |  | To Do | +1 prekršaj pri otkazivanju <24h, automatski NEPOUZDAN na 3 prekršaja |
 | **7** | US-20, US-20.1 | **Real-time komunikacija i liste čekanja** | Mehdi Zaimović| Done | Prijava/odjava sa liste čekanja, real-time obavijest kad se termin oslobodi |
-| **8** | US-18, US-18.1 | **Centralni kalendar i notifikacioni UI** | Irma Topčagić | Done | FullCalendar (dnevni/sedmični/mjesečni), role-based podaci |
+| **8** | US-18, US-18.1 | **Vlastiti kalendar** | Irma Topčagić | Done | Prikaz nadolazećih termina, role-based podaci |
 
 
 #### ID: US-15
