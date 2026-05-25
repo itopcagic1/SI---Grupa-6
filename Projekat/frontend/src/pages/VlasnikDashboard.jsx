@@ -111,6 +111,12 @@ function getDatumVrijeme(zapis) {
   return zapis?.datumVrijeme || zapis?.vrijemePocetka;
 }
 
+function jeIstekloVrijeme(vrijemePocetkaTermina) {
+  if (!vrijemePocetkaTermina) return true;
+  const saatiDo = (new Date(vrijemePocetkaTermina) - new Date()) / (1000 * 60 * 60);
+  return saatiDo < 24;
+}
+
 function UserName({ zapis }) {
   const nepouzdan = getStatusPouzdanosti(zapis) === 'NEPOUZDAN';
   const brojPrekrsaja = getBrojPrekrsaja(zapis);
