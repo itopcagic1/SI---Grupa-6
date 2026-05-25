@@ -11,7 +11,7 @@ function formatTime(d) {
   return new Date(d).toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' });
 }
 
-// --- TASK-6.6: Pomoćna JavaScript funkcija za provjeru preostalog vremena ---
+// Pomoćna funkcija za provjeru preostalog vremena
 function jeUnutar24Sata(datumTerminaString) {
   if (!datumTerminaString) return false;
   const sada = new Date();
@@ -20,7 +20,7 @@ function jeUnutar24Sata(datumTerminaString) {
   // Razlika u milisekundama
   const razlikaUMilisekundama = pocetakTermina.getTime() - sada.getTime();
   
-  // Pretvaramo milisekunde u sate (1 sat = 1000ms * 60s * 60m)
+  // Pretvaramo milisekunde u sate
   const preostaloSati = razlikaUMilisekundama / (1000 * 60 * 60);
   
   // Vraća true ako je termin u budućnosti, ali je ostalo manje od 24 sata do njega
@@ -57,26 +57,29 @@ export default function MojeRezervacije() {
   }, []);
 
   const handleCancel = async () => {
-    if (!confirmModal.item) return;
-    setSubmitting(true);
-    try {
-      if (confirmModal.item.tip === 'INDIVIDUALNI') {
-        // Za individualni termin prosjeđujemo ID termina (ili rezervacije zavisno od tvog API-ja)
-        await cancelIndividualTerm(confirmModal.item.id);
-        showNotification('success', 'Uspješno otkazan individualni termin.');
-      } else {
-        await odjaviSeSaGrupnogTreninga(confirmModal.item.id, cancelReason);
-        showNotification('success', 'Uspješno ste se odjavili sa grupnog treninga.');
-      }
-      setConfirmModal({ open: false, item: null });
-      setCancelReason('');
-      load();
-    } catch (err) {
-      showNotification('error', err.message || 'Greška pri otkazivanju.');
-    } finally {
-      setSubmitting(false);
+  if (!confirmModal.item) return;
+  setSubmitting(true);
+  try {
+    if (confirmModal.item.tip === 'INDIVIDUALNI') {
+      // Koristi terminId, NE rezervacijaId
+      const idZaSlanje = confirmModal.item.terminId || confirmModal.item.id;
+      const response = await cancelIndividualTerm(idZaSlanje);
+      showNotification('success', response?.poruka || 'Uspješno otkazan individualni termin.');
+    } else {
+      const idZaSlanje = confirmModal.item.treningId || confirmModal.item.id;
+      const response = await odjaviSeSaGrupnogTreninga(idZaSlanje, cancelReason);
+      showNotification('success', response?.poruka || 'Uspješno ste se odjavili.');
     }
-  };
+    setConfirmModal({ open: false, item: null });
+    setCancelReason('');
+    load();
+  } catch (err) {
+    console.error('CANCEL ERROR:', err.response?.data || err.message);
+    showNotification('error', err.response?.data?.poruka || err.message || 'Greška pri otkazivanju.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -111,7 +114,6 @@ export default function MojeRezervacije() {
             </p>
           </div>
         ) : (
-          /* TASK-6.4: Korisnički ekran "Moje rezervacije" u obliku liste/kartica */
           <div className="grid gap-4">
             {rezervacije.map((item) => {
               const isIndividual = item.tip === 'INDIVIDUALNI';
@@ -144,7 +146,6 @@ export default function MojeRezervacije() {
                     </div>
                   </div>
 
-                  {/* TASK-6.5: Crveno dugme "Otkaži termin" pored svake rezervacije */}
                   <button
                     type="button"
                     onClick={() => setConfirmModal({ open: true, item })}
@@ -167,13 +168,12 @@ export default function MojeRezervacije() {
               Otkazivanje termina
             </h2>
             
-            {/* Osnovno pitanje iz TASK-6.5 */}
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Da li ste sigurni da želite otkazati ovaj termin?
             </p>
 
-            {/* --- TASK-6.6: Dinamičko crveno upozorenje ako je ostalo manje od 24 sata --- */}
-            {confirmModal.item.tip === 'INDIVIDUALNI' && jeUnutar24Sata(confirmModal.item.start) && (
+            {/* POPRAVLJENO: Crveno upozorenje se sada prikazuje za BILO KOJI TIP koji je unutar 24h */}
+            {jeUnutar24Sata(confirmModal.item.start || confirmModal.item.datum) && (
               <div className="mb-5 rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-xs text-red-800 font-black uppercase tracking-wide leading-relaxed shadow-sm animate-pulse">
                 Pažnja: Otkazujete termin unutar 24 sata prije njegovog početka. 
                 Ova akcija će Vam dodijeliti 1 prekršajni poen. 
