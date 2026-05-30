@@ -102,3 +102,43 @@ Ugrađeni browser pop-up prozori (poput "localhost says...") narušavaju vizueln
 - Povećava kompleksnost koda i stanje komponente (`useState` za modal, otvorenost, sadržaj).
 
 **Status odluke:** Prihvaćena i implementirana
+
+
+## Odluka 4
+
+**ID:** DL-S9-04
+
+**Datum:** 25.05.2026.
+
+**Naziv:** Jedna zajednička stranica za igrača gdje će upravljati prijavom na treninge.
+
+**Opis:**
+Odlučeno je da se implementira jedna zajednička stranica za upravljanje individualnim, grupnim treninzima i prikaz nadolazećih rezervacija, umjesto kreiranja odvojenih ekrana i ruta za svaku od ovih funkcionalnosti.
+
+**Razmatrane opcije:**
+- **Modularno-razdvojeni pristup (3 odvojene stranice)**
+  - Posebna stranica za pretragu i rezervaciju individualnih termina 
+  - Posebna stranica za pregled i prijavu na grupne treninge/liste čekanja 
+  - Posebna stranica "Moje rezervacije" za kalendarski prikaz i otkazivanje termina 
+- **Opcija 2: Centralizovani "All-in-One" Dashboard za igrače**
+  - Jedinstvena stranica koja kombinuje centralnu `FullCalendar` komponentu (sa vizuelno kodiranim tipovima termina), tabove/filtere za prebacivanje između individualnih i grupnih treninga, te bočni panel (ili sekciju) za brzi pregled nadolazećih rezervacija i statusa pouzdanosti
+
+**Odabrana opcija:**
+- **Opcija 2:** Centralizovani "All-in-One" Dashboard za igrače.
+
+**Razlog izbora:**
+- **Superioran UX (Korisničko iskustvo):** Igrač ne mora skakati s rute na rutu da bi vidio šta je rezervisao, šta je slobodno i gdje je na listi čekanja. Sve je vidljivo na jednom ekranu.
+- **Lakša real-time sinhronizacija:** Pošto WebSockets (Socket.io) upravljaju listama čekanja i brzim oslobađanjem termina, mnogo je jednostavnije osvježiti stanje (state) jedne komponente i kalendara na istom ekranu, nego pratiti i sinhronizovati podatke kroz tri različite rute.
+- **Smanjenje dupliranja koda:** Izbjegnuto je višestruko inicijalizovanje kompleksne `FullCalendar` komponente na različitim mjestima u aplikaciji.
+
+**Posljedice odluke:**
+
+*Pozitivne:*
+- Čist i kompaktan korisnički interfejs koji igraču daje osjećaj kontrole i preglednosti nad svim terminima.
+- Centralizovan State Management na frontend-u za sve akcije vezane za igrača.
+- Lakša integracija globalnog kaznenog sistema (igrač na istoj stranici vidi upozorenje o prekršajima i odmah unutar kalendara/rezervacija ima restrikcije ako postane "NEPOUZDAN").
+
+*Negativne:*
+- **Kompleksnost komponente:** Stvorena je velika i kompleksna frontend datoteka sa mnogo uslovnog renderovanja (conditional rendering) i poslovne logike.
+
+**Status odluke:** Prihvaćena i implementirana.
