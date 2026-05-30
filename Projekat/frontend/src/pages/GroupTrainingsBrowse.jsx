@@ -67,7 +67,8 @@ export default function GroupTrainingsBrowse() {
     setSubmittingId(treningId);
     try {
       const response = await prijaviSeNaGrupniTrening(treningId);
-      showNotification('success', response.poruka || 'Uspješno ste se prijavili na grupni trening.');
+      const porukaUspjeh = response?.data?.poruka || response?.poruka || 'Uspješno ste se prijavili na grupni trening.';
+      showNotification('success', porukaUspjeh);
       loadTrainings();
     } catch (err) {
       console.error(err);
@@ -80,6 +81,9 @@ export default function GroupTrainingsBrowse() {
     }
   };
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // POPRAVLJENO: Dinamičko hvatanje poruke o prekršaju i kazni sa backenda
+  // ─────────────────────────────────────────────────────────────────────────────
   const handleCancelRegistration = (treningId) => {
     setOptOutReason('');
     setConfirmModal({
@@ -91,13 +95,17 @@ export default function GroupTrainingsBrowse() {
         setSubmittingId(treningId);
         try {
           const response = await odjaviSeSaGrupnogTreninga(treningId, reasonText);
-          showNotification('success', response.poruka || 'Uspješno ste se odjavili.');
+          
+          // Provjeravamo i response.data.poruka i response.poruka u zavisnosti od axios konfiguracije
+          const porukaSaBackenda = response?.data?.poruka || response?.poruka || 'Uspješno ste se odjavili sa grupnog treninga.';
+          
+          showNotification('success', porukaSaBackenda);
           loadTrainings();
         } catch (err) {
           console.error(err);
           showNotification(
             'error',
-            err.response?.data?.poruka || 'Odjava sa grupnog treninga nije uspjela.'
+            err.response?.data?.poruka || err.response?.data?.message || 'Odjava sa grupnog treninga nije uspjela.'
           );
         } finally {
           setSubmittingId(null);
@@ -241,7 +249,7 @@ export default function GroupTrainingsBrowse() {
                           </div>
                           <button
                             type="button"
-                            disabled={submittingId === trening.treningId}
+                            disabled={submittingId === Grid?.treningId}
                             onClick={() => handleCancelRegistration(trening.treningId)}
                             className="w-full rounded-2xl bg-white text-red-600 border-2 border-red-100 hover:border-red-400 hover:bg-red-50/20 py-2.5 text-xs font-black uppercase tracking-widest text-center transition"
                           >

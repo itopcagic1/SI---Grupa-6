@@ -52,3 +52,15 @@ export const verifikujZahtjevRezervacije = async (id, payload) => {
 
   return response.data;
 };
+
+export const otkaziRezervacijuVlasnik = async (rezervacijaId, razlog) => {
+  const response = await api.post(
+    `/vlasnik/rezervacije/${rezervacijaId}/otkazivanje`,
+    { razlog },
+     getAuthHeaders()
+  );
+  return response.data;
+};
+
+
+

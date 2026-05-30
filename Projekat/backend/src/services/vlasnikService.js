@@ -570,7 +570,86 @@ const obradiZahtjevVerifikacijeService = async (korisnik, zahtjevIdValue, body =
   });
 };
 
+const otkaziRezervacijuVlasnikService = async (rezervacijaId, vlasnikId, razlog) => {
+   //Razlog otkazivanja je obavezan i mora imati najmanje 10 karaktera. Ovo je važno kako bismo imali jasnu evidenciju razloga otkazivanja.
+  if (!razlog || razlog.trim().length < 10) {
+    throw serviceError(
+      'Razlog otkazivanja mora imati najmanje 10 karaktera.',
+      400,
+      'RAZLOG_OBAVEZAN'
+    );
+  }
+  
+  const rezervacija = await prisma.rezervacija.findUnique({
+    where: { rezervacijaId: parseInt(rezervacijaId) },
+    include: {
+      terminObjekta: {
+        include: { sportskiObjekat: true }
+      }
+    }
+  });
+
+  if (!rezervacija) {
+    throw serviceError('Rezervacija nije pronađena.', 404, 'NIJE_PRONADJENA');
+  }
+
+  // Provjeri da li termin pripada ovom vlasniku
+  if (rezervacija.terminObjekta.sportskiObjekat.vlasnikId !== vlasnikId) {
+    throw serviceError('Nemate pravo otkazati ovu rezervaciju.', 403, 'ZABRANJEN_PRISTUP');
+  }
+
+  if (rezervacija.status !== 'POTVRDJENA') {
+    throw serviceError('Samo potvrđene rezervacije se mogu otkazati.', 400, 'NEVALIDAN_STATUS');
+  }
+
+  // TASK-3.3: Otkazivanje rezervacije od strane vlasnika je dozvoljeno najkasnije 24 sata prije početka termina. Nakon toga, vlasnik ne može otkazati rezervaciju, a korisnik ima pravo na naknadu štete.
+  // NOVO (ispravno) - 24h prije termina:
+const terminPocetakMs = new Date(rezervacija.terminObjekta.vrijemePocetka).getTime();
+const saatMs = new Date().getTime();
+const saatiDoTermina = (terminPocetakMs - saatMs) / (1000 * 60 * 60);
+
+if (saatiDoTermina < 24) {
+  throw serviceError(
+    'Nije moguće otkazati rezervaciju unutar 24 sata prije termina.',
+    403,
+    'ISTEKLO_VRIJEME_OTKAZIVANJA'
+  );
+}
+
+
+  await prisma.$transaction(async (tx) => {
+    await tx.rezervacija.update({
+      where: { rezervacijaId: rezervacija.rezervacijaId },
+      data: { status: 'OTKAZANA' }
+    });
+
+    await tx.zahtjevZaRezervaciju.updateMany({
+      where: { zahtjevId: rezervacija.zahtjevId },
+      data: { status: 'OTKAZANO' }
+    });
+
+    await tx.terminObjekta.update({
+      where: { terminId: rezervacija.terminId },
+      data: { status: 'SLOBODAN' }
+    });
+
+        await tx.rezervacija.update({
+          where: { rezervacijaId: rezervacija.rezervacijaId },
+          data: { 
+        status: 'OTKAZANA',
+        razlogOtkazivanja: razlog,  // dodaj ovo
+        datumOtkazivanja: new Date()
+      }
+    });
+  });
+
+  return { poruka: 'Rezervacija je uspješno otkazana.' };
+};
+
+
+
 module.exports = {
   dohvatiSveRezervacijeService,
   obradiZahtjevVerifikacijeService,
+  otkaziRezervacijuVlasnikService,
 };

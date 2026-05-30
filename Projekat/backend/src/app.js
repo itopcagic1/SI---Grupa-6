@@ -22,6 +22,7 @@ const vlasnikRoutes = require('./routes/vlasnikRoutes');
 const listaCekanjaRoutes = require('./routes/listaCekanjaRoutes');
 const { initializeSocket } = require('./websocket');
 
+require('./workers/reservationWorker');
 
 const app = express();
 
