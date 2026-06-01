@@ -465,7 +465,7 @@ function Timovi() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2 pr-2">
                     <h3 className="text-xl font-bold text-slate-800 group-hover:text-orange-600 transition-colors leading-snug">
-                      {team.naziv}
+                      <Link to={`/statistika-tima/${team.timId}`} className="hover:text-orange-600 transition">{team.naziv}</Link>
                     </h3>
                     {isAuthenticated && (korisnikData?.trenutnaUloga === 'NAVIJAC' || korisnikData?.uloga === 'NAVIJAC') && (
                       <button
