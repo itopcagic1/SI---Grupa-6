@@ -20,6 +20,7 @@ const facilityRoutes = require('./routes/facilityRoutes');
 const rezervacijaRoutes = require('./routes/rezervacijaRoutes');
 const vlasnikRoutes = require('./routes/vlasnikRoutes');
 const listaCekanjaRoutes = require('./routes/listaCekanjaRoutes');
+const omiljeniTimRoutes = require('./routes/omiljeniTimRoutes');
 const { initializeSocket } = require('./websocket');
 
 require('./workers/reservationWorker');
@@ -61,6 +62,7 @@ app.use('/api', facilityRoutes);
 app.use('/api', rezervacijaRoutes);
 app.use('/api', listaCekanjaRoutes);
 app.use('/api/vlasnik', vlasnikRoutes);
+app.use('/api/omiljeni-tim', omiljeniTimRoutes);
 
 app.get('/', (req, res) => {
   res.send('API radi');
