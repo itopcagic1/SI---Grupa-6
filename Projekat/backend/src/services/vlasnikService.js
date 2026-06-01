@@ -13,104 +13,79 @@ function serviceError(message, status = 400, code = 'GRESKA') {
 
 function parsePositiveId(value, fieldName) {
   const parsed = Number(value);
-
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw serviceError(`${fieldName} mora biti pozitivan cijeli broj.`, 400, 'NEVALIDAN_ID');
   }
-
   return parsed;
 }
 
 function parseOptionalPositiveId(value, fieldName) {
   if (value === undefined || value === null || value === '') return undefined;
-
   const parsed = Number(value);
-
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw serviceError(`${fieldName} mora biti pozitivan cijeli broj.`, 400, 'NEVALIDAN_ID');
   }
-
   return parsed;
 }
 
 function parsePage(value) {
   if (value === undefined || value === null || value === '') return 1;
-
   const parsed = Number(value);
-
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw serviceError('page mora biti pozitivan cijeli broj.', 400, 'NEVALIDNA_STRANICA');
   }
-
   return parsed;
 }
 
 function parseLimit(value) {
   if (value === undefined || value === null || value === '') return 15;
-
   const parsed = Number(value);
-
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw serviceError('limit mora biti pozitivan cijeli broj.', 400, 'NEVALIDAN_LIMIT');
   }
-
   return Math.min(parsed, 50);
 }
 
 function parseDateStart(value, fieldName) {
   if (!value) return undefined;
-
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) {
     throw serviceError(`${fieldName} mora biti validan datum.`, 400, 'NEVALIDAN_DATUM');
   }
-
   date.setHours(0, 0, 0, 0);
   return date;
 }
 
 function parseDateEnd(value, fieldName) {
   if (!value) return undefined;
-
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) {
     throw serviceError(`${fieldName} mora biti validan datum.`, 400, 'NEVALIDAN_DATUM');
   }
-
   date.setHours(23, 59, 59, 999);
   return date;
 }
 
 function normalizujStatus(status) {
   if (!status) return 'NA_CEKANJU';
-
   const statusUpper = status.toUpperCase();
-
   if (['POTVRDJENA', 'POTVRDJENO', 'ODOBRENO'].includes(statusUpper)) {
     return 'POTVRDJENO';
   }
-
   if (['CEKANJE', 'NA_CEKANJU'].includes(statusUpper)) {
     return 'NA_CEKANJU';
   }
-
   if (['OTKAZANA', 'OTKAZANO', 'ODBIJENO'].includes(statusUpper)) {
     return 'OTKAZANO';
   }
-
   return statusUpper;
 }
 
 function normalizujTipTermina(tipTermina) {
   if (!tipTermina) return 'Individualni';
-
   const tip = tipTermina.toUpperCase();
-
   if (tip.includes('GRUP')) return 'Grupni';
   if (tip.includes('INDIVID')) return 'Individualni';
-
   return tipTermina;
 }
 
@@ -122,7 +97,6 @@ function assertVlasnik(korisnik) {
 
 function assertZahtjevPripadaVlasniku(zahtjev, vlasnikId) {
   const zahtjevVlasnikId = zahtjev?.terminObjekta?.sportskiObjekat?.vlasnikId;
-
   if (zahtjevVlasnikId !== vlasnikId) {
     throw serviceError('Ne možete obraditi zahtjev za tuđi sportski objekat.', 403, 'ZABRANJEN_PRISTUP');
   }
@@ -213,14 +187,8 @@ function napraviWhereZaTermin({ vlasnikId, terenId, datumOd, datumDo }) {
 
   if (datumOd || datumDo) {
     where.vrijemePocetka = {};
-
-    if (datumOd) {
-      where.vrijemePocetka.gte = datumOd;
-    }
-
-    if (datumDo) {
-      where.vrijemePocetka.lte = datumDo;
-    }
+    if (datumOd) where.vrijemePocetka.gte = datumOd;
+    if (datumDo) where.vrijemePocetka.lte = datumDo;
   }
 
   return where;
@@ -233,35 +201,24 @@ async function izracunajAnalitiku(vlasnikId) {
   const danasKraj = new Date();
   danasKraj.setHours(23, 59, 59, 999);
 
-  const ukupnoRezervacijaDanas = await prisma.rezervacija.count({
-    where: {
-      terminObjekta: {
-        sportskiObjekat: {
-          vlasnikId,
-        },
-        vrijemePocetka: {
-          gte: danasPocetak,
-          lte: danasKraj,
+  const [ukupnoRezervacijaDanas, zahtjeviNaCekanju] = await Promise.all([
+    prisma.rezervacija.count({
+      where: {
+        terminObjekta: {
+          sportskiObjekat: { vlasnikId },
+          vrijemePocetka: { gte: danasPocetak, lte: danasKraj },
         },
       },
-    },
-  });
-
-  const zahtjeviNaCekanju = await prisma.zahtjevZaRezervaciju.count({
-    where: {
-      status: { in: ['NA_CEKANJU', 'CEKANJE'] },
-      terminObjekta: {
-        sportskiObjekat: {
-          vlasnikId,
-        },
+    }),
+    prisma.zahtjevZaRezervaciju.count({
+      where: {
+        status: { in: ['NA_CEKANJU', 'CEKANJE'] },
+        terminObjekta: { sportskiObjekat: { vlasnikId } },
       },
-    },
-  });
+    }),
+  ]);
 
-  return {
-    ukupnoRezervacijaDanas,
-    zahtjeviNaCekanju,
-  };
+  return { ukupnoRezervacijaDanas, zahtjeviNaCekanju };
 }
 
 const dohvatiSveRezervacijeService = async (korisnik, query) => {
@@ -271,82 +228,64 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
   const terenId = parseOptionalPositiveId(query.terenId, 'terenId');
   const page = parsePage(query.page);
   const limit = parseLimit(query.limit);
-
   const datumOd = parseDateStart(query.datumOd, 'datumOd');
 
-  // Ako frontend šalje samo jedan datum iz DatePicker-a, tretiramo ga kao jedan dan.
-  // Ako kasnije pošaljete datumDo, podržan je i opseg.
   const datumDo = query.datumDo
     ? parseDateEnd(query.datumDo, 'datumDo')
     : query.datumOd
       ? parseDateEnd(query.datumOd, 'datumOd')
       : undefined;
 
-  const terminWhere = napraviWhereZaTermin({
-    vlasnikId,
-    terenId,
-    datumOd,
-    datumDo,
-  });
+  const terminWhere = napraviWhereZaTermin({ vlasnikId, terenId, datumOd, datumDo });
 
-  const rezervacije = await prisma.rezervacija.findMany({
-    where: {
-      terminObjekta: terminWhere,
-    },
-    include: {
-      zahtjev: {
-        include: {
-          korisnik: {
-            select: {
-              korisnikId: true,
-              punoIme: true,
-              email: true,
-              statusPouzdanosti: true,
-              brojPreksrenihRezervacija: true,
+  const [rezervacije, zahtjeviNaCekanju, analytics] = await Promise.all([
+    prisma.rezervacija.findMany({
+      where: { terminObjekta: terminWhere },
+      include: {
+        zahtjev: {
+          include: {
+            korisnik: {
+              select: {
+                korisnikId: true,
+                punoIme: true,
+                email: true,
+                statusPouzdanosti: true,
+                brojPreksrenihRezervacija: true,
+              },
             },
           },
         },
-      },
-      terminObjekta: {
-        include: {
-          sportskiObjekat: {
-            select: {
-              objekatId: true,
-              naziv: true,
-            },
+        terminObjekta: {
+          include: {
+            sportskiObjekat: { select: { objekatId: true,  naziv: true } },
           },
         },
       },
-    },
-  });
-
-  const zahtjeviNaCekanju = await prisma.zahtjevZaRezervaciju.findMany({
-    where: {
-      status: { in: ['NA_CEKANJU', 'CEKANJE'] },
-      terminObjekta: terminWhere,
-    },
-    include: {
-      korisnik: {
-        select: {
-          korisnikId: true,
-          punoIme: true,
-          email: true,
-          statusPouzdanosti: true,
-          brojPreksrenihRezervacija: true,
-        },
+    }),
+    prisma.zahtjevZaRezervaciju.findMany({
+      where: {
+        status: { in: ['NA_CEKANJU', 'CEKANJE'] },
+        terminObjekta: terminWhere,
       },
-      terminObjekta: {
-        include: {
-          sportskiObjekat: {
-            select: {
-              objekatId: true,
-              naziv: true,
-            },
+      include: {
+        korisnik: {
+          select: {
+            korisnikId: true,
+            punoIme: true,
+            email: true,
+            statusPouzdanosti: true,
+            brojPreksrenihRezervacija: true,
+          },
+        },
+        terminObjekta: {
+          include: {
+            sportskiObjekat: { select: { objekatId: true, naziv: true } },
           },
         },
       },
-    },
-  });
+    }),
+    izracunajAnalitiku(vlasnikId)
+  ]);
 
   const objedinjeno = [
     ...rezervacije.map(mapirajRezervaciju),
@@ -354,7 +293,6 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
   ].sort((a, b) => {
     const datumA = new Date(a.datumVrijeme || a.datumKreiranja).getTime();
     const datumB = new Date(b.datumVrijeme || b.datumKreiranja).getTime();
-
     return datumB - datumA;
   });
 
@@ -363,16 +301,9 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
   const startIndex = (page - 1) * limit;
   const data = objedinjeno.slice(startIndex, startIndex + limit);
 
-  const analytics = await izracunajAnalitiku(vlasnikId);
-
   return {
     data,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-    },
+    pagination: { page, limit, total, totalPages },
     analytics,
   };
 };
@@ -436,22 +367,10 @@ async function odobriZahtjev(tx, zahtjev, vlasnikId) {
       obradioKorisnikId: vlasnikId,
     },
     include: {
-      korisnik: {
-        select: {
-          korisnikId: true,
-          punoIme: true,
-          email: true,
-        },
-      },
+      korisnik: { select: { korisnikId: true, punoIme: true, email: true } },
       terminObjekta: {
         include: {
-          sportskiObjekat: {
-            select: {
-              objekatId: true,
-              naziv: true,
-              vlasnikId: true,
-            },
-          },
+          sportskiObjekat: { select: { objekatId: true, naziv: true, vlasnikId: true } },
         },
       },
     },
@@ -471,13 +390,7 @@ async function odobriZahtjev(tx, zahtjev, vlasnikId) {
     data: { status: ZAUZET },
   });
 
-  await tx.notifikacija.create({
-    data: napraviNotifikaciju({
-      korisnikId: zahtjev.korisnikId,
-      tipNotifikacije: 'ZAHTJEV_REZERVACIJE_ODOBREN',
-      sadrzajPoruke: 'Vaš zahtjev za rezervaciju termina je odobren.',
-    }),
-  });
+  
 
   return {
     message: 'Zahtjev je odobren.',
@@ -504,22 +417,10 @@ async function odbijZahtjev(tx, zahtjev, vlasnikId, razlogOdbijanja) {
       obradioKorisnikId: vlasnikId,
     },
     include: {
-      korisnik: {
-        select: {
-          korisnikId: true,
-          punoIme: true,
-          email: true,
-        },
-      },
+      korisnik: { select: { korisnikId: true, punoIme: true, email: true } },
       terminObjekta: {
         include: {
-          sportskiObjekat: {
-            select: {
-              objekatId: true,
-              naziv: true,
-              vlasnikId: true,
-            },
-          },
+          sportskiObjekat: { select: { objekatId: true,  naziv: true, vlasnikId: true } },
         },
       },
     },
@@ -556,6 +457,7 @@ const obradiZahtjevVerifikacijeService = async (korisnik, zahtjevIdValue, body =
     throw serviceError('Akcija mora biti ODOBRI ili ODBIJ.', 400, 'NEISPRAVNA_AKCIJA');
   }
 
+  // DODAN TIMEOUT: Proslijeđen konfiguracijski objekat sa postavkama timeout-a na 15000 ms
   return prisma.$transaction(async (tx) => {
     const zahtjev = await dohvatiZahtjevZaObradu(tx, zahtjevId);
 
@@ -567,11 +469,12 @@ const obradiZahtjevVerifikacijeService = async (korisnik, zahtjevIdValue, body =
     }
 
     return odbijZahtjev(tx, zahtjev, korisnik.korisnikId, body.razlogOdbijanja);
+  }, {
+    timeout: 15000 // 15 sekundi tolerancije za izvršavanje transakcije
   });
 };
 
 const otkaziRezervacijuVlasnikService = async (rezervacijaId, vlasnikId, razlog) => {
-   //Razlog otkazivanja je obavezan i mora imati najmanje 10 karaktera. Ovo je važno kako bismo imali jasnu evidenciju razloga otkazivanja.
   if (!razlog || razlog.trim().length < 10) {
     throw serviceError(
       'Razlog otkazivanja mora imati najmanje 10 karaktera.',
@@ -581,7 +484,7 @@ const otkaziRezervacijuVlasnikService = async (rezervacijaId, vlasnikId, razlog)
   }
   
   const rezervacija = await prisma.rezervacija.findUnique({
-    where: { rezervacijaId: parseInt(rezervacijaId) },
+    where: { rezervacijaId: parseInt(rezervacijaId, 10) },
     include: {
       terminObjekta: {
         include: { sportskiObjekat: true }
@@ -593,7 +496,6 @@ const otkaziRezervacijuVlasnikService = async (rezervacijaId, vlasnikId, razlog)
     throw serviceError('Rezervacija nije pronađena.', 404, 'NIJE_PRONADJENA');
   }
 
-  // Provjeri da li termin pripada ovom vlasniku
   if (rezervacija.terminObjekta.sportskiObjekat.vlasnikId !== vlasnikId) {
     throw serviceError('Nemate pravo otkazati ovu rezervaciju.', 403, 'ZABRANJEN_PRISTUP');
   }
@@ -602,25 +504,27 @@ const otkaziRezervacijuVlasnikService = async (rezervacijaId, vlasnikId, razlog)
     throw serviceError('Samo potvrđene rezervacije se mogu otkazati.', 400, 'NEVALIDAN_STATUS');
   }
 
-  // TASK-3.3: Otkazivanje rezervacije od strane vlasnika je dozvoljeno najkasnije 24 sata prije početka termina. Nakon toga, vlasnik ne može otkazati rezervaciju, a korisnik ima pravo na naknadu štete.
-  // NOVO (ispravno) - 24h prije termina:
-const terminPocetakMs = new Date(rezervacija.terminObjekta.vrijemePocetka).getTime();
-const saatMs = new Date().getTime();
-const saatiDoTermina = (terminPocetakMs - saatMs) / (1000 * 60 * 60);
+  const terminPocetakMs = new Date(rezervacija.terminObjekta.vrijemePocetka).getTime();
+  const saatMs = new Date().getTime();
+  const saatiDoTermina = (terminPocetakMs - saatMs) / (1000 * 60 * 60);
 
-if (saatiDoTermina < 24) {
-  throw serviceError(
-    'Nije moguće otkazati rezervaciju unutar 24 sata prije termina.',
-    403,
-    'ISTEKLO_VRIJEME_OTKAZIVANJA'
-  );
-}
+  if (saatiDoTermina < 24) {
+    throw serviceError(
+      'Nije moguće otkazati rezervaciju unutar 24 sata prije termina.',
+      403,
+      'ISTEKLO_VRIJEME_OTKAZIVANJA'
+    );
+  }
 
-
+  // DODAN TIMEOUT I OPTIMIZOVANA TRANSAKCIJA: Spojena dva update-a nad istim modelom u jedan korak
   await prisma.$transaction(async (tx) => {
     await tx.rezervacija.update({
       where: { rezervacijaId: rezervacija.rezervacijaId },
-      data: { status: 'OTKAZANA' }
+      data: { 
+        status: 'OTKAZANA',
+        razlogOtkazivanja: razlog,
+        datumOtkazivanja: new Date()
+      }
     });
 
     await tx.zahtjevZaRezervaciju.updateMany({
@@ -632,21 +536,12 @@ if (saatiDoTermina < 24) {
       where: { terminId: rezervacija.terminId },
       data: { status: 'SLOBODAN' }
     });
-
-        await tx.rezervacija.update({
-          where: { rezervacijaId: rezervacija.rezervacijaId },
-          data: { 
-        status: 'OTKAZANA',
-        razlogOtkazivanja: razlog,  // dodaj ovo
-        datumOtkazivanja: new Date()
-      }
-    });
+  }, {
+    timeout: 15000
   });
 
   return { poruka: 'Rezervacija je uspješno otkazana.' };
 };
-
-
 
 module.exports = {
   dohvatiSveRezervacijeService,

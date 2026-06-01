@@ -249,7 +249,7 @@ export default function GroupTrainingsBrowse() {
                           </div>
                           <button
                             type="button"
-                            disabled={submittingId === Grid?.treningId}
+                            disabled={submittingId === trening.treningId}
                             onClick={() => handleCancelRegistration(trening.treningId)}
                             className="w-full rounded-2xl bg-white text-red-600 border-2 border-red-100 hover:border-red-400 hover:bg-red-50/20 py-2.5 text-xs font-black uppercase tracking-widest text-center transition"
                           >

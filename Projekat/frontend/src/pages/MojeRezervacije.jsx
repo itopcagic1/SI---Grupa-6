@@ -55,20 +55,23 @@ export default function MojeRezervacije() {
     if (!confirmModal.item) return;
     setSubmitting(true);
     
-    const terminId = confirmModal.item.terminId || confirmModal.item.terminObjekta?.terminId;
+    // Podržavamo i terminId i zahtjevId
+    const terminId = confirmModal.item.terminId;
 
     try {
-      const isIndividual = confirmModal.item.tip === 'INDIVIDUALNI' || confirmModal.item.terminObjekta?.tip === 'INDIVIDUALNI' || !confirmModal.item.treningId;
+      // Ako je status NA_CEKANJU, otkazivanje zapravo briše/odbija sam zahtjev na backendu
+      const isIndividual = confirmModal.item.tip === 'INDIVIDUALNI';
 
       if (isIndividual) {
         if (!terminId) throw new Error("ID termina nije pronađen.");
         const response = await cancelIndividualTerm(terminId);
-        showNotification('success', response?.poruka || 'Uspješno procesuiran zahtjev.');
+        showNotification('success', response?.poruka || 'Uspješno otkazan zahtjev.');
       } else {
-        const idZaSlanje = confirmModal.item.treningId || confirmModal.item.id;
-        if (!idZaSlanje) throw new Error("ID grupnog treninga nije pronađen.");
+        // Za grupne treninge koji su odobreni ili na čekanju
+        const idZaSlanje = confirmModal.item.treningId || confirmModal.item.zahtjevId;
+        if (!idZaSlanje) throw new Error("ID treninga/zahtjeva nije pronađen.");
         const response = await odjaviSeSaGrupnogTreninga(idZaSlanje, cancelReason);
-        showNotification('success', response?.poruka || 'Uspješno poslat zahtjev za odjavu.');
+        showNotification('success', response?.poruka || 'Uspješno otkazan grupni trening.');
       }
       
       setConfirmModal({ open: false, item: null });
@@ -102,29 +105,53 @@ export default function MojeRezervacije() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {rezervacije.map((item) => {
-              const isIndividual = item.tip === 'INDIVIDUALNI' || item.terminObjekta?.tip === 'INDIVIDUALNI' || !item.treningId;
-              const vrijemePocetka = item.vrijemePocetka || item.terminObjekta?.vrijemePocetka;
+            {rezervacije.map((item, index) => {
+              // Osiguravamo stabilan ispravan tip iz spojenog backenda
+              const isIndividual = item.tip === 'INDIVIDUALNI';
+              const vrijemePocetka = item.vrijemePocetka;
+              const naCekanju = item.status === 'NA_CEKANJU';
               
+              // Generisanje sigurnog ključa (kombinacija ID-jeva i indeksa sprečava React bagove sa renderovanjem)
+              const kljuc = item.rezervacijaId || item.zahtjevId || item.treningId || `term-${index}`;
+
               return (
-                <div key={item.rezervacijaId || item.id} className="bg-white border-2 border-slate-100 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div key={kljuc} className="bg-white border-2 border-slate-100 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-2xl font-black text-center min-w-[64px] ${isIndividual ? 'bg-orange-50 text-orange-600' : 'bg-sky-50 text-sky-600'}`}>
-                      <span className="block text-xs uppercase tracking-widest font-bold">{isIndividual ? 'Indiv' : 'Grupni'}</span>
+                    <div className={`p-3 rounded-2xl font-black text-center min-w-[75px] ${
+                      naCekanju 
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                        : isIndividual ? 'bg-orange-50 text-orange-600' : 'bg-sky-50 text-sky-600'
+                    }`}>
+                      <span className="block text-[10px] uppercase tracking-widest font-black">
+                        {isIndividual ? 'Indiv' : 'Grupni'}
+                      </span>
                       <span className="block text-lg mt-0.5">{formatTime(vrijemePocetka)}</span>
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                        {isIndividual ? 'Individualni trening' : (item.naziv || 'Grupni trening')}
+                        {isIndividual ? 'Individualni trening' : (item.naziv || 'Grupni trening (Trener)')}
                       </h3>
                       <p className="text-xs text-slate-400 font-semibold mt-0.5">{formatDate(vrijemePocetka)}</p>
-                      <span className="inline-block mt-2 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-xl bg-slate-100 text-slate-600">
-                        Status: {item.status}
+                      
+                      {item.objekat && (
+                        <p className="text-xs text-slate-600 font-bold mt-1">📍 {item.objekat} {item.adresa ? `(${item.adresa})` : ''}</p>
+                      )}
+
+                      <span className={`inline-block mt-2 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-xl ${
+                        naCekanju 
+                          ? 'bg-amber-100 text-amber-800 animate-pulse' 
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        Status: {naCekanju ? 'Na čekanju odobrenja' : 'Potvrđeno'}
                       </span>
                     </div>
                   </div>
-                  <button type="button" onClick={() => setConfirmModal({ open: true, item })} className="px-5 py-3 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 text-center">
-                    Otkaži termin
+                  <button 
+                    type="button" 
+                    onClick={() => setConfirmModal({ open: true, item })} 
+                    className="px-5 py-3 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 text-center"
+                  >
+                    {naCekanju ? 'Otkaži zahtjev' : 'Otkaži termin'}
                   </button>
                 </div>
               );
@@ -136,16 +163,18 @@ export default function MojeRezervacije() {
       {confirmModal.open && confirmModal.item && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white border-2 border-slate-100 rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider mb-2">Otkazivanje termina</h2>
+            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider mb-2">
+              {confirmModal.item.status === 'NA_CEKANJU' ? 'Povlačenje zahtjeva' : 'Otkazivanje termina'}
+            </h2>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">Potvrdite vašu akciju:</p>
 
-            {jeUnutar24Sata(confirmModal.item.vrijemePocetka || confirmModal.item.terminObjekta?.vrijemePocetka) && (
+            {confirmModal.item.status !== 'NA_CEKANJU' && jeUnutar24Sata(confirmModal.item.vrijemePocetka) && (
               <div className="mb-5 rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-xs text-red-800 font-black uppercase tracking-wide">
                 Pažnja: Otkazujete unutar 24 sata prije početka. Zahtjev ide na odobrenje vlasniku.
               </div>
             )}
 
-            {!(confirmModal.item.tip === 'INDIVIDUALNI' || confirmModal.item.terminObjekta?.tip === 'INDIVIDUALNI') && (
+            {confirmModal.item.tip === 'GRUPNI' && confirmModal.item.status !== 'NA_CEKANJU' && (
               <div className="mb-4">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Razlog odjave *</label>
                 <textarea rows="3" placeholder="Unesite razlog..." value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border-2 border-amber-100 rounded-2xl focus:border-orange-500 focus:bg-white outline-none text-xs resize-none font-semibold" />
@@ -154,7 +183,12 @@ export default function MojeRezervacije() {
 
             <div className="flex gap-3">
               <button type="button" onClick={() => { setConfirmModal({ open: false, item: null }); setCancelReason(''); }} className="flex-1 rounded-2xl bg-amber-50 border border-amber-200 py-3 text-xs font-black uppercase tracking-wider text-amber-900 transition hover:bg-amber-100">Odustani</button>
-              <button type="button" disabled={submitting || (!(confirmModal.item.tip === 'INDIVIDUALNI' || confirmModal.item.terminObjekta?.tip === 'INDIVIDUALNI') && !cancelReason.trim())} onClick={handleCancel} className="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-700 disabled:opacity-50">
+              <button 
+                type="button" 
+                disabled={submitting || (confirmModal.item.tip === 'GRUPNI' && confirmModal.item.status !== 'NA_CEKANJU' && !cancelReason.trim())} 
+                onClick={handleCancel} 
+                className="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-red-700 disabled:opacity-50"
+              >
                 {submitting ? 'Otkazivanje...' : 'Potvrdi'}
               </button>
             </div>
