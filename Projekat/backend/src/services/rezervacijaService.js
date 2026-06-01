@@ -229,35 +229,46 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
 const getMojeRezervacijeService = async (korisnikId) => {
   const now = new Date();
 
-  const individualne = await prisma.rezervacija.findMany({
-    where: {
-      zahtjev: { korisnikId },
-      status: { in: ['POTVRDJENA', 'NA_CEKANJU'] },
-    },
-    include: {
-      terminObjekta: { include: { sportskiObjekat: true } },
-      zahtjev: true,
-    },
-  });
-
-  const grupne = await prisma.prijavaGrupnogTreninga.findMany({
-    where: { korisnikId },
-    include: {
-      grupniTrening: {
-        include: {
-          terminObjekta: { include: { sportskiObjekat: true } },
-          trener: { select: { punoIme: true } },
+  const [individualne, zahtjeviNaCekanju, grupne] = await Promise.all([
+    prisma.rezervacija.findMany({
+      where: {
+        zahtjev: { korisnikId },
+        status: 'POTVRDJENA',
+      },
+      include: {
+        terminObjekta: { include: { sportskiObjekat: true } },
+        zahtjev: true,
+      },
+    }),
+    prisma.zahtjevZaRezervaciju.findMany({
+      where: {
+        korisnikId,
+        status: { in: ['NA_CEKANJU', 'CEKANJE'] },
+        terminObjekta: { vrijemePocetka: { gt: now } },
+      },
+      include: {
+        terminObjekta: { include: { sportskiObjekat: true } },
+      },
+    }),
+    prisma.prijavaGrupnogTreninga.findMany({
+      where: { korisnikId },
+      include: {
+        grupniTrening: {
+          include: {
+            terminObjekta: { include: { sportskiObjekat: true } },
+            trener: { select: { punoIme: true } },
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   return [
     ...individualne
       .filter((r) => new Date(r.terminObjekta.vrijemePocetka) > now)
       .map((r) => ({
         tip: 'INDIVIDUALNI',
-        status: r.status,
+        status: 'POTVRDJENA',
         datumKreiranja: r.datumKreiranja,
         vrijemePocetka: r.terminObjekta.vrijemePocetka,
         vrijemeZavrsetka: r.terminObjekta.vrijemeZavrsetka,
@@ -266,6 +277,17 @@ const getMojeRezervacijeService = async (korisnikId) => {
         terminId: r.terminId,
         rezervacijaId: r.rezervacijaId,
       })),
+    ...zahtjeviNaCekanju.map((z) => ({
+      tip: 'INDIVIDUALNI',
+      status: 'NA_CEKANJU',
+      datumKreiranja: z.datumSlanja,
+      vrijemePocetka: z.terminObjekta.vrijemePocetka,
+      vrijemeZavrsetka: z.terminObjekta.vrijemeZavrsetka,
+      objekat: z.terminObjekta.sportskiObjekat?.naziv,
+      adresa: z.terminObjekta.sportskiObjekat?.adresa,
+      terminId: z.terminId,
+      zahtjevId: z.zahtjevId,
+    })),
     ...grupne
       .filter((p) => new Date(p.grupniTrening.terminObjekta.vrijemePocetka) > now)
       .map((p) => ({

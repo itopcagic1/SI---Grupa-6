@@ -19,7 +19,6 @@ function todayInputValue() {
   return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 }
 
-// Iz fajla 3 – za default opseg "narednih 7 dana"
 function addDaysInputValue(days) {
   const date = new Date();
   date.setDate(date.getDate() + days);

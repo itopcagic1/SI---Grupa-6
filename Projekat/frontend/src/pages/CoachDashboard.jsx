@@ -167,30 +167,52 @@ export default function CoachDashboard() {
     }
   };
 
-  const handleCancelTraining = (treningId) => {
-    setConfirmModal({
-      open: true,
-      title: 'Otkaži grupni trening',
-      message: 'Da li ste sigurni da želite otkazati ovaj grupni trening? Svi prijavljeni igrači će biti obrisani i termin će ponovo biti slobodan.',
-      onConfirm: async () => {
-        try {
-          await otkaziGrupniTrening(treningId);
+  const handleCancelTraining = (trening) => {
+  // 1. Izračunaj preostalo vrijeme do početka treninga za prikaz upozorenja u modalu
+  const vrijemePocetka = new Date(trening.terminObjekta.vrijemePocetka);
+  const sada = new Date();
+  const razlikaUMilisekundama = vrijemePocetka - sada;
+  const razlikaUSatima = razlikaUMilisekundama / (1000 * 60 * 60);
+
+  let porukaModala = 'Da li ste sigurni da želite otkazati ovaj grupni trening? Svi prijavljeni igrači će biti obrisani i termin će ponovo biti slobodan.\n\n';
+
+  // Ako je manje od 24 sata, dodaj oštro upozorenje prije nego što trener potvrdi
+  if (razlikaUSatima > 0 && razlikaUSatima < 24) {
+    porukaModala = '\n\n⚠️ PAŽNJA: Ovaj trening počinje za manje od 24 sata! Otkazivanjem u zadnji čas dobit ćete kazneni prekršaj na svom profilu.';
+  }
+
+  setConfirmModal({
+    open: true,
+    title: 'Otkaži grupni trening',
+    message: porukaModala,
+    onConfirm: async () => {
+      try {
+        // Izvršavamo brisanje i hvatamo podatke koje je backend vratio
+        const resData = await otkaziGrupniTrening(trening.treningId);
+
+        // 2. PROVJERA REZULTATA SA BACKENDA (Gledamo tvoj kontroler koji vraća upozorenje: 'PREKRSAJ')
+        if (resData && resData.upozorenje === 'PREKRSAJ') {
+          showNotification('warning', `Trening otkazan uz kaznu! ${resData.poruka}`);
+        } else {
           showNotification('success', 'Grupni trening je uspješno otkazan.');
-          loadMyTrainings();
-          loadNotifications();
-          if (selectedFacilityId) {
-            setLoadingTerms(true);
-            const data = await getFacilityTerms(selectedFacilityId);
-            setAllTerms(data.termini || []);
-            setLoadingTerms(false);
-          }
-        } catch (err) {
-          console.error(err);
-          showNotification('error', err.response?.data?.poruka || 'Greška pri otkazivanju grupnog treninga.');
         }
+
+        // Osvježavanje podataka na ekranu
+        loadMyTrainings();
+        loadNotifications();
+        if (selectedFacilityId) {
+          setLoadingTerms(true);
+          const data = await getFacilityTerms(selectedFacilityId);
+          setAllTerms(data.termini || []);
+          setLoadingTerms(false);
+        }
+      } catch (err) {
+        console.error(err);
+        showNotification('error', err.response?.data?.poruka || 'Greška pri otkazivanju grupnog treninga.');
       }
-    });
-  };
+    }
+  });
+};
 
   useEffect(() => {
     if (isTrainer) {
@@ -445,7 +467,7 @@ export default function CoachDashboard() {
                                     </div>
                                     {!jeBlokiran && (rezervisaoKorisnik || rezervisaoTim) ? (
                                       <div className="mt-2 pt-2 border-t border-amber-100/50 text-[10px] text-slate-500 font-bold leading-tight space-y-0.5">
-                                        {rezervisaoKorisnik && <div>Trener: {rezervisaoKorisnik}</div>}
+                                        {rezervisaoKorisnik && <div>Rezervisao: {rezervisaoKorisnik}</div>}
                                         {rezervisaoTim && <div>Tim: <span className="text-orange-600 font-extrabold">{rezervisaoTim}</span></div>}
                                       </div>
                                     ) : (
@@ -565,11 +587,12 @@ export default function CoachDashboard() {
                       {/* Gumb za otkazivanje */}
                       <button
                         type="button"
-                        onClick={() => handleCancelTraining(trening.treningId)}
+                        onClick={() => handleCancelTraining(trening)}
                         className="mt-4 w-full rounded-2xl border-2 border-red-100 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-red-600 shadow-sm transition hover:border-red-400 hover:bg-red-50/20"
                       >
                         Otkaži trening
                       </button>
+
 
                     </div>
                   );
