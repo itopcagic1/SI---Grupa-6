@@ -282,19 +282,33 @@ export default function IndividualTraining() {
                       <div className="space-y-3">
                         {dayTerms.map((termin) => {
                           // POPRAVLJENO: Provjeravamo da li se termin nalazi među mojim rezervacijama (bilo POTVRDJENA ili NA_CEKANJU)
+                          // BUG FIX: Koristimo server-side flagove (jeMojaRezervacija, naListiCekanja)
+                          // koje getAllTermsService već ispravno računa, umjesto lokalnog lookuupa
+                          // koji je imao race condition i nije pokrivao NA_CEKANJU zahtjeve.
+                          //
+                          // Fallback na lokalnu listu (mojeRezervacijeLista) samo ako server-side
+                          // flagovi nisu dostupni (starija verzija API-ja).
                           const pronadjenaMojaRezervacija = mojeRezervacijeLista.find(
                             (r) => r.terminId === termin.terminId
                           );
 
-                          const isFree = termin.status === 'SLOBODAN' && !pronadjenaMojaRezervacija;
-                          
-                          // Ako je u bazi POTVRDJENA ili je termin spojen sa mnom, to je moja rezervacija
-                          const isMyReservation = !!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'POTVRDJENA';
-                          
-                          // Ako je poslat zahtjev ali je još na čekanju kod vlasnika objekta
-                          const isMyPending = !!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'NA_CEKANJU';
+                          // Moja potvrđena rezervacija: server kaže jeMojaRezervacija=true ILI
+                          // lokalna lista ima POTVRDJENA za ovaj termin
+                          const isMyReservation =
+                            termin.jeMojaRezervacija === true ||
+                            (!!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'POTVRDJENA');
 
-                          // Termin je stvarno tuđi/zauzet samo ako nije slobodan i nije niti spojen s mojim profilom
+                          // Na čekanju (nepouzdan igrač poslao zahtjev, vlasnik još nije odobrio):
+                          // server kaže naListiCekanja=true (pokriva i NA_CEKANJU zahtjeve!) ILI
+                          // lokalna lista ima NA_CEKANJU
+                          const isMyPending =
+                            (!isMyReservation && termin.naListiCekanja === true) ||
+                            (!isMyReservation && !!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'NA_CEKANJU');
+
+                          // Slobodan: termin je SLOBODAN, nije moj, nije na čekanju
+                          const isFree = termin.status === 'SLOBODAN' && !isMyReservation && !isMyPending;
+
+                          // Zauzet tuđi termin
                           const isOccupied = !isFree && !isMyReservation && !isMyPending;
                           const isJoining = joiningWaitlistIds.includes(termin.terminId);
 
@@ -302,10 +316,12 @@ export default function IndividualTraining() {
                             <button
                               key={termin.terminId}
                               type="button"
-                              disabled={(isOccupied && (termin.naListiCekanja || isJoining)) || isMyPending}
+                              disabled={isOccupied && (termin.naListiCekanja || isJoining)}
                               onClick={() => {
                                 if (isFree) openReservationModal(termin);
                                 if (isMyReservation) openCancelModal(termin);
+                                // BUG FIX: Igrač može povući i zahtjev koji je NA_CEKANJU
+                                if (isMyPending) openCancelModal(termin);
                                 if (isOccupied && !termin.naListiCekanja) handleJoinWaitlist(termin);
                               }}
                               className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition
@@ -344,7 +360,7 @@ export default function IndividualTraining() {
                               )}
                               {isMyPending && (
                                 <div className="mt-2 text-[10px] text-amber-600 font-black uppercase tracking-wide">
-                                  Čeka odobrenje vlasnika
+                                  Čeka odobrenje · Klikni za povlačenje
                                 </div>
                               )}
                               {isOccupied && (
@@ -374,10 +390,10 @@ export default function IndividualTraining() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                  {modalMode === 'reserve' ? 'Potvrda rezervacije' : 'Otkazivanje rezervacije'}
+                  {modalMode === 'reserve' ? 'Potvrda rezervacije' : selectedTerm?.naListiCekanja ? 'Povlačenje zahtjeva' : 'Otkazivanje rezervacije'}
                 </h2>
                 <p className="mt-1 text-xs text-slate-400 font-medium">
-                  {modalMode === 'reserve' ? 'Potvrdite rezervaciju termina.' : 'Termin će postati slobodan.'}
+                  {modalMode === 'reserve' ? 'Potvrdite rezervaciju termina.' : selectedTerm?.naListiCekanja ? 'Vaš zahtjev na čekanju bit će povučen.' : 'Termin će postati slobodan.'}
                 </p>
               </div>
               <button type="button" onClick={closeModal}
@@ -426,7 +442,7 @@ export default function IndividualTraining() {
               ) : (
                 <button type="button" onClick={handleConfirmCancellation}
                   className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-700 transition-all shadow-md active:scale-95 transform">
-                  Otkaži rezervaciju
+                  {selectedTerm?.naListiCekanja ? 'Povuci zahtjev' : 'Otkaži rezervaciju'}
                 </button>
               )}
             </div>

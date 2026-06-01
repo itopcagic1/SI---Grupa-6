@@ -171,7 +171,6 @@ const createIndividualReservationService = async (terminIdValue, korisnik, isTru
 const cancelIndividualReservationService = async (terminIdValue, korisnikId) => {
   const terminId = parsePositiveId(terminIdValue, 'terminId');
 
-
   const rezervacija = await prisma.rezervacija.findFirst({
     where: {
       terminId,
@@ -190,7 +189,6 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
       'REZERVACIJA_NIJE_PRONADJENA'
     );
   }
-
 
   const termin = await prisma.terminObjekta.findUnique({
     where: { terminId },
@@ -226,32 +224,49 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
   return { poruka: 'Rezervacija je uspješno otkazana.' };
 };
 
+// POPRAVLJENA I SIGURNA FUNKCIJA
 const getMojeRezervacijeService = async (korisnikId) => {
-  const now = new Date();
+  // Rješenje za Timezone: Gledamo od početka današnjeg dana (00:00) kako sustav ne bi sakrio današnje termine
+  const danas = new Date();
+  danas.setHours(0, 0, 0, 0);
 
-  const [individualne, zahtjeviNaCekanju, grupne] = await Promise.all([
+  // Provjeravamo ulogu korisnika (ako je TRENER, povući ćemo i njegove poslane grupne treninge koji čekaju)
+  const korisnik = await prisma.korisnik.findUnique({ where: { korisnikId } });
+  const isTrener = korisnik?.uloga === 'TRENER';
+
+  const [potvrdjeneIndividualne, zahtjeviNaCekanju, grupnePrijave, trenerZahtjeviNaCekanju] = await Promise.all([
+    // 1. Sve POTVRĐENE individualne rezervacije igrača
     prisma.rezervacija.findMany({
       where: {
         zahtjev: { korisnikId },
         status: 'POTVRDJENA',
+        terminObjekta: { vrijemePocetka: { gte: danas } }
       },
       include: {
-        terminObjekta: { include: { sportskiObjekat: true } },
-        zahtjev: true,
-      },
+        terminObjekta: { include: { sportskiObjekat: true } }
+      }
     }),
+
+    // 2. Svi INDIVIDUALNI zahtjevi igrača koji su još na čekanju ('PENDING' ili 'NA_CEKANJU')
     prisma.zahtjevZaRezervaciju.findMany({
       where: {
         korisnikId,
-        status: { in: ['NA_CEKANJU', 'CEKANJE'] },
-        terminObjekta: { vrijemePocetka: { gt: now } },
+        status: { in: ['NA_CEKANJU', 'CEKANJE', 'PENDING'] },
+        terminObjekta: { vrijemePocetka: { gte: danas } }
       },
       include: {
-        terminObjekta: { include: { sportskiObjekat: true } },
-      },
+        terminObjekta: { include: { sportskiObjekat: true } }
+      }
     }),
+
+    // 3. Grupni treninzi na koje se ulogirani igrač prijavio (Potvrđeni)
     prisma.prijavaGrupnogTreninga.findMany({
-      where: { korisnikId },
+      where: { 
+        korisnikId,
+        grupniTrening: {
+          terminObjekta: { vrijemePocetka: { gte: danas } }
+        }
+      },
       include: {
         grupniTrening: {
           include: {
@@ -261,46 +276,76 @@ const getMojeRezervacijeService = async (korisnikId) => {
         },
       },
     }),
+
+    // 4. Ako je korisnik TRENER -> povuci grupne treninge koje je pokrenuo, a vlasnik ih još nije odobrio
+    isTrener ? prisma.zahtjevZaRezervaciju.findMany({
+      where: {
+        korisnikId,
+        status: { in: ['NA_CEKANJU', 'CEKANJE', 'PENDING'] },
+        terminObjekta: { vrijemePocetka: { gte: danas } }
+      },
+      include: {
+        terminObjekta: { include: { sportskiObjekat: true } }
+      }
+    }) : []
   ]);
 
+  // Spajamo sve u jedan unificirani niz za Frontend
   return [
-    ...individualne
-      .filter((r) => new Date(r.terminObjekta.vrijemePocetka) > now)
-      .map((r) => ({
-        tip: 'INDIVIDUALNI',
-        status: 'POTVRDJENA',
-        datumKreiranja: r.datumKreiranja,
-        vrijemePocetka: r.terminObjekta.vrijemePocetka,
-        vrijemeZavrsetka: r.terminObjekta.vrijemeZavrsetka,
-        objekat: r.terminObjekta.sportskiObjekat?.naziv,
-        adresa: r.terminObjekta.sportskiObjekat?.adresa,
-        terminId: r.terminId,
-        rezervacijaId: r.rezervacijaId,
-      })),
+    // Mapiranje potvrđenih individualnih rezervacija
+    ...potvrdjeneIndividualne.map((r) => ({
+      tip: 'INDIVIDUALNI',
+      status: 'POTVRDJENA',
+      datumKreiranja: r.datumPotvrde,
+      vrijemePocetka: r.terminObjekta.vrijemePocetka,
+      vrijemeZavrsetka: r.terminObjekta.vrijemeZavrsetka,
+      objekat: r.terminObjekta.sportskiObjekat?.naziv || 'Sportski objekat',
+      adresa: r.terminObjekta.sportskiObjekat?.adresa,
+      terminId: r.terminId,
+      rezervacijaId: r.rezervacijaId,
+    })),
+
+    // Mapiranje individualnih zahtjeva na čekanju
     ...zahtjeviNaCekanju.map((z) => ({
       tip: 'INDIVIDUALNI',
       status: 'NA_CEKANJU',
       datumKreiranja: z.datumSlanja,
       vrijemePocetka: z.terminObjekta.vrijemePocetka,
       vrijemeZavrsetka: z.terminObjekta.vrijemeZavrsetka,
-      objekat: z.terminObjekta.sportskiObjekat?.naziv,
+      objekat: z.terminObjekta.sportskiObjekat?.naziv || 'Sportski objekat',
       adresa: z.terminObjekta.sportskiObjekat?.adresa,
       terminId: z.terminId,
       zahtjevId: z.zahtjevId,
     })),
-    ...grupne
-      .filter((p) => new Date(p.grupniTrening.terminObjekta.vrijemePocetka) > now)
-      .map((p) => ({
-        tip: 'GRUPNI',
-        status: 'POTVRDJENA',
-        datumKreiranja: p.datumPrijave,
-        vrijemePocetka: p.grupniTrening.terminObjekta.vrijemePocetka,
-        vrijemeZavrsetka: p.grupniTrening.terminObjekta.vrijemeZavrsetka,
-        objekat: p.grupniTrening.terminObjekta.sportskiObjekat?.naziv,
-        adresa: p.grupniTrening.terminObjekta.sportskiObjekat?.adresa,
-        trener: p.grupniTrening.trener?.punoIme,
-        treningId: p.grupniTrening.treningId,
-      })),
+
+    // Mapiranje grupnih treninga na kojima je igrač potvrđen
+    ...grupnePrijave.map((p) => ({
+      tip: 'GRUPNI',
+      status: 'POTVRDJENA',
+      naziv: p.grupniTrening.naziv || 'Grupni trening',
+      datumKreiranja: p.datumPrijave,
+      vrijemePocetka: p.grupniTrening.terminObjekta.vrijemePocetka,
+      vrijemeZavrsetka: p.grupniTrening.terminObjekta.vrijemeZavrsetka,
+      objekat: p.grupniTrening.terminObjekta.sportskiObjekat?.naziv || 'Sportski objekat',
+      adresa: p.grupniTrening.terminObjekta.sportskiObjekat?.adresa,
+      trener: p.grupniTrening.trener?.punoIme,
+      terminId: p.grupniTrening.terminObjekta.terminId,
+      treningId: p.grupniTrening.treningId,
+    })),
+
+    // Mapiranje grupnih treninga koje je kreirao TRENER, a još čekaju odobrenje vlasnika objekta
+    ...trenerZahtjeviNaCekanju.map((z) => ({
+      tip: 'GRUPNI',
+      status: 'NA_CEKANJU',
+      naziv: 'Kreiranje grupnog treninga (Čeka odobrenje)',
+      datumKreiranja: z.datumSlanja,
+      vrijemePocetka: z.terminObjekta.vrijemePocetka,
+      vrijemeZavrsetka: z.terminObjekta.vrijemeZavrsetka,
+      objekat: z.terminObjekta.sportskiObjekat?.naziv || 'Sportski objekat',
+      adresa: z.terminObjekta.sportskiObjekat?.adresa,
+      terminId: z.terminId,
+      zahtjevId: z.zahtjevId,
+    }))
   ].sort((a, b) => new Date(a.vrijemePocetka) - new Date(b.vrijemePocetka));
 };
 
