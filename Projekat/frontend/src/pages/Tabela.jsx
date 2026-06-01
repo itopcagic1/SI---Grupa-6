@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchTabela } from '../api/tabelaApi';
 import { fetchLige } from '../api/ligaApi';
@@ -176,7 +176,9 @@ function Tabela() {
                                 >
                                 {tim.naziv.charAt(0)}
                                 </div>
-                          <span className="font-bold text-slate-800">{tim.naziv}</span>
+                          <Link to={`/statistika-tima/${tim.timId}`} className="font-bold text-slate-800 hover:text-orange-600 transition">
+                            {tim.naziv}
+                          </Link>
                         </div>
                       </td>
 
