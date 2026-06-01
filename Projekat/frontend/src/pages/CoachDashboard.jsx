@@ -7,6 +7,7 @@ import {
   getTrenerGrupniTreninzi,
   getAllTeams,
   otkaziGrupniTrening,
+  cancelIndividualTerm,
   getTrenerNotifikacije
 } from '../api/reservationApi';
 
@@ -167,15 +168,45 @@ export default function CoachDashboard() {
     }
   };
 
-  const handleCancelTraining = (treningId) => {
+ const handleCancelTraining = (trening) => {
+    const vrijemePocetka = new Date(trening.terminObjekta.vrijemePocetka);
+    const sada = new Date();
+    const razlikaUMilisekundama = vrijemePocetka - sada;
+    const razlikaUSatima = razlikaUMilisekundama / (1000 * 60 * 60);
+
+    let porukaModala = 'Da li ste sigurni da želite otkazati ovaj grupni trening? Svi prijavljeni igrači će biti obrisani i termin će ponovo biti slobodan.\n\n';
+ if (razlikaUSatima > 0 && razlikaUSatima < 24) {
+      porukaModala = '\n\n⚠️ PAŽNJA: Ovaj trening počinje za manje od 24 sata! Otkazivanjem u zadnji čas dobit ćete kazneni prekršaj na svom profilu.';
+    }
+
+    const naCekanjuModal = trening.statusTreninga === 'NA_CEKANJU';
+
     setConfirmModal({
       open: true,
-      title: 'Otkaži grupni trening',
-      message: 'Da li ste sigurni da želite otkazati ovaj grupni trening? Svi prijavljeni igrači će biti obrisani i termin će ponovo biti slobodan.',
+      title: naCekanjuModal ? 'Povuci zahtjev' : 'Otkaži grupni trening',
+      message: naCekanjuModal
+        ? 'Da li ste sigurni da želite povući zahtjev za ovaj grupni trening? Termin će ostati slobodan.'
+        : porukaModala,
       onConfirm: async () => {
         try {
-          await otkaziGrupniTrening(treningId);
-          showNotification('success', 'Grupni trening je uspješno otkazan.');
+          let resData;
+          
+          if (naCekanjuModal) {
+            // Umjesto cancelIndividualTerm, šaljemo zahtjev kroz otkaziGrupniTrening sa jasnim string prefiksom!
+            // Koristimo trening.zahtjevId koji je mapiran iz baze
+            const privremeniId = `zahtjev-${trening.zahtjevId}`;
+            resData = await otkaziGrupniTrening(privremeniId);
+          } else {
+            // Za regularne, potvrđene treninge šaljemo normalni brojčani treningId
+            resData = await otkaziGrupniTrening(trening.treningId);
+          }
+
+          if (resData && resData.upozorenje === 'PREKRSAJ') {
+            showNotification('warning', `Trening otkazan uz kaznu! ${resData.poruka}`);
+          } else {
+            showNotification('success', naCekanjuModal ? 'Zahtjev je uspješno povučen.' : 'Grupni trening je uspješno otkazan.');
+          }
+
           loadMyTrainings();
           loadNotifications();
           if (selectedFacilityId) {
@@ -186,12 +217,11 @@ export default function CoachDashboard() {
           }
         } catch (err) {
           console.error(err);
-          showNotification('error', err.response?.data?.poruka || 'Greška pri otkazivanju grupnog treninga.');
+          showNotification('error', err.response?.data?.poruka || err.response?.data?.message || 'Greška pri otkazivanju.');
         }
       }
     });
   };
-
   useEffect(() => {
     if (isTrainer) {
       loadInitialData();
@@ -445,7 +475,7 @@ export default function CoachDashboard() {
                                     </div>
                                     {!jeBlokiran && (rezervisaoKorisnik || rezervisaoTim) ? (
                                       <div className="mt-2 pt-2 border-t border-amber-100/50 text-[10px] text-slate-500 font-bold leading-tight space-y-0.5">
-                                        {rezervisaoKorisnik && <div>Trener: {rezervisaoKorisnik}</div>}
+                                        {rezervisaoKorisnik && <div>Rezervisao: {rezervisaoKorisnik}</div>}
                                         {rezervisaoTim && <div>Tim: <span className="text-orange-600 font-extrabold">{rezervisaoTim}</span></div>}
                                       </div>
                                     ) : (
@@ -495,17 +525,29 @@ export default function CoachDashboard() {
                   const maxKapacitet = trening.maksimalanBrojIgraca;
                   const procenat = Math.min(100, (prijavljeniCount / maxKapacitet) * 100);
                   const timNaziv = trening.terminObjekta?.zahtjeviZaRezervaciju?.[0]?.tim?.naziv;
+                  const naCekanju = trening.statusTreninga === 'NA_CEKANJU';
 
                   return (
                     <div
-                      key={trening.treningId}
-                      className="rounded-[2.5rem] border-2 border-amber-100 bg-amber-50/10 p-6 shadow-sm flex flex-col justify-between hover:shadow-xl transition-all duration-300"
+                      key={trening.treningId ?? `zahtjev-${trening.zahtjevId}`}
+                      className={`rounded-[2.5rem] border-2 p-6 shadow-sm flex flex-col justify-between hover:shadow-xl transition-all duration-300 ${naCekanju ? 'border-amber-300 bg-amber-50/40' : 'border-amber-100 bg-amber-50/10'}`}
                     >
                       <div>
                         {/* Objekat */}
                         <div className="text-xs font-black uppercase tracking-widest text-orange-600 mb-1">
                           {trening.terminObjekta?.sportskiObjekat?.naziv || 'Sportski objekat'}
                         </div>
+
+                        {/* Status badge */}
+                        {naCekanju ? (
+                          <div className="inline-flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-2xl bg-amber-100 border border-amber-300 text-[10px] font-black uppercase tracking-wider text-amber-800">
+                             Na čekanju — čeka odobrenje vlasnika
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                            ✓ Potvrđeno
+                          </div>
+                        )}
 
                         {timNaziv && (
                           <div className="text-[10px] font-black text-amber-900/80 mb-2 bg-amber-100/50 rounded-xl px-2.5 py-1 border border-amber-200/30 inline-block">
@@ -565,11 +607,12 @@ export default function CoachDashboard() {
                       {/* Gumb za otkazivanje */}
                       <button
                         type="button"
-                        onClick={() => handleCancelTraining(trening.treningId)}
+                        onClick={() => handleCancelTraining(trening)}
                         className="mt-4 w-full rounded-2xl border-2 border-red-100 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-red-600 shadow-sm transition hover:border-red-400 hover:bg-red-50/20"
                       >
-                        Otkaži trening
+                        {naCekanju ? 'Povuci zahtjev' : 'Otkaži trening'}
                       </button>
+
 
                     </div>
                   );

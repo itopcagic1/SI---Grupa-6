@@ -35,7 +35,7 @@ function hoursUntil(dateTime) {
   const razlikaUDanima = Math.ceil(razlikaUms / (1000 * 60 * 60 * 24));
 
   if (preostaloSati < 24 || razlikaUDanima <= 1) {
-    return 0; 
+    return 0;
   }
   return preostaloSati;
 }
@@ -49,7 +49,7 @@ async function zabiljeziPrekrsaj(korisnikId) {
   });
 
   const noviBroj = (korisnik?.brojPreksrenihRezervacija || 0) + 1;
-  const noviStatus = noviBroj >= PRAG_NEPOUZDANOSTI ? 'NEPOUZDAN' : (korisnik?.statusPouzdanosti || 'SREDJEN');
+  const noviStatus = noviBroj >= PRAG_NEPOUZDANOSTI ? 'NEPOUZDAN' : ('AKTIVAN');
 
   await prisma.korisnik.update({
     where: { korisnikId: kId },
@@ -91,22 +91,32 @@ const kreirajIndividualnuRezervaciju = async (req, res) => {
       return res.status(400).json({ poruka: 'ID termina nije validan broj.' });
     }
 
-    const isTrusted = req.user?.statusPouzdanosti !== 'NEPOUZDAN';
+    const korisnikIzBaze = await prisma.korisnik.findUnique({
+      where: { korisnikId: korisnikId },
+      select: { statusPouzdanosti: true }
+    });
+
+    const isTrusted = korisnikIzBaze?.statusPouzdanosti !== 'NEPOUZDAN';
 
     const result = await createIndividualReservationService(
-      termId, 
-      { 
-        id: korisnikId, 
+      termId,
+      {
+        id: korisnikId,
         korisnikId: korisnikId,
-        statusPouzdanosti: req.user?.statusPouzdanosti 
-      }, 
+        statusPouzdanosti: korisnikIzBaze?.statusPouzdanosti
+      },
       isTrusted
     );
 
+    // Ako je korisnik pouzdan i termin je odmah potvrđen
     if (result.tip === 'REZERVISANO') {
-      return res.json({ poruka: 'Termin je uspješno rezervisan.', status: 'POTVRDJENA' });
+      return res.status(200).json({
+        poruka: 'Termin je uspješno rezervisan.',
+        status: 'POTVRDJENA'
+      });
     }
 
+    // Ako korisnik ima 3 ili više prekršaja, ide u Bull queue i na čekanje
     const reservationId = result.reservationId;
     const termStartTime = result.termStartTime;
     const delayMilliseconds = calculateTimeoutMilliseconds(termStartTime);
@@ -117,10 +127,11 @@ const kreirajIndividualnuRezervaciju = async (req, res) => {
       { delay: delayMilliseconds }
     );
 
-    return res.json({
-      poruka: 'Vaš zahtjev je poslan na listu čekanja zbog pravila pouzdanosti računa.',
+    return res.status(202).json({
+      poruka: 'Vaš zahtjev je poslan na listu čekanja zbog pravila pouzdanosti računa (3 ili više kaznena profila). Vlasnik objekta mora ručno odobriti termin.',
       status: 'NA_CEKANJU',
     });
+
   } catch (error) {
     return res.status(error.status || 500).json({
       greska: error.code || 'SERVER_ERROR',
@@ -145,47 +156,23 @@ const otkaziIndividualnuRezervaciju = async (req, res) => {
 
     const preostaloSati = hoursUntil(termin.vrijemePocetka);
 
+    await cancelIndividualReservationService(terminId, korisnikId);
+
     if (preostaloSati < 24) {
-      const aktivnaRezervacija = await prisma.rezervacija.findFirst({
-        where: {
-          terminId: terminId,
-          zahtjev: { korisnikId: korisnikId },
-          status: { in: ['CONFIRMED', 'POTVRDJENA', 'REZERVISANO', 'ODOBRENO'] }
-        }
-      });
-
-      if (!aktivnaRezervacija) {
-        return res.status(400).json({ greska: 'REZERVACIJA_NIJE_PRONADJENA', poruka: 'Aktivna rezervacija nije pronađena za ovaj termin.' });
-      }
-
-      await prisma.rezervacija.update({
-        where: { rezervacijaId: aktivnaRezervacija.rezervacijaId },
-        data: { status: 'CEKA_OTKAZIVANJE', razlogOtkazivanja: 'Otkazivanje unutar 24h.' }
-      });
-
+      const { noviBroj } = await zabiljeziPrekrsaj(korisnikId);
       return res.json({
-        status: 'CEKA_ODOBRENJE',
-        poruka: 'Vaš zahtjev za otkazivanje unutar 24h je poslat na odobrenje vlasniku.'
+        upozorenje: 'PREKRSAJ',
+        brojPrekrsaja: noviBroj,
+        maxDozvoljeno: PRAG_NEPOUZDANOSTI,
+        poruka: `Otkazali ste unutar 24h. Broj prekršaja: ${noviBroj}/${PRAG_NEPOUZDANOSTI}.`
       });
     }
-
-    await prisma.rezervacija.deleteMany({ 
-      where: { 
-        terminId: terminId, 
-        zahtjev: { korisnikId: korisnikId }
-      } 
-    });
-    
-    await prisma.terminObjekta.update({ 
-      where: { terminId: terminId }, 
-      data: { status: 'SLOBODAN' } 
-    });
 
     const trenutniBroj = await dohvatiTrenutniBrojPrekrsaja(korisnikId);
     return res.json({
       brojPrekrsaja: trenutniBroj,
       maxDozvoljeno: PRAG_NEPOUZDANOSTI,
-      poruka: "Uspješno otkazano na vrijeme. Termin je ponovo slobodan."
+      poruka: 'Uspješno otkazano na vrijeme. Termin je ponovo slobodan.'
     });
   } catch (error) {
     console.error(error);
@@ -197,7 +184,7 @@ const kreirajGrupniTrening = async (req, res) => {
   try {
     const terminId = req.params.id;
     const { maksimalanBrojIgraca, timId } = req.body;
-    
+
     const resultado = await kreirajGrupniTreningService(terminId, req.user.korisnikId, maksimalanBrojIgraca, timId);
     return res.status(201).json({ poruka: 'Grupni trening je uspješno kreiran.', trening: resultado });
   } catch (error) {
@@ -205,15 +192,15 @@ const kreirajGrupniTrening = async (req, res) => {
 
     // Hvatanje Prisma greške za Unique Constraint (P2002)
     if (error.code === 'P2002' || (error.message && error.message.includes('Unique constraint failed'))) {
-      return res.status(400).json({ 
-        greska: 'TERMIN_ZAUZET', 
-        poruka: 'Ovaj termin je već iskorišten za kreiranje grupnog treninga.' 
+      return res.status(400).json({
+        greska: 'TERMIN_ZAUZET',
+        poruka: 'Ovaj termin je već iskorišten za kreiranje grupnog treninga.'
       });
     }
 
-    return res.status(error.status || 500).json({ 
-      greska: error.code || 'SERVER_ERROR', 
-      poruka: error.message || 'Došlo je do greške prilikom kreiranja grupnog treninga.' 
+    return res.status(error.status || 500).json({
+      greska: error.code || 'SERVER_ERROR',
+      poruka: error.message || 'Došlo je do greške prilikom kreiranja grupnog treninga.'
     });
   }
 };
@@ -229,19 +216,56 @@ const prijaviSeNaGrupniTrening = async (req, res) => {
 };
 
 const getTrenerGrupniTreninzi = async (req, res) => {
-  try { res.json({ treninzi: await getTrenerGrupniTreninziService(req.user.korisnikId) }); } 
+  try { res.json({ treninzi: await getTrenerGrupniTreninziService(req.user.korisnikId) }); }
   catch (error) { res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message }); }
 };
 
 const getGrupniTreninzi = async (req, res) => {
-  try { res.json({ treninzi: await getGrupniTreninziService(req.user.korisnikId) }); } 
+  try { res.json({ treninzi: await getGrupniTreninziService(req.user.korisnikId) }); }
   catch (error) { res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message }); }
 };
 
 const otkaziGrupniTrening = async (req, res) => {
   try {
-    const treningId = parseInt(req.params.id);
+    const idParam = String(req.params.id);
     const korisnikId = req.user.korisnikId || req.user.id;
+
+    // SLUČAJ A: Ako frontend šalje ID zahtjeva sa prefiksom 'zahtjev-'
+    if (idParam.startsWith('zahtjev-')) {
+      const zahtjevId = parseInt(idParam.split('-')[1], 10);
+
+      if (isNaN(zahtjevId)) {
+        return res.status(400).json({ greska: 'INVALID_ID', poruka: 'ID zahtjeva nije ispravan.' });
+      }
+
+      // Pronađi zahtjev u bazi
+      const zahtjev = await prisma.zahtjevZaRezervaciju.findUnique({
+        where: { zahtjevId: zahtjevId }
+      });
+
+      if (!zahtjev) {
+        return res.status(404).json({ greska: 'ZAHTJEV_NIJE_PRONADJEN', poruka: 'Zahtjev nije pronađen.' });
+      }
+      await prisma.$transaction([
+        prisma.terminObjekta.update({
+          where: { terminId: zahtjev.terminId },
+          data: { status: 'SLOBODAN' }
+        }),
+        prisma.zahtjevZaRezervaciju.update({
+          where: { zahtjevId: zahtjevId },
+          data: { status: 'ODBIJENO', datumObrade: new Date() }
+        })
+      ]);
+
+      return res.json({ message: 'Zahtjev za grupni trening je uspješno povučen.' });
+    }
+
+    // SLUČAJ B: Standardno otkazivanje potvrđenog treninga preko brojčanog ID-ja
+    const treningId = parseInt(idParam, 10);
+
+    if (isNaN(treningId)) {
+      return res.status(400).json({ greska: 'INVALID_ID', poruka: 'ID treninga nije validan broj.' });
+    }
 
     const grupniTrening = await prisma.grupniTrening.findUnique({
       where: { treningId: treningId },
@@ -256,7 +280,7 @@ const otkaziGrupniTrening = async (req, res) => {
     const preostaloSati = hoursUntil(grupniTrening.terminObjekta.vrijemePocetka);
 
     if (preostaloSati < 24) {
-      const { noviStatus, noviBroj } = await zabiljeziPrekrsaj(korisnikId);
+      const { noviBroj } = await zabiljeziPrekrsaj(korisnikId);
       return res.json({
         ...rezultat,
         upozorenje: 'PREKRSAJ',
@@ -269,6 +293,7 @@ const otkaziGrupniTrening = async (req, res) => {
     const trenutniBroj = await dohvatiTrenutniBrojPrekrsaja(korisnikId);
     return res.json({ ...rezultat, brojPrekrsaja: trenutniBroj, maxDozvoljeno: PRAG_NEPOUZDANOSTI });
   } catch (error) {
+    console.error("Greška pri otkazivanju grupnog treninga:", error);
     res.status(500).json({ greska: 'SERVER_ERROR', poruka: error.message });
   }
 };
@@ -302,9 +327,6 @@ const odjaviSeSaGrupnogTreninga = async (req, res) => {
         return res.status(404).json({ greska: 'PRIJAVA_NIJE_PRONADJENA', poruka: 'Niste prijavljeni na ovaj trening.' });
       }
 
-      // Ako tvoja šema nema eksplicitno polje status u PrijavaGrupnogTreninga, samo ga obriši i kazni odmah,
-      // a ukoliko ima, ovdje šaljemo zahtjev vlasniku. Pošto tabela nema polja za čekanje odjave u bazi,
-      // najsigurnije je evidentirati prekršaj i odmah izvršiti odjavu da ne puca baza.
       const rezultat = await odjaviSeSaGrupnogTreningaService(treningId, korisnikId, razlog);
       const { noviBroj } = await zabiljeziPrekrsaj(korisnikId);
 
@@ -324,37 +346,43 @@ const odjaviSeSaGrupnogTreninga = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VLASNIČKE FUNKCIJE
-// ─────────────────────────────────────────────────────────────────────────────
-
 const getOwnerPendingRequests = async (req, res) => {
   try {
-    const rezervacijeNaCekanju = await prisma.rezervacija.findMany({
+    const zahtjeviNaCekanju = await prisma.zahtjevZaRezervaciju.findMany({
       where: {
-        status: { in: ['NA_CEKANJU', 'CEKANJE', 'CEKA_OTKAZIVANJE', 'CEKA_ODOBRENJE'] }
+        status: { in: ['NA_CEKANJU', 'CEKANJE'] },
+        terminObjekta: {
+          sportskiObjekat: {
+            vlasnikId: req.user.korisnikId,
+          },
+        },
       },
       include: {
         terminObjekta: {
-          include: { sportskiObjekat: true }
+          include: { sportskiObjekat: true },
         },
-        zahtjev: {
-          include: { korisnik: { select: { punoIme: true, email: true } } }
-        }
-      }
+        korisnik: {
+          select: { punoIme: true, email: true, uloga: true },
+        },
+      },
     });
 
-    const formatiraneRezervacije = rezervacijeNaCekanju.map(r => ({
-      id: r.rezervacijaId,
-      tip: 'INDIVIDUALNI',
-      status: r.status,
-      korisnik: r.zahtjev?.korisnik?.punoIme || r.zahtjev?.korisnik?.email || 'Nepoznat korisnik',
-      objekat: r.terminObjekta?.sportskiObjekat?.naziv || 'Sportski objekat',
-      vrijemePocetka: r.terminObjekta?.vrijemePocetka,
-      razlog: r.razlogOtkazivanja || ''
-    }));
+    const formatiraniZahtjevi = zahtjeviNaCekanju.map((z) => {
+     const jeGrupni = z.terminObjekta?.tipTermina === 'GRUPNI' || z.korisnik?.uloga === 'TRENER';
+      return {
+        id: z.zahtjevId,
+        tip: jeGrupni ? 'GRUPNI' : 'INDIVIDUALNI',
+        status: z.status,
+        korisnik: z.korisnik?.punoIme || z.korisnik?.email || 'Nepoznat korisnik',
+        objekat: z.terminObjekta?.sportskiObjekat?.naziv || 'Sportski objekat',
+        vrijemePocetka: z.terminObjekta?.vrijemePocetka,
+        razlog: '',
+        // Šaljemo i maksimalanBrojIgraca ako postoji na zahtjevu (za grupne)
+        maksimalanBrojIgraca: z.maksimalanBrojIgraca || null,
+      };
+    });
 
-    return res.json({ zahtjevi: formatiraneRezervacije });
+    return res.json({ zahtjevi: formatiraniZahtjevi });
   } catch (error) {
     return res.status(500).json({ greska: 'SERVER_ERROR', poruka: error.message });
   }
@@ -363,57 +391,84 @@ const getOwnerPendingRequests = async (req, res) => {
 const ownerApprovePendingReservation = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const rezervacija = await prisma.rezervacija.findUnique({ where: { rezervacijaId: id } });
-    
-    if (rezervacija) {
-      if (rezervacija.status === 'CEKA_OTKAZIVANJE' || rezervacija.status === 'CEKA_ODOBRENJE') {
-        await prisma.rezervacija.delete({ where: { rezervacijaId: id } });
-        await prisma.terminObjekta.update({ 
-          where: { terminId: rezervacija.terminId }, 
-          data: { status: 'SLOBODAN' } 
-        });
-        return res.json({ message: 'Otkazivanje rezervacije je uspješno odobreno.' });
-      } else {
-        await prisma.rezervacija.update({ where: { rezervacijaId: id }, data: { status: 'CONFIRMED' } });
-        return res.json({ message: 'Rezervacija je uspješno potvrđena.' });
-      }
+  const zahtjev = await prisma.zahtjevZaRezervaciju.findUnique({ where: { zahtjevId: id } });
+
+    if (!zahtjev) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Zahtjev nije pronađen.' });
     }
-    return res.status(404).json({ error: 'NOT_FOUND', message: 'Zahtjev nije pronađen.' });
-  } catch (error) { 
-    return res.status(500).json({ error: 'SERVER_ERROR', message: error.message }); 
+ const terminInfo = await prisma.terminObjekta.findUnique({
+      where: { terminId: zahtjev.terminId },
+      select: { tipTermina: true },
+    });
+    const korisnikInfo = await prisma.korisnik.findUnique({
+      where: { korisnikId: zahtjev.korisnikId },
+      select: { uloga: true },
+    });
+    const jeGrupniZahtjev = terminInfo?.tipTermina === 'GRUPNI' || korisnikInfo?.uloga === 'TRENER';
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Ažuriraj zahtjev na ODOBRENO
+      await tx.zahtjevZaRezervaciju.update({
+        where: { zahtjevId: id },
+        data: { status: 'ODOBRENO', datumObrade: new Date() },
+      });
+
+     
+      await tx.rezervacija.create({
+        data: {
+          zahtjevId: id,
+          terminId: zahtjev.terminId,
+          status: 'POTVRDJENA',
+          datumPotvrde: new Date(),
+        },
+      });
+
+      if (jeGrupniZahtjev) {
+          await tx.terminObjekta.update({
+          where: { terminId: zahtjev.terminId },
+          data: { status: 'ZAUZET', tipTermina: 'GRUPNI' },
+        });
+      } else {
+        await tx.terminObjekta.update({
+          where: { terminId: zahtjev.terminId },
+          data: { status: 'ZAUZET' },
+        });
+      }
+    });
+
+    return res.json({ message: jeGrupniZahtjev ? 'Grupni trening je uspješno odobren.' : 'Rezervacija je uspješno potvrđena.' });
+  } catch (error) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: error.message });
   }
 };
 
 const ownerRejectPendingReservation = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const rezervacija = await prisma.rezervacija.findUnique({ where: { rezervacijaId: id } });
-    
-    if (rezervacija) {
-      if (rezervacija.status === 'CEKA_OTKAZIVANJE' || rezervacija.status === 'CEKA_ODOBRENJE') {
-        await prisma.rezervacija.update({ 
-          where: { rezervacijaId: id }, 
-          data: { status: 'CONFIRMED', razlogOtkazivanja: null } 
-        });
-        return res.json({ message: 'Zahtjev za otkazivanje je odbijen.' });
-      } else {
-        await prisma.rezervacija.update({ where: { rezervacijaId: id }, data: { status: 'REJECTED' } });
-        return res.json({ message: 'Zahtjev za rezervaciju je odbijen.' });
-      }
+    const zahtjev = await prisma.zahtjevZaRezervaciju.findUnique({ where: { zahtjevId: id } });
+
+    if (!zahtjev) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Zahtjev nije pronađen.' });
     }
-    return res.status(404).json({ error: 'NOT_FOUND', message: 'Zahtjev nije pronađen.' });
-  } catch (error) { 
-    return res.status(500).json({ error: 'SERVER_ERROR', message: error.message }); 
+
+    await prisma.zahtjevZaRezervaciju.update({
+      where: { zahtjevId: id },
+      data: { status: 'ODBIJENO', datumObrade: new Date() },
+    });
+
+    return res.json({ message: 'Zahtjev za rezervaciju je odbijen.' });
+  } catch (error) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: error.message });
   }
 };
 
 const getTrenerNotifikacije = async (req, res) => {
-  try { res.json({ notifikacije: await getTrenerNotifikacijeService(req.user.korisnikId) }); } 
+  try { res.json({ notifikacije: await getTrenerNotifikacijeService(req.user.korisnikId) }); }
   catch (error) { res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message }); }
 };
 
 const getMojeRezervacije = async (req, res) => {
-  try { res.json({ rezervacije: await getMojeRezervacijeService(req.user.korisnikId) }); } 
+  try { res.json({ rezervacije: await getMojeRezervacijeService(req.user.korisnikId) }); }
   catch (error) { res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message }); }
 };
 
