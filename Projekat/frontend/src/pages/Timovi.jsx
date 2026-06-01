@@ -18,6 +18,12 @@ import {
   deleteTeam,
 } from '../api/teamApi';
 
+import {
+  addOmiljeniTim,
+  removeOmiljeniTim,
+  getOmiljeniTimovi,
+} from '../api/omiljeniTimApi';
+
 
 
 function Modal({ isOpen, onClose, children }) {
@@ -180,6 +186,7 @@ function Timovi() {
   const [openMenuTeamId, setOpenMenuTeamId] = useState(null);
   const [coachModalOpen, setCoachModalOpen] = useState(false);
   const [coachModalTeam, setCoachModalTeam] = useState(null);
+  const [favoriteTeamIds, setFavoriteTeamIds] = useState([]);
   const token = localStorage.getItem('token');
   const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
   const isAuthenticated = Boolean(token);
@@ -223,11 +230,32 @@ function Timovi() {
       setTeams(Array.isArray(teamsData) ? teamsData : []);
       setSports(Array.isArray(sportsData) ? sportsData : []);
       setCoaches(Array.isArray(coachesData) ? coachesData : []);
+
+      if (token && (korisnikData?.trenutnaUloga === 'NAVIJAC' || korisnikData?.uloga === 'NAVIJAC')) {
+        const favs = await getOmiljeniTimovi();
+        setFavoriteTeamIds(Array.isArray(favs) ? favs.map(f => f.timId) : []);
+      }
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Došlo je do greške pri učitavanju.";
       setError(errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async (teamId) => {
+    const isFav = favoriteTeamIds.includes(teamId);
+    try {
+      if (isFav) {
+        await removeOmiljeniTim(teamId);
+        setFavoriteTeamIds(prev => prev.filter(id => id !== teamId));
+      } else {
+        await addOmiljeniTim(teamId);
+        setFavoriteTeamIds(prev => [...prev, teamId]);
+      }
+    } catch (err) {
+      console.error("Greška pri izmjeni omiljenog tima:", err);
+      setError(err.response?.data?.message || "Greška pri ažuriranju omiljenog tima.");
     }
   };
 
@@ -435,9 +463,28 @@ function Timovi() {
               >
                 {/* Card header */}
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-xl font-bold text-slate-800 group-hover:text-orange-600 transition-colors leading-snug pr-2">
-                    {team.naziv}
-                  </h3>
+                  <div className="flex items-center gap-2 pr-2">
+                    <h3 className="text-xl font-bold text-slate-800 group-hover:text-orange-600 transition-colors leading-snug">
+                      {team.naziv}
+                    </h3>
+                    {isAuthenticated && (korisnikData?.trenutnaUloga === 'NAVIJAC' || korisnikData?.uloga === 'NAVIJAC') && (
+                      <button
+                        onClick={() => handleToggleFavorite(team.timId)}
+                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        aria-label="Omiljeni tim"
+                      >
+                        {favoriteTeamIds.includes(team.timId) ? (
+                          <svg className="w-5 h-5 fill-current text-red-500" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 stroke-current text-slate-400 hover:text-red-500 fill-none" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
 
                   {/* Admin menu */}
                   {isAdmin && (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import { getMyWaitlistTerms, leaveWaitlist } from '../api/reservationApi';
+import { getOmiljeniTimovi, removeOmiljeniTim } from '../api/omiljeniTimApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -28,8 +29,29 @@ const Profile = () => {
     const [waitlistLoading, setWaitlistLoading] = useState(false);
     const [removingWaitlistId, setRemovingWaitlistId] = useState(null);
 
+    const [favoriteTeams, setFavoriteTeams] = useState([]);
     const korisnikData = localStorage.getItem('korisnik') ? JSON.parse(localStorage.getItem('korisnik')) : null;
     const isPlayer = korisnikData?.trenutnaUloga === 'IGRAC' || korisnikData?.uloga === 'IGRAC';
+    const isNavijac = korisnikData?.trenutnaUloga === 'NAVIJAC' || korisnikData?.uloga === 'NAVIJAC';
+
+    const fetchFavorites = async () => {
+        try {
+            const data = await getOmiljeniTimovi();
+            setFavoriteTeams(Array.isArray(data) ? data : []);
+        } catch {
+            console.error('Greška pri učitavanju omiljenih timova');
+        }
+    };
+
+    const handleUnfavorite = async (timId) => {
+        try {
+            await removeOmiljeniTim(timId);
+            setFavoriteTeams((current) => current.filter((item) => item.timId !== timId));
+            setMessage({ type: 'success', text: 'Tim uspješno uklonjen iz omiljenih.' });
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.message || 'Greška pri uklanjanju iz omiljenih.' });
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -92,6 +114,7 @@ const Profile = () => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchProfile();
         if (isPlayer) fetchWaitlist();
+        if (isNavijac) fetchFavorites();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -162,6 +185,39 @@ const Profile = () => {
                                 )}
                             </div>
                         </div>
+
+                        {isNavijac && (
+                            <div className="bg-white rounded-3xl border border-amber-100 p-6 shadow-sm">
+                                <h3 className="text-sm font-black uppercase text-amber-950 mb-4 tracking-tighter">Moji omiljeni timovi</h3>
+                                <div className="space-y-3">
+                                    {favoriteTeams.length > 0 ? (
+                                        favoriteTeams.map((fav) => (
+                                            <div key={fav.omiljeniTimId} className="bg-amber-50 rounded-xl px-4 py-3 border border-amber-100 flex items-center justify-between gap-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">
+                                                        {fav.tim?.sport?.naziv || 'Sport'}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-amber-900">
+                                                        {fav.tim?.naziv}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleUnfavorite(fav.timId)}
+                                                    className="text-xs text-red-600 hover:text-red-700 font-semibold transition"
+                                                    aria-label="Ukloni iz omiljenih"
+                                                >
+                                                    Ukloni
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-xs text-amber-400 italic">Nemate omiljenih timova.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="md:col-span-2">
