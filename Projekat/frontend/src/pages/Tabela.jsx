@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchTabela } from '../api/tabelaApi';
-import { fetchLige } from '../api/ligaApi';
+import { downloadTabelaPDF, canExportPDF } from '../api/pdfApi';
 
 // Boja reda prema poziciji
 function getRedBoja(pozicija) {
@@ -28,7 +28,7 @@ function getGolRazlikaBoja(gr) {
 }
 
 function Tabela() {
-  const { id } = useParams(); // takmicenjeId iz URL-a /tabela/:id
+  const { id } = useParams();
 
   const [tabela, setTabela] = useState([]);
   const [takmicenje, setTakmicenje] = useState(null);
@@ -36,7 +36,11 @@ function Tabela() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Ucitaj tabelu kada se promijeni id ili sortiranje
+  // PDF export state
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+  const mozePDF = canExportPDF();
+
   useEffect(() => {
     let isActive = true;
 
@@ -63,6 +67,21 @@ function Tabela() {
     return () => { isActive = false; };
   }, [id, sortBy]);
 
+  const handleExportPDF = async () => {
+    if (!id) return;
+    setPdfLoading(true);
+    setPdfError('');
+    try {
+      await downloadTabelaPDF(id);
+    } catch (err) {
+      setPdfError(
+        err.response?.data?.poruka || 'Nije moguće generisati PDF. Pokušajte ponovo.'
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
       <Navbar />
@@ -73,33 +92,67 @@ function Tabela() {
         <div className="mb-8">
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">TABELA</h1>
           <p className="text-slate-500 mt-2 text-lg">
-            {takmicenje ? `${takmicenje.naziv}${takmicenje.sezona ? ` · Sezona ${takmicenje.sezona}` : ''}` : 'Učitavanje...'}
+            {takmicenje
+              ? `${takmicenje.naziv}${takmicenje.sezona ? ` · Sezona ${takmicenje.sezona}` : ''}`
+              : 'Učitavanje...'}
           </p>
         </div>
 
-        {/* Sortiranje */}
+        {/* Sortiranje + PDF export */}
         <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
-          <div className="flex flex-wrap gap-3 items-center">
-            <span className="text-xs font-black uppercase tracking-widest text-amber-900/60">
-              Sortiraj po:
-            </span>
-            {[
-              { key: 'ukupniBodovi', label: 'Bodovi' },
-              { key: 'pobjede', label: 'Pobjede' },
-              { key: 'golRazlika', label: 'Gol razlika' },
-            ].map(opcija => (
-              <button
-                key={opcija.key}
-                onClick={() => setSortBy(opcija.key)}
-                className={`px-5 py-2 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-95 ${
-                  sortBy === opcija.key
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20'
-                    : 'bg-amber-50 text-slate-700 hover:bg-amber-100'
-                }`}
-              >
-                {opcija.label}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+            {/* Dugmad za sortiranje */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <span className="text-xs font-black uppercase tracking-widest text-amber-900/60">
+                Sortiraj po:
+              </span>
+              {[
+                { key: 'ukupniBodovi', label: 'Bodovi' },
+                { key: 'pobjede',      label: 'Pobjede' },
+                { key: 'golRazlika',   label: 'Gol razlika' },
+              ].map((opcija) => (
+                <button
+                  key={opcija.key}
+                  type="button"
+                  onClick={() => setSortBy(opcija.key)}
+                  className={`px-5 py-2 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-95 ${
+                    sortBy === opcija.key
+                      ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20'
+                      : 'bg-amber-50 text-slate-700 hover:bg-amber-100'
+                  }`}
+                >
+                  {opcija.label}
+                </button>
+              ))}
+            </div>
+
+            {/* PDF export – vidljivo samo ADMINISTRATOR / ORGANIZATOR */}
+            {mozePDF && (
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportPDF}
+                  disabled={pdfLoading || loading || !takmicenje}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-700 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pdfLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Generisanje...
+                    </>
+                  ) : (
+                    <>
+                      <span>📄</span>
+                      Izvezi u PDF
+                    </>
+                  )}
+                </button>
+                {pdfError && (
+                  <p className="text-xs font-semibold text-red-600">{pdfError}</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -111,12 +164,10 @@ function Tabela() {
               Učitavanje tabele...
             </p>
           </div>
-
         ) : error ? (
           <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200 text-center font-bold">
             {error}
           </div>
-
         ) : tabela.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-[32px] border border-amber-100 shadow-sm">
             <p className="text-slate-500 text-lg font-medium">
@@ -126,7 +177,6 @@ function Tabela() {
               Tabela će biti prikazana nakon unosa rezultata.
             </p>
           </div>
-
         ) : (
           <div className="bg-white rounded-[32px] border border-amber-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -151,31 +201,29 @@ function Tabela() {
                       key={tim.timId}
                       className={`border-t border-amber-50 ${getRedBoja(tim.pozicija)}`}
                     >
-                      {/* Pozicija / medalja */}
                       <td className="px-5 py-4 font-bold text-lg">
                         {getPozicijaLabel(tim.pozicija)}
                       </td>
 
-                      {/* Tim sa logom */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           {tim.logoUrl ? (
-                                <img
-                                    src={tim.logoUrl}
-                                    alt={tim.naziv}
-                                    className="w-7 h-7 rounded-full object-cover"
-                                    onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                    }}
-                                />
-                                ) : null}
-                                <div
-                                style={{ display: tim.logoUrl ? 'none' : 'flex' }}
-                                className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-black text-orange-600"
-                                >
-                                {tim.naziv.charAt(0)}
-                                </div>
+                            <img
+                              src={tim.logoUrl}
+                              alt={tim.naziv}
+                              className="w-7 h-7 rounded-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            style={{ display: tim.logoUrl ? 'none' : 'flex' }}
+                            className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-black text-orange-600"
+                          >
+                            {tim.naziv.charAt(0)}
+                          </div>
                           <span className="font-bold text-slate-800">{tim.naziv}</span>
                         </div>
                       </td>
