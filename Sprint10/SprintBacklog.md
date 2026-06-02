@@ -1,6 +1,6 @@
 # Sprint Backlog
 
-Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 10, sa fokusom na registraciju navijača, notifikacije i PDF izvještaje.
+Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 10, sa fokusom na dodavanje omiljenih timova i dobijanje notifikacija za navijače.
 
 # Sprint Backlog — Sprint 10
 
