@@ -3,28 +3,46 @@ const router = express.Router();
 const matchController = require('../controllers/matchController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
+
 router.get('/public', matchController.getPublicMatches);
-router.get('/:id/details', matchController.getMatchById);
 
 router.post(
   '/generate-schedule',
   authenticateToken,
-  matchController.generisiRaspored
+  matchController.generateSchedule
 );
+
+router.patch(
+  '/notifications/read-all',
+  authenticateToken,
+  matchController.markAllAsRead
+);
+
+router.patch(
+  '/notifications/:id/read',
+  authenticateToken,
+  matchController.markAsRead
+);
+
+
 
 const resultController = require('../controllers/resultController');
 const statistikaController = require('../controllers/statistikaController');
 
+router.get('/:id/details', matchController.getMatchById);
+
+// Unos rezultata preko matchController-a (sa slanjem notifikacija)
 router.post(
   '/:id/rezultat',
   authenticateToken,
-  resultController.kreirajRezultat
+  matchController.createMatchResult
 );
 
+// Izmjena rezultata preko matchController-a (sa slanjem notifikacija)
 router.put(
   '/:id/rezultat',
   authenticateToken,
-  resultController.azurirajRezultat
+  matchController.updateMatchResult
 );
 
 router.get(
