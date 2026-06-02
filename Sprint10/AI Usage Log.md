@@ -43,3 +43,41 @@ Konsultacija oko Prisma ORM sintakse za compound unique ključeve i Tailwind CSS
 
 **Ko je koristio alat:**
 Ilma Hindija
+
+---
+
+## Zapis 2
+
+**Datum:** 02.06.2026.
+
+**Sprint broj:** 10
+
+**Alat koji je korišten:** Claude Code (Anthropic)
+
+**Svrha korištenja:**
+Implementacija funkcionalnosti izvoza PDF izvještaja za rezultate i raspored utakmica, te popravka pratećih problema ( UX greške, autorizacija).
+
+**Kratak opis zadatka ili upita:**
+- Zamjena browser `alert()` poruka za greške pri PDF izvozu ljepšim modalnim prozorom.
+- Provjera da li postoje nelogičnosti oko PDF dugmeta (vidljivost za sve uloge).
+- Dodavanje podrške za ulogu `TRENER` u PDF izvoz.
+- Implementacija PDF izvoza rasporeda utakmica (novi backend servis, controller, ruta i frontend integracija).
+- Kreiranje testnih fajlova za PDF izvoz po uzoru na postojeće testove u projektu.
+
+**Šta je AI predložio ili generisao:**
+- Uvoz i korištenje postojeće funkcije `canExportPDF()` iz `pdfApi.js` koja je bila definisana ali nekorištena u `Rezultati.jsx`.
+-Implementaciju `generateRasporedPDF` funkcije u `pdfService.js`, odgovarajućeg controllera u `pdfController.js`, rute u `pdfRoutes.js`, `downloadRasporedPDF` funkcije u `pdfApi.js`, te dugmeta i logike u `Raspored.jsx`.
+
+**Šta je korisnik prihvatio:**
+- Modalni prozor za greške umjesto `alert()`.
+- Uvoz i primjena `canExportPDF()` za skrivanje dugmeta neovlaštenim korisnicima.
+
+
+**Šta je korisnik izmijenio:**
+- Tekst loading stanja dugmeta promijenjen je iz "GARDENJE..." u "Izvoz u toku..." po vlastitoj odluci korisnika.
+
+**Rizici, problemi ili greške koje su uočene:**
+- `canExportPDF()` funkcija je bila definisana u `pdfApi.js` ali nigdje importovana ni korištena u `Rezultati.jsx`, što je značilo da je PDF dugme bilo vidljivo svim korisnicima bez obzira na ulogu.
+
+**Ko je koristio alat:**
+Irma Topčagić

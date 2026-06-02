@@ -6,6 +6,8 @@ import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { dohvatiTopStrijelce } from '../api/statistikaApi';
 import { formatStatistikaVrijednost, getSportKey } from '../utils/statistikaTipovi';
+// UVOZ TVOG PDF API-JA (Prilagodi naziv funkcije ako se zove drugačije u pdfApi.js)
+import { downloadRezultatiPDF, canExportPDF } from '../api/pdfApi';
 
 const initialFilters = {
   sportId: '',
@@ -94,6 +96,13 @@ function Rezultati() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState('');
 
+  const [topStrijelci, setTopStrijelci] = useState(null);
+  const [topStrijelciLoading, setTopStrijelciLoading] = useState(false);
+  const [topStrijelciError, setTopStrijelciError] = useState('');
+  const [topStrijelciTip, setTopStrijelciTip] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+
   const handleOpenDetails = async (utakmica) => {
     setSelectedMatch(utakmica);
     setDetailsLoading(true);
@@ -108,10 +117,6 @@ function Rezultati() {
       setDetailsLoading(false);
     }
   };
-  const [topStrijelci, setTopStrijelci] = useState(null);
-  const [topStrijelciLoading, setTopStrijelciLoading] = useState(false);
-  const [topStrijelciError, setTopStrijelciError] = useState('');
-  const [topStrijelciTip, setTopStrijelciTip] = useState(null);
 
   useEffect(() => {
     let isActive = true;
@@ -131,7 +136,7 @@ function Rezultati() {
         setTimovi(normalizeList(timoviData, ['timovi', 'podaci']));
       } catch (err) {
         if (isActive) {
-          console.error('Greska pri ucitavanju filtera:', err);
+          console.error('Greška pri učitavanju filtera:', err);
         }
       }
     };
@@ -156,7 +161,7 @@ function Rezultati() {
         }
       } catch (err) {
         if (isActive) {
-          setError(err.response?.data?.poruka || 'Nije moguce ucitati rezultate.');
+          setError(err.response?.data?.poruka || 'Nije moguće učitati rezultate.');
           setUtakmice([]);
         }
       } finally {
@@ -173,18 +178,10 @@ function Rezultati() {
     };
   }, [filters, reloadKey]);
 
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters((current) => ({
-      ...current,
-      [name]: value
-    }));
-  };
-
-  const handleReset = () => {
-    setFilters(initialFilters);
-    setReloadKey((current) => current + 1);
-  };
+  const filtriraneLige = useMemo(() => {
+    if (!filters.sportId) return lige;
+    return lige.filter(liga => String(liga.sportId) === String(filters.sportId));
+  }, [filters.sportId, lige]);
 
   const aktivnaLiga = useMemo(() => {
     if (!filters.takmicenjeId) return null;
@@ -192,9 +189,14 @@ function Rezultati() {
   }, [filters.takmicenjeId, lige]);
 
   const aktivniSport = useMemo(() => {
-    if (!aktivnaLiga) return null;
-    return sportovi.find((sport) => sport.sportId === aktivnaLiga.sportId) || null;
-  }, [aktivnaLiga, sportovi]);
+    if (aktivnaLiga) {
+      return sportovi.find((sport) => sport.sportId === aktivnaLiga.sportId) || null;
+    }
+    if (filters.sportId) {
+      return sportovi.find((sport) => String(sport.sportId) === String(filters.sportId)) || null;
+    }
+    return null;
+  }, [aktivnaLiga, filters.sportId, sportovi]);
 
   const supportTopScorers = useMemo(() => {
     if (!aktivnaLiga) return false;
@@ -220,7 +222,7 @@ function Rezultati() {
         if (!active) return;
 
         setTopStrijelci(topData);
-        setTopStrijelciTip(topData.tipStatistike);
+        setTopStrijelciTip(topData?.tipStatistike || null);
       } catch (err) {
         if (!active) return;
         setTopStrijelciError(err.response?.data?.poruka || 'Greška pri učitavanju lidera statistike.');
@@ -236,6 +238,49 @@ function Rezultati() {
     };
   }, [supportTopScorers, aktivnaLiga]);
 
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters((current) => {
+      const updated = { ...current, [name]: value };
+      if (name === 'sportId') {
+        updated.takmicenjeId = '';
+        updated.timId = '';
+      }
+      if (name === 'takmicenjeId') {
+        updated.timId = '';
+      }
+      return updated;
+    });
+  };
+
+  const handleReset = () => {
+    setFilters(initialFilters);
+    setReloadKey((current) => current + 1);
+  };
+
+  // FUNKCIJA ZA IZVOZ U PDF SA PROSLIJEĐENIM FILTERIMA (UKLJUČUJUĆI DATUM)
+  const handleExportPDF = async () => {
+    setPdfError('');
+    if (!filters.takmicenjeId) {
+      setPdfError('Odaberite ligu iz filtera da biste generisali PDF izvještaj.');
+      setTimeout(() => setPdfError(''), 5000);
+      return;
+    }
+    try {
+      setPdfLoading(true);
+      const takmicenjeId = filters.takmicenjeId;
+      const izabraniDatum = filters.datum || undefined;
+      await downloadRezultatiPDF(takmicenjeId, izabraniDatum, izabraniDatum);
+    } catch (err) {
+      console.error('Greška prilikom generisanja PDF izvještaja:', err);
+      const poruka = err.response?.data?.poruka || 'Nije moguće generisati PDF izvještaj. Pokušajte ponovo.';
+      setPdfError(poruka);
+      setTimeout(() => setPdfError(''), 5000);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const rezultati = useMemo(
     () => utakmice.filter((utakmica) => getResultLabel(utakmica)),
     [utakmice]
@@ -246,6 +291,7 @@ function Rezultati() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-10">
+        {/* NASLOV SA DUGMETOM ZA PDF NA DESNOJ STRANI */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <h1 className="text-4xl font-black text-slate-800 tracking-tight">REZULTATI</h1>
@@ -253,8 +299,50 @@ function Rezultati() {
               Pregledajte rezultate utakmica.
             </p>
           </div>
+          {/* DUGME ZA PDF – vidljivo samo administratorima i organizatorima */}
+          {canExportPDF() && <button
+            type="button"
+            onClick={handleExportPDF}
+            disabled={pdfLoading}
+            className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-red-700 transition-all shadow-md shadow-red-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2 self-start md:self-end"
+          >
+            {pdfLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Izvoz u toku...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Izvezi u PDF
+              </>
+            )}
+          </button>}
         </div>
 
+        {/* PDF greška – modalni prozor */}
+        {pdfError && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-8 flex flex-col items-center gap-5">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <p className="text-slate-700 font-semibold text-center text-base">{pdfError}</p>
+              <button
+                onClick={() => setPdfError('')}
+                className="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95"
+              >
+                U redu
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filteri */}
         <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <div>
@@ -275,7 +363,7 @@ function Rezultati() {
               </label>
               <select id="takmicenjeId" name="takmicenjeId" value={filters.takmicenjeId} onChange={handleFilterChange} className="w-full px-4 py-3 bg-white border-2 border-amber-100 rounded-2xl focus:border-orange-500 outline-none transition-all font-medium text-slate-700">
                 <option value="">Sve lige</option>
-                {lige.map((liga) => (
+                {filtriraneLige.map((liga) => (
                   <option key={liga.takmicenjeId} value={liga.takmicenjeId}>{liga.naziv}</option>
                 ))}
               </select>
@@ -308,6 +396,7 @@ function Rezultati() {
           </div>
         </section>
 
+        {/* Lideri Statistike */}
         {supportTopScorers && aktivnaLiga && (
           <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -337,9 +426,9 @@ function Rezultati() {
                     <div className="text-sm font-bold text-slate-800">{igrac.igrac.punoIme}</div>
                     <div className="text-xs text-slate-500">{igrac.tim?.naziv || 'Tim'}</div>
                     <div className="mt-2 text-xl font-black text-orange-600">
-                      {formatStatistikaVrijednost(topStrijelciTip?.nazivStatistike, igrac.vrijednost, { mode: 'aggregate' })}
+                      {formatStatistikaVrijednost(topStrijelciTip, igrac.vrijednost, { mode: 'aggregate' })}
                     </div>
-                    <div className="text-[11px] uppercase tracking-widest text-slate-500">{topStrijelciTip?.nazivStatistike}</div>
+                    <div className="text-[11px] uppercase tracking-widest text-slate-500">{topStrijelciTip?.nazivStatistike || 'Poeni/Golovi'}</div>
                   </div>
                 ))}
               </div>
@@ -349,10 +438,11 @@ function Rezultati() {
           </section>
         )}
 
+        {/* Tabela sa rezultatima */}
         {loading ? (
           <div className="text-center py-20">
             <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Ucitavanje rezultata...</p>
+            <p className="mt-4 font-bold text-slate-500 uppercase tracking-widest text-sm">Učitavanje rezultata...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-200 text-center font-bold">
@@ -369,8 +459,8 @@ function Rezultati() {
                 <thead>
                   <tr className="bg-amber-50 text-left">
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Liga</th>
-                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Domaci tim</th>
-                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Gostujuci tim</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Domaći tim</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Gostujući tim</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60 text-center">Rezultat</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Datum</th>
                     <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-amber-900/60">Lokacija</th>
@@ -387,14 +477,14 @@ function Rezultati() {
                             onClick={() => navigate(`/top-strijelci/${utakmica.takmicenje.takmicenjeId}`)}
                             className="text-left font-bold text-orange-600 underline underline-offset-4 hover:text-orange-700"
                           >
-                            {utakmica.takmicenje?.naziv || 'Takmicenje nije definisano'}
+                            {utakmica.takmicenje?.naziv || 'Takmičenje nije definisano'}
                           </button>
                         ) : (
-                          'Takmicenje nije definisano'
+                          'Takmičenje nije definisano'
                         )}
                       </td>
-                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.domaciTim?.naziv || 'Domaci tim'}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.gostujuciTim?.naziv || 'Gostujuci tim'}</td>
+                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.domaciTim?.naziv || 'Domaći tim'}</td>
+                      <td className="px-5 py-4 font-semibold text-slate-800">{utakmica.gostujuciTim?.naziv || 'Gostujući tim'}</td>
                       <td className="px-5 py-4 text-center">
                         <span className="inline-flex min-w-20 justify-center rounded-2xl bg-orange-50 px-4 py-2 text-lg font-black text-orange-600">
                           {getResultLabel(utakmica)}
@@ -419,13 +509,14 @@ function Rezultati() {
           </div>
         )}
 
+        {/* Modal za detalje utakmice */}
         {selectedMatch && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
             <div className="bg-white w-full max-w-4xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <div className="px-8 py-6 border-b border-amber-50 flex justify-between items-start gap-4">
                 <div>
                   <div className="text-xs font-black uppercase tracking-widest text-orange-600 mb-2">
-                    {selectedMatch.takmicenje?.naziv || 'Takmicenje'}
+                    {selectedMatch.takmicenje?.naziv || 'Takmičenje'}
                   </div>
                   <h2 className="text-2xl font-black text-slate-800">Detalji utakmice</h2>
                 </div>
@@ -438,15 +529,15 @@ function Rezultati() {
               <div className="px-8 py-6 overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center text-center mb-6">
                   <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Domaci tim</div>
-                    <div className="text-lg font-black text-slate-800">{selectedMatch.domaciTim?.naziv || 'Domaci tim'}</div>
+                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Domaći tim</div>
+                    <div className="text-lg font-black text-slate-800">{selectedMatch.domaciTim?.naziv || 'Domaći tim'}</div>
                   </div>
                   <div className="rounded-2xl bg-orange-50 px-6 py-4 border border-orange-100">
                     <div className="text-3xl font-black text-orange-600">{getResultLabel(selectedMatch)}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Gostujuci tim</div>
-                    <div className="text-lg font-black text-slate-800">{selectedMatch.gostujuciTim?.naziv || 'Gostujuci tim'}</div>
+                    <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Gostujući tim</div>
+                    <div className="text-lg font-black text-slate-800">{selectedMatch.gostujuciTim?.naziv || 'Gostujući tim'}</div>
                   </div>
                 </div>
 
@@ -482,9 +573,9 @@ function Rezultati() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {selectedMatch.statistikeTimova.map((statistika) => (
                             <div key={statistika.statistikaTimaId} className="border border-amber-100 rounded-2xl p-5">
-                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
                                 <div>
-                                  <div className="font-black text-slate-800 mb-3">{statistika.tim?.naziv || 'Tim'}</div>
+                                  <div className="font-black text-slate-800">{statistika.tim?.naziv || 'Tim'}</div>
                                 </div>
                                 {statistika.tim?.timId && (
                                   <button
@@ -512,7 +603,7 @@ function Rezultati() {
                     </section>
 
                     <section>
-                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika igraca</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 mb-4">Statistika igrača</h3>
                       {selectedMatch.statistikeIgraca?.length ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {groupPlayerStatsByTeam(selectedMatch).map((group) => (
@@ -524,7 +615,7 @@ function Rezultati() {
                                     <div key={statistika.statistikaIgracaId} className="rounded-2xl bg-slate-50 px-4 py-3">
                                       <div className="flex flex-col gap-2">
                                         <div className="flex flex-wrap items-center justify-between gap-3">
-                                          <div className="font-bold text-slate-800">{statistika.korisnik?.punoIme || 'Igrac'}</div>
+                                          <div className="font-bold text-slate-800">{statistika.korisnik?.punoIme || 'Igrač'}</div>
                                           {statistika.korisnik?.korisnikId && (
                                             <button
                                               type="button"
@@ -547,7 +638,7 @@ function Rezultati() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm font-medium text-slate-500">Statistika igraca nije unesena.</p>
+                        <p className="text-sm font-medium text-slate-500">Statistika igrača nije unesena.</p>
                       )}
                     </section>
                   </div>

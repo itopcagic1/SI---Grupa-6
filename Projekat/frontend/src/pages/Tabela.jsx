@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { fetchTabela } from '../api/tabelaApi';
+import { downloadTabelaPDF, canExportPDF } from '../api/pdfApi';
 import { fetchPublicMatches } from '../api/matchApi';
 
 // Boja reda prema poziciji
@@ -58,7 +59,7 @@ function getResultLabel(utakmica) {
 }
 
 function Tabela() {
-  const { id } = useParams(); // takmicenjeId iz URL-a /tabela/:id
+  const { id } = useParams();
 
   const [tabela, setTabela] = useState([]);
   const [takmicenje, setTakmicenje] = useState(null);
@@ -333,12 +334,10 @@ function Tabela() {
                       key={tim.timId}
                       className={`border-t border-amber-50 ${getRedBoja(tim.pozicija)}`}
                     >
-                      {/* Pozicija / medalja */}
                       <td className="px-5 py-4 font-bold text-lg">
                         {getPozicijaLabel(tim.pozicija)}
                       </td>
 
-                      {/* Tim sa logom */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           {tim.logoUrl ? (

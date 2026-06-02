@@ -6,6 +6,7 @@ import { fetchLige, fetchSportovi } from '../api/ligaApi';
 import { fetchTeams } from '../api/teamApi';
 import { unesiRezultat, azurirajRezultat } from '../api/resultApi';
 import { fetchTipoviStatistike, snimiStatistikuIgraca, snimiStatistikuTima } from '../api/statistikaApi';
+import { downloadRasporedPDF, canExportPDF } from '../api/pdfApi';
 import {
   getIgrackiTipoviStatistike,
   getStatistikaInputConfig,
@@ -80,6 +81,29 @@ function Raspored() {
   const [rezultatError, setRezultatError] = useState('');
   const [rezultatSuccess, setRezultatSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('nadolazece');
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+
+  const handleExportPDF = async () => {
+    setPdfError('');
+    if (!filters.takmicenjeId) {
+      setPdfError('Odaberite ligu iz filtera da biste generisali PDF raspored.');
+      setTimeout(() => setPdfError(''), 5000);
+      return;
+    }
+    try {
+      setPdfLoading(true);
+      const izabraniDatum = filters.datum || undefined;
+      await downloadRasporedPDF(filters.takmicenjeId, izabraniDatum, izabraniDatum);
+    } catch (err) {
+      console.error('Greška prilikom generisanja PDF rasporeda:', err);
+      const poruka = err.response?.data?.poruka || 'Nije moguće generisati PDF raspored. Pokušajte ponovo.';
+      setPdfError(poruka);
+      setTimeout(() => setPdfError(''), 5000);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
   const [modalTab, setModalTab] = useState('rezultat');
   const [tipoviStatistike, setTipoviStatistike] = useState([]);
   const [statistikaIgracaForm, setStatistikaIgracaForm] = useState({ korisnikId: '', timId: '', vrijednosti: {} });
@@ -454,7 +478,46 @@ function Raspored() {
               Pregledajte nadolazeće utakmice.
             </p>
           </div>
+          {canExportPDF() && <button
+            type="button"
+            onClick={handleExportPDF}
+            disabled={pdfLoading}
+            className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-red-700 transition-all shadow-md shadow-red-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2 self-start md:self-end"
+          >
+            {pdfLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Izvoz u toku...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Izvezi u PDF
+              </>
+            )}
+          </button>}
         </div>
+
+        {pdfError && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-8 flex flex-col items-center gap-5">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <p className="text-slate-700 font-semibold text-center text-base">{pdfError}</p>
+              <button
+                onClick={() => setPdfError('')}
+                className="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95"
+              >
+                U redu
+              </button>
+            </div>
+          </div>
+        )}
 
         <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
