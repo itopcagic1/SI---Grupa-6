@@ -28,6 +28,11 @@ export const cancelIndividualTerm = async (terminId) => {
   return response.data;
 };
 
+export const cancelPendingReservationRequest = async (zahtjevId) => {
+  const response = await api.delete(`/rezervacije/zahtjevi/${zahtjevId}`, getAuthHeaders());
+  return response.data;
+};
+
 export const joinWaitlist = async (terminId) => {
   const response = await api.post(`/liste-cekanja/termini/${terminId}`, {}, getAuthHeaders());
   return response.data;

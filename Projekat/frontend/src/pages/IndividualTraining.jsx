@@ -78,6 +78,7 @@ export default function IndividualTraining() {
   const [error, setError] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
   const [joiningWaitlistIds, setJoiningWaitlistIds] = useState([]);
+  const [reservationSubmitting, setReservationSubmitting] = useState(false);
 
   const korisnik = localStorage.getItem('korisnik')
     ? JSON.parse(localStorage.getItem('korisnik'))
@@ -132,18 +133,40 @@ export default function IndividualTraining() {
   const closeModal = () => { setModalOpen(false); setSelectedTerm(null); setError(''); };
 
   const handleConfirmReservation = async () => {
-    if (!selectedTerm) return;
+    if (!selectedTerm || reservationSubmitting) return;
+    const selectedTerminId = selectedTerm.terminId;
+    setReservationSubmitting(true);
     try {
-      const response = await reserveIndividualTerm(selectedTerm.terminId);
+      const response = await reserveIndividualTerm(selectedTerminId);
       if (response?.status === 'POTVRDJENA') {
         showNotification('success', 'Uspješno ste rezervisali termin!');
       } else {
         showNotification('warning', 'Vaš zahtjev je poslat na čekanje i biće ručno pregledan od strane vlasnika objekta.');
       }
+      setAllTerms((current) => current.map((termin) => {
+        if (termin.terminId !== selectedTerminId) return termin;
+        if (response?.status === 'POTVRDJENA') {
+          return {
+            ...termin,
+            status: 'ZAUZET',
+            jeMojaRezervacija: true,
+            mojStatusRezervacije: null,
+            mojZahtjevNaCekanju: false,
+          };
+        }
+        return {
+          ...termin,
+          mojStatusRezervacije: 'NA_CEKANJU',
+          mojZahtjevNaCekanju: true,
+          zahtjevId: response?.zahtjevId,
+        };
+      }));
       closeModal();
-      loadTerms();
+      void Promise.allSettled([loadTerms()]);
     } catch (err) {
       setError(err.response?.data?.poruka || 'Rezervacija nije uspjela.');
+    } finally {
+      setReservationSubmitting(false);
     }
   };
 
@@ -302,6 +325,8 @@ export default function IndividualTraining() {
                           // server kaže naListiCekanja=true (pokriva i NA_CEKANJU zahtjeve!) ILI
                           // lokalna lista ima NA_CEKANJU
                           const isMyPending =
+                            (!isMyReservation && termin.mojStatusRezervacije === 'NA_CEKANJU') ||
+                            (!isMyReservation && termin.mojZahtjevNaCekanju === true) ||
                             (!isMyReservation && termin.naListiCekanja === true) ||
                             (!isMyReservation && !!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'NA_CEKANJU');
 
@@ -435,9 +460,9 @@ export default function IndividualTraining() {
                 Odustani
               </button>
               {modalMode === 'reserve' ? (
-                <button type="button" onClick={handleConfirmReservation}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform">
-                  Potvrdi rezervaciju
+                <button type="button" onClick={handleConfirmReservation} disabled={reservationSubmitting}
+                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform disabled:cursor-not-allowed disabled:opacity-60">
+                  {reservationSubmitting ? 'Slanje...' : 'Potvrdi rezervaciju'}
                 </button>
               ) : (
                 <button type="button" onClick={handleConfirmCancellation}

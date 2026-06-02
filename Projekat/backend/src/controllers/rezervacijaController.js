@@ -2,6 +2,7 @@ const {
   getAllTermsService,
   createIndividualReservationService,
   cancelIndividualReservationService,
+  cancelPendingIndividualRequestService,
 } = require('../services/rezervacijaService');
 const { getMojeRezervacijeService } = require('../services/rezervacijaService');
 const {
@@ -117,19 +118,23 @@ const kreirajIndividualnuRezervaciju = async (req, res) => {
     }
 
     // Ako korisnik ima 3 ili više prekršaja, ide u Bull queue i na čekanje
-    const reservationId = result.reservationId;
-    const termStartTime = result.termStartTime;
+    const reservationId = result.zahtjev?.zahtjevId;
+    const termStartTime = result.termin?.vrijemePocetka;
     const delayMilliseconds = calculateTimeoutMilliseconds(termStartTime);
 
-    await reservationQueue.add(
+    reservationQueue.add(
       'check-reservation-timeout',
       { reservationId, termId },
       { delay: delayMilliseconds }
-    );
+    ).catch((queueError) => {
+      console.error('Greska pri zakazivanju provjere pending rezervacije:', queueError);
+    });
 
     return res.status(202).json({
       poruka: 'Vaš zahtjev je poslan na listu čekanja zbog pravila pouzdanosti računa (3 ili više kaznena profila). Vlasnik objekta mora ručno odobriti termin.',
       status: 'NA_CEKANJU',
+      zahtjevId: reservationId,
+      terminId: termId,
     });
 
   } catch (error) {
@@ -176,7 +181,24 @@ const otkaziIndividualnuRezervaciju = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ greska: 'SERVER_ERROR', poruka: error.message });
+    return res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message });
+  }
+};
+
+const otkaziZahtjevZaIndividualnuRezervaciju = async (req, res) => {
+  try {
+    const zahtjevId = parseInt(req.params.id);
+    const korisnikId = parseInt(req.user.korisnikId || req.user.id);
+
+    if (isNaN(zahtjevId)) {
+      return res.status(400).json({ greska: 'INVALID_ID', poruka: 'ID zahtjeva nije validan.' });
+    }
+
+    const rezultat = await cancelPendingIndividualRequestService(zahtjevId, korisnikId);
+    return res.json(rezultat);
+  } catch (error) {
+    console.error(error);
+    return res.status(error.status || 500).json({ greska: error.code || 'SERVER_ERROR', poruka: error.message });
   }
 };
 
@@ -476,6 +498,7 @@ module.exports = {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
   otkaziIndividualnuRezervaciju,
+  otkaziZahtjevZaIndividualnuRezervaciju,
   kreirajGrupniTrening,
   prijaviSeNaGrupniTrening,
   getTrenerGrupniTreninzi,
