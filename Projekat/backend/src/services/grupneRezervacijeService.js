@@ -20,12 +20,11 @@ const kreirajGrupniTreningService = async (terminIdValue, trenerId, maksimalanBr
     throw serviceError('Kapacitet grupe mora biti između 2 i 30.', 400, 'NEVALIDAN_KAPACITET');
   }
 
-  const termin = await prisma.terminObjekta.findUnique({
-    where: { terminId },
-    include: {
-      sportskiObjekat: true,
-    },
-  });
+  // 1. Dohvat termina i trenera odjednom paralelno radi brzine
+  const [termin, trener] = await Promise.all([
+    prisma.terminObjekta.findUnique({ where: { terminId } }),
+    prisma.korisnik.findUnique({ where: { korisnikId: trenerId } })
+  ]);
 
   if (!termin) {
     throw serviceError('Termin nije pronađen.', 404, 'TERMIN_NIJE_PRONADJEN');
@@ -39,61 +38,86 @@ const kreirajGrupniTreningService = async (terminIdValue, trenerId, maksimalanBr
     throw serviceError('Nije moguće rezervisati termin u prošlosti.', 400, 'TERMIN_PROSAO');
   }
 
-  // Provjera da li trener već ima zahtjev za ovaj termin
-  const postojeciZahtjev = await prisma.zahtjevZaRezervaciju.findFirst({
-    where: {
-      terminId,
-      korisnikId: trenerId,
-      status: { in: ['NA_CEKANJU', 'CEKANJE', 'ODOBRENO'] },
-    },
-  });
-
-  if (postojeciZahtjev) {
-    throw serviceError('Već imate aktivan zahtjev za ovaj termin.', 409, 'DUPLI_TERMIN');
-  }
+  // --- ISTA LOGIKA KAO ZA INDIVIDUALNE REZERVACIJE ---
+  const brojPrekrsaja = trener ? trener.brojPreksrenihRezervacija : 0;
+  
+  // Ako trener ima 3 ili više prekršaja, status je 'CEKANJE', inače je odmah 'ODOBRENO'
+  const inicijalniStatus = brojPrekrsaja >= 3 ? 'CEKANJE' : 'ODOBRENO';
 
   return prisma.$transaction(async (tx) => {
-    // 1. Kreiraj zahtjev za rezervaciju
+    
+    // Provjera duplog zahtjeva za ovaj termin
+    const postojeciZahtjev = await tx.zahtjevZaRezervaciju.findFirst({
+      where: {
+        terminId,
+        korisnikId: trenerId,
+        status: { in: ['NA_CEKANJU', 'CEKANJE', 'ODOBRENO'] },
+      },
+    });
+
+    if (postojeciZahtjev) {
+      throw serviceError('Već imate aktivan zahtjev za ovaj termin.', 409, 'DUPLI_TERMIN');
+    }
+
+    // Kreiramo ZAHTJEV sa odgovarajućim statusom
     const zahtjev = await tx.zahtjevZaRezervaciju.create({
       data: {
         terminId,
         korisnikId: trenerId,
         timId: timId,
-        status: 'ODOBRENO',
+        status: inicijalniStatus,
         datumSlanja: new Date(),
-        datumObrade: new Date(),
+        datumObrade: inicijalniStatus === 'ODOBRENO' ? new Date() : null,
       },
     });
 
-    // 2. Kreiraj rezervaciju
-    await tx.rezervacija.create({
-      data: {
-        zahtjevId: zahtjev.zahtjevId,
-        terminId,
-        status: 'POTVRDJENA',
-        datumPotvrde: new Date(),
-      },
-    });
+    let kreiraniTrening = null;
 
-    // 3. Ažuriraj status termina
-    await tx.terminObjekta.update({
-      where: { terminId },
-      data: {
-        status: 'ZAUZET',
-        tipTermina: 'GRUPNI',
-      },
-    });
+    // Ako je trener POUZDAN (nema prekrsaja), zavrsavamo cijeli proces u istoj transakciji.
+    if (inicijalniStatus === 'ODOBRENO') {
+      await tx.rezervacija.create({
+        data: {
+          zahtjevId: zahtjev.zahtjevId,
+          terminId,
+          status: 'POTVRDJENA',
+          datumPotvrde: new Date(),
+        },
+      });
 
-    // 4. Kreiraj grupni trening
-    const grupniTrening = await tx.grupniTrening.create({
-      data: {
-        terminId,
-        trenerId,
-        maksimalanBrojIgraca: maxIgraca,
-      },
-    });
+      await tx.terminObjekta.update({
+        where: { terminId },
+        data: {
+          status: 'ZAUZET',
+          tipTermina: 'GRUPNI',
+        },
+      });
 
-    return grupniTrening;
+      kreiraniTrening = await tx.grupniTrening.create({
+        data: {
+          terminId,
+          trenerId,
+          maksimalanBrojIgraca: maxIgraca,
+        },
+      });
+    } else {
+      // Ako je trener NEPOUZDAN (inicijalniStatus === 'CEKANJE'):
+      // NE kreiramo rezervaciju, NE mijenjamo termin u ZAUZET, NE kreiramo grupni trening.
+      // Sve ovo će se odraditi tek kada Vlasnik objekta odobri zahtjev kroz Vaš postojeći kontroler/odobrenje.
+    }
+
+    // Vraćamo trenutni brzi odgovor (Trener ne čeka ni sekunde)
+    return {
+      status: inicijalniStatus,
+      poruka: inicijalniStatus === 'CEKANJE' 
+        ? 'Zahtjev je poslan na čekanje jer imate 3 ili više prekršaja. Čeka se odobrenje vlasnika objekta.' 
+        : 'Grupni trening je uspješno kreiran.',
+      zahtjevId: zahtjev.zahtjevId,
+      trening: kreiraniTrening,
+    };
+
+  }, {
+    maxWait: 3000,
+    timeout: 7000
   });
 };
 
@@ -103,22 +127,31 @@ const prijaviSeNaGrupniTreningService = async (idParam, korisnikId) => {
     throw serviceError('Neispravan ID.', 400, 'NEVALIDAN_ID');
   }
 
-  // Pronađi grupni trening po treningId ili terminId
-  const grupniTrening = await prisma.grupniTrening.findFirst({
-    where: {
-      OR: [
-        { treningId: id },
-        { terminId: id },
-      ],
-    },
-  });
+  // Paralelno dohvatamo trening i provjeravamo status korisnika (igrača)
+  const [grupniTrening, igrac] = await Promise.all([
+    prisma.grupniTrening.findFirst({
+      where: {
+        OR: [
+          { treningId: id },
+          { terminId: id },
+        ],
+      },
+    }),
+    prisma.korisnik.findUnique({
+      where: { korisnikId }
+    })
+  ]);
 
   if (!grupniTrening) {
     throw serviceError('Grupni trening nije pronađen.', 404, 'TRENING_NIJE_PRONADJEN');
   }
 
+  // --- ISTA LOGIKA KAO ZA INDIVIDUALNE (BLOKADA ZA NEPOUZDANE IGRAČE) ---
+  if (igrac && igrac.brojPreksrenihRezervacija >= 3) {
+    throw serviceError('Nemate pravo prijave na grupni trening jer imate 3 ili više prekršaja.', 403, 'NEPOUZDAN_KORISNIK');
+  }
+
   return prisma.$transaction(async (tx) => {
-    // Dohvati najsvježije podatke o treningu unutar transakcije
     const trening = await tx.grupniTrening.findUnique({
       where: { treningId: grupniTrening.treningId },
       include: {
@@ -134,16 +167,14 @@ const prijaviSeNaGrupniTreningService = async (idParam, korisnikId) => {
       throw serviceError('Nije moguće prijaviti se na trening koji je već počeo ili prošao.', 400, 'TRENING_PROSAO');
     }
 
-    // Prebroji trenutni broj prijavljenih igrača
     const brojPrijava = await tx.prijavaGrupnogTreninga.count({
       where: { treningId: trening.treningId },
     });
 
     if (brojPrijava >= trening.maksimalanBrojIgraca) {
-      throw serviceError('Nažalost, ovaj grupni trening je popunjen', 400, 'POPUNJEN_TRENING');
+      throw serviceError('Nažalost, ovaj grupni trening je popunjen.', 400, 'POPUNJEN_TRENING');
     }
 
-    // Provjeri da li je igrač već prijavljen
     const vecPrijavljen = await tx.prijavaGrupnogTreninga.findUnique({
       where: {
         treningId_korisnikId: {
@@ -157,7 +188,6 @@ const prijaviSeNaGrupniTreningService = async (idParam, korisnikId) => {
       throw serviceError('Već ste prijavljeni na ovaj grupni trening.', 400, 'VEC_PRIJAVLJEN');
     }
 
-    // Kreiraj prijavu
     const prijava = await tx.prijavaGrupnogTreninga.create({
       data: {
         treningId: trening.treningId,
@@ -166,40 +196,42 @@ const prijaviSeNaGrupniTreningService = async (idParam, korisnikId) => {
     });
 
     return prijava;
+  }, {
+    maxWait: 3000,
+    timeout: 7000
   });
 };
 
 const getTrenerGrupniTreninziService = async (trenerId) => {
-  return prisma.grupniTrening.findMany({
+  const parsedTrenerId = parseInt(trenerId, 10);
+  if (isNaN(parsedTrenerId) || parsedTrenerId <= 0) {
+    return [];
+  }
+
+  if (!prisma.zahtjevZaRezervaciju?.findMany) {
+    return [];
+  }
+
+  const zahtjevi = await prisma.zahtjevZaRezervaciju.findMany({
     where: {
-      trenerId,
+      korisnikId: parsedTrenerId,
+      status: { in: ['CEKANJE', 'NA_CEKANJU', 'ODOBRENO', 'POTVRDJENO'] },
+      terminObjekta: {
+        vrijemePocetka: {
+          gt: new Date(),
+        },
+      },
     },
     include: {
       terminObjekta: {
         include: {
           sportskiObjekat: true,
-          zahtjeviZaRezervaciju: {
-            where: { status: 'ODOBRENO' },
-            include: {
-              tim: {
-                select: {
-                  timId: true,
-                  naziv: true,
-                }
-              }
-            }
-          }
         },
       },
-      prijave: {
-        include: {
-          korisnik: {
-            select: {
-              korisnikId: true,
-              punoIme: true,
-              email: true,
-            },
-          },
+      tim: {
+        select: {
+          timId: true,
+          naziv: true,
         },
       },
     },
@@ -209,6 +241,74 @@ const getTrenerGrupniTreninziService = async (trenerId) => {
       },
     },
   });
+
+  if (zahtjevi.length === 0) {
+    return [];
+  }
+
+  const terminIds = zahtjevi.map((z) => z.terminId).filter(Boolean);
+  const treninzi = prisma.grupniTrening?.findMany
+    ? await prisma.grupniTrening.findMany({
+        where: {
+          trenerId: parsedTrenerId,
+          terminId: { in: terminIds },
+        },
+        include: {
+          prijave: {
+            include: {
+              korisnik: {
+                select: {
+                  korisnikId: true,
+                  punoIme: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    : [];
+
+  const treningPoTerminu = new Map(treninzi.map((trening) => [trening.terminId, trening]));
+
+  return zahtjevi.map((z) => {
+    const stvarniTrening = treningPoTerminu.get(z.terminId) || null;
+    const jePotvrdjen = z.status === 'ODOBRENO' || z.status === 'POTVRDJENO';
+    const statusZaFrontend = jePotvrdjen ? 'POTVRDJEN' : 'NA_CEKANJU';
+
+    if (jePotvrdjen && stvarniTrening) {
+      return {
+        treningId: stvarniTrening.treningId,
+        terminId: stvarniTrening.terminId,
+        trenerId: stvarniTrening.trenerId,
+        maksimalanBrojIgraca: stvarniTrening.maksimalanBrojIgraca,
+        statusTreninga: 'POTVRDJEN',
+        terminObjekta: {
+          ...z.terminObjekta,
+          grupniTrening: stvarniTrening,
+          zahtjeviZaRezervaciju: [z],
+        },
+        prijave: stvarniTrening.prijave || [],
+        tim: z.tim,
+      };
+    }
+
+    return {
+      treningId: `zahtjev-${z.zahtjevId}`,
+      zahtjevId: z.zahtjevId,
+      terminId: z.terminId,
+      trenerId: z.korisnikId,
+      maksimalanBrojIgraca: stvarniTrening?.maksimalanBrojIgraca || 10,
+      statusTreninga: statusZaFrontend,
+      terminObjekta: {
+        ...z.terminObjekta,
+        grupniTrening: stvarniTrening,
+        zahtjeviZaRezervaciju: [z],
+      },
+      prijave: stvarniTrening?.prijave || [],
+      tim: z.tim,
+    };
+  });
 };
 
 const getGrupniTreninziService = async (korisnikId) => {
@@ -216,7 +316,10 @@ const getGrupniTreninziService = async (korisnikId) => {
     return [];
   }
 
-  // 1. Get the player's teams
+  if (!prisma.grupniTrening?.findMany || !prisma.clanstvoTima?.findMany) {
+    return [];
+  }
+
   const playerClanstva = await prisma.clanstvoTima.findMany({
     where: {
       korisnikId: parseInt(korisnikId, 10),
@@ -230,7 +333,6 @@ const getGrupniTreninziService = async (korisnikId) => {
 
   const teamIds = playerClanstva.map(c => c.timId);
 
-  // 2. Get the coaches of those teams
   const coachClanstva = await prisma.clanstvoTima.findMany({
     where: {
       timId: { in: teamIds },
@@ -244,9 +346,6 @@ const getGrupniTreninziService = async (korisnikId) => {
 
   const coachIds = coachClanstva.map(c => c.korisnikId);
 
-  // 3. Find group trainings that are:
-  // - Either scheduled for one of the player's teams (zahtjevZaRezervaciju.timId is in teamIds)
-  // - OR scheduled without a team (zahtjevZaRezervaciju.timId is null) but created by one of the player's team's coaches (trenerId is in coachIds)
   return prisma.grupniTrening.findMany({
     where: {
       terminObjekta: {
@@ -322,66 +421,76 @@ const otkaziGrupniTreningService = async (treningIdValue, trenerId) => {
     throw serviceError('Neispravan ID treninga.', 400, 'NEVALIDAN_ID');
   }
 
-  const training = await prisma.grupniTrening.findUnique({
-    where: { treningId },
-    include: {
-      terminObjekta: {
-        include: {
-          zahtjeviZaRezervaciju: {
-            where: { status: 'ODOBRENO' }
+  return prisma.$transaction(async (tx) => {
+    const training = await tx.grupniTrening.findUnique({
+      where: { treningId },
+      include: {
+        terminObjekta: {
+          include: {
+            zahtjeviZaRezervaciju: {
+              where: { status: 'ODOBRENO' }
+            }
           }
         }
       }
+    });
+
+    if (!training) {
+      throw serviceError('Grupni trening nije pronađen.', 404, 'TRENING_NIJE_PRONADJEN');
     }
-  });
 
-  if (!training) {
-    throw serviceError('Grupni trening nije pronađen.', 404, 'TRENING_NIJE_PRONADJEN');
-  }
+    if (training.trenerId !== trenerId) {
+      throw serviceError('Nemate pravo da otkažete ovaj trening.', 403, 'NEOVLASTEN');
+    }
 
-  if (training.trenerId !== trenerId) {
-    throw serviceError('Nemate pravo da otkažete ovaj trening.', 403, 'NEOVLASTEN');
-  }
+    if (new Date(training.terminObjekta.vrijemePocetka) <= new Date()) {
+      throw serviceError('Nije moguće otkazati trening koji je već počeo ili prošao.', 400, 'TRENING_PROSAO');
+    }
 
-  if (new Date(training.terminObjekta.vrijemePocetka) <= new Date()) {
-    throw serviceError('Nije moguće otkazati trening koji je već počeo ili prošao.', 400, 'TRENING_PROSAO');
-  }
+    const operacije = [];
 
-  return prisma.$transaction(async (tx) => {
-    // 1. Obriši prijave za trening
     await tx.prijavaGrupnogTreninga.deleteMany({
       where: { treningId }
     });
 
-    // 2. Obriši sam grupni trening
-    await tx.grupniTrening.delete({
-      where: { treningId }
-    });
+    operacije.push(
+      tx.grupniTrening.delete({ where: { treningId } })
+    );
 
-    // 3. Otkaži rezervaciju i zahtjev
     const odobreniZahtjev = training.terminObjekta.zahtjeviZaRezervaciju[0];
     if (odobreniZahtjev) {
-      await tx.rezervacija.updateMany({
-        where: { zahtjevId: odobreniZahtjev.zahtjevId },
-        data: { status: 'OTKAZANA' }
-      });
+      operacije.push(
+        tx.rezervacija.updateMany({
+          where: { zahtjevId: odobreniZahtjev.zahtjevId },
+          data: { status: 'OTKAZANA' }
+        })
+      );
 
-      await tx.zahtjevZaRezervaciju.update({
-        where: { zahtjevId: odobreniZahtjev.zahtjevId },
-        data: { status: 'OTKAZANO' }
-      });
+      operacije.push(
+        tx.zahtjevZaRezervaciju.update({
+          where: { zahtjevId: odobreniZahtjev.zahtjevId },
+          data: { status: 'OTKAZANO' }
+        })
+      );
     }
 
-    // 4. Vrati termin u status SLOBODAN i tipTermina u NULL
-    await tx.terminObjekta.update({
-      where: { terminId: training.terminId },
-      data: {
-        status: 'SLOBODAN',
-        tipTermina: null
-      }
-    });
+    operacije.push(
+      tx.terminObjekta.update({
+        where: { terminId: training.terminId },
+        data: {
+          status: 'SLOBODAN',
+          tipTermina: null
+        }
+      })
+    );
+
+    await Promise.all(operacije);
 
     return { poruka: 'Grupni trening je uspješno otkazan.' };
+    
+  }, {
+    maxWait: 5000,
+    timeout: 15000
   });
 };
 

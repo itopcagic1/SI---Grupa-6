@@ -5,14 +5,15 @@ import {
   reserveIndividualTerm,
   cancelIndividualTerm,
   joinWaitlist,
+  getMojeRezervacije, 
 } from '../api/reservationApi';
 
 const DAY_LABELS = ['NED', 'PON', 'UTO', 'SRI', 'ČET', 'PET', 'SUB'];
 
 function pad(value) { return String(value).padStart(2, '0'); }
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
+function formatDate(dateInput) {
+  const date = new Date(dateInput);
   return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}.`;
 }
 
@@ -57,8 +58,8 @@ function groupTermsByDay(terms) {
 
 function tipTerminaLabel(tip) {
   if (!tip) return null;
-  const map = { JEDNOM: 'Jednokratno', SEDMICNO: 'Sedmično', MJESECNO: 'Mjesečno', INDIVIDUALNI: 'Individualno' };
-  return map[tip] || tip;
+  const map = { INDIVIDUALNI: 'Individualni', GRUPNI: 'Grupni' };
+  return map[tip] || null;
 }
 
 function formatWeekRange(start) {
@@ -68,6 +69,7 @@ function formatWeekRange(start) {
 
 export default function IndividualTraining() {
   const [allTerms, setAllTerms] = useState([]);
+  const [mojeRezervacijeLista, setMojeRezervacijeLista] = useState([]); // Dodano za praćenje tvojih termina
   const [loading, setLoading] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -76,6 +78,7 @@ export default function IndividualTraining() {
   const [error, setError] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
   const [joiningWaitlistIds, setJoiningWaitlistIds] = useState([]);
+  const [reservationSubmitting, setReservationSubmitting] = useState(false);
 
   const korisnik = localStorage.getItem('korisnik')
     ? JSON.parse(localStorage.getItem('korisnik'))
@@ -105,35 +108,65 @@ export default function IndividualTraining() {
   const loadTerms = async () => {
     setLoading(true);
     try {
-      const response = await getFreeIndividualTerms();
-      const podaci = Array.isArray(response) ? response : (response?.termini || []);
+      // Paralelno učitavamo sve slobodne/zauzete termine i specifično rezervacije ovog igrača
+      const [termsResponse, rezResponse] = await Promise.all([
+        getFreeIndividualTerms(),
+        getMojeRezervacije ? getMojeRezervacije() : { rezervacije: [] }
+      ]);
+
+      const podaci = Array.isArray(termsResponse) ? termsResponse : (termsResponse?.termini || []);
       setAllTerms(podaci);
-    } catch {
+
+      const mojeRez = Array.isArray(rezResponse) ? rezResponse : (rezResponse?.rezervacije || []);
+      setMojeRezervacijeLista(mojeRez);
+    } catch (err) {
       showNotification('error', 'Neuspješno učitavanje termina.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadTerms(); }, []);
+  useEffect(() => { if (isPlayer) { loadTerms(); } }, [isPlayer]);
 
   const openReservationModal = (termin) => { setSelectedTerm(termin); setModalMode('reserve'); setModalOpen(true); setError(''); };
   const openCancelModal = (termin) => { setSelectedTerm(termin); setModalMode('cancel'); setModalOpen(true); setError(''); };
   const closeModal = () => { setModalOpen(false); setSelectedTerm(null); setError(''); };
 
   const handleConfirmReservation = async () => {
-    if (!selectedTerm) return;
+    if (!selectedTerm || reservationSubmitting) return;
+    const selectedTerminId = selectedTerm.terminId;
+    setReservationSubmitting(true);
     try {
-      const response = await reserveIndividualTerm(selectedTerm.terminId);
+      const response = await reserveIndividualTerm(selectedTerminId);
       if (response?.status === 'POTVRDJENA') {
         showNotification('success', 'Uspješno ste rezervisali termin!');
       } else {
         showNotification('warning', 'Vaš zahtjev je poslat na čekanje i biće ručno pregledan od strane vlasnika objekta.');
       }
+      setAllTerms((current) => current.map((termin) => {
+        if (termin.terminId !== selectedTerminId) return termin;
+        if (response?.status === 'POTVRDJENA') {
+          return {
+            ...termin,
+            status: 'ZAUZET',
+            jeMojaRezervacija: true,
+            mojStatusRezervacije: null,
+            mojZahtjevNaCekanju: false,
+          };
+        }
+        return {
+          ...termin,
+          mojStatusRezervacije: 'NA_CEKANJU',
+          mojZahtjevNaCekanju: true,
+          zahtjevId: response?.zahtjevId,
+        };
+      }));
       closeModal();
-      loadTerms();
+      void Promise.allSettled([loadTerms()]);
     } catch (err) {
       setError(err.response?.data?.poruka || 'Rezervacija nije uspjela.');
+    } finally {
+      setReservationSubmitting(false);
     }
   };
 
@@ -222,7 +255,7 @@ export default function IndividualTraining() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>
-                Zauzeto
+                Zauzeto / Na čekanju
               </span>
             </div>
 
@@ -254,7 +287,7 @@ export default function IndividualTraining() {
             {/* Grid sedmice */}
             <div className="grid gap-4 lg:grid-cols-7">
               {weekDays.map((day) => {
-                const dayKey = formatDate(day.date.toISOString());
+                const dayKey = formatDate(day.date);
                 const dayTerms = groupedTerms[dayKey] || [];
 
                 return (
@@ -271,9 +304,37 @@ export default function IndividualTraining() {
                     ) : (
                       <div className="space-y-3">
                         {dayTerms.map((termin) => {
-                          const isFree = termin.status === 'SLOBODAN';
-                          const isMyReservation = termin.jeMojaRezervacija || termin.status === 'POTVRDJENA';
-                          const isOccupied = (termin.status === 'ZAUZET' || termin.status === 'NA_CEKANJU') && !isMyReservation;
+                          // POPRAVLJENO: Provjeravamo da li se termin nalazi među mojim rezervacijama (bilo POTVRDJENA ili NA_CEKANJU)
+                          // BUG FIX: Koristimo server-side flagove (jeMojaRezervacija, naListiCekanja)
+                          // koje getAllTermsService već ispravno računa, umjesto lokalnog lookuupa
+                          // koji je imao race condition i nije pokrivao NA_CEKANJU zahtjeve.
+                          //
+                          // Fallback na lokalnu listu (mojeRezervacijeLista) samo ako server-side
+                          // flagovi nisu dostupni (starija verzija API-ja).
+                          const pronadjenaMojaRezervacija = mojeRezervacijeLista.find(
+                            (r) => r.terminId === termin.terminId
+                          );
+
+                          // Moja potvrđena rezervacija: server kaže jeMojaRezervacija=true ILI
+                          // lokalna lista ima POTVRDJENA za ovaj termin
+                          const isMyReservation =
+                            termin.jeMojaRezervacija === true ||
+                            (!!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'POTVRDJENA');
+
+                          // Na čekanju (nepouzdan igrač poslao zahtjev, vlasnik još nije odobrio):
+                          // server kaže naListiCekanja=true (pokriva i NA_CEKANJU zahtjeve!) ILI
+                          // lokalna lista ima NA_CEKANJU
+                          const isMyPending =
+                            (!isMyReservation && termin.mojStatusRezervacije === 'NA_CEKANJU') ||
+                            (!isMyReservation && termin.mojZahtjevNaCekanju === true) ||
+                            (!isMyReservation && termin.naListiCekanja === true) ||
+                            (!isMyReservation && !!pronadjenaMojaRezervacija && pronadjenaMojaRezervacija.status === 'NA_CEKANJU');
+
+                          // Slobodan: termin je SLOBODAN, nije moj, nije na čekanju
+                          const isFree = termin.status === 'SLOBODAN' && !isMyReservation && !isMyPending;
+
+                          // Zauzet tuđi termin
+                          const isOccupied = !isFree && !isMyReservation && !isMyPending;
                           const isJoining = joiningWaitlistIds.includes(termin.terminId);
 
                           return (
@@ -284,6 +345,8 @@ export default function IndividualTraining() {
                               onClick={() => {
                                 if (isFree) openReservationModal(termin);
                                 if (isMyReservation) openCancelModal(termin);
+                                // BUG FIX: Igrač može povući i zahtjev koji je NA_CEKANJU
+                                if (isMyPending) openCancelModal(termin);
                                 if (isOccupied && !termin.naListiCekanja) handleJoinWaitlist(termin);
                               }}
                               className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition
@@ -291,6 +354,8 @@ export default function IndividualTraining() {
                                   ? 'border-green-100 bg-white hover:border-green-400 hover:bg-green-50/30 cursor-pointer'
                                   : isMyReservation
                                   ? 'border-blue-100 bg-blue-50/30 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+                                  : isMyPending
+                                  ? 'border-amber-200 bg-amber-50/40 opacity-80 cursor-not-allowed'
                                   : 'border-orange-100 bg-orange-50/25 hover:border-orange-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75'
                                 }`}
                             >
@@ -298,8 +363,8 @@ export default function IndividualTraining() {
                                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border
                                   ${isFree ? 'bg-green-50 text-green-700 border-green-100'
                                   : isMyReservation ? 'bg-blue-50 text-blue-700 border-blue-100'
-                                  : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
-                                  {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : 'Zauzeto'}
+                                  : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                  {isFree ? 'Slobodno' : isMyReservation ? 'Vaš Termin' : isMyPending ? 'Na čekanju' : 'Zauzeto'}
                                 </span>
                               </div>
                               <div className="font-bold text-slate-900 text-sm">
@@ -308,7 +373,7 @@ export default function IndividualTraining() {
                               <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
                                 {termin.sportskiObjekat?.naziv || termin.objekat || 'Sportski objekat'}
                               </div>
-                              {termin.tipTermina && (
+                              {tipTerminaLabel(termin.tipTermina) && (
                                 <div className="mt-0.5 text-[10px] text-slate-400">
                                   {tipTerminaLabel(termin.tipTermina)}
                                 </div>
@@ -316,6 +381,11 @@ export default function IndividualTraining() {
                               {isMyReservation && (
                                 <div className="mt-2 text-[10px] text-blue-500 font-black uppercase tracking-wide">
                                   Kliknite za otkazivanje
+                                </div>
+                              )}
+                              {isMyPending && (
+                                <div className="mt-2 text-[10px] text-amber-600 font-black uppercase tracking-wide">
+                                  Čeka odobrenje · Klikni za povlačenje
                                 </div>
                               )}
                               {isOccupied && (
@@ -345,10 +415,10 @@ export default function IndividualTraining() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                  {modalMode === 'reserve' ? 'Potvrda rezervacije' : 'Otkazivanje rezervacije'}
+                  {modalMode === 'reserve' ? 'Potvrda rezervacije' : selectedTerm?.naListiCekanja ? 'Povlačenje zahtjeva' : 'Otkazivanje rezervacije'}
                 </h2>
                 <p className="mt-1 text-xs text-slate-400 font-medium">
-                  {modalMode === 'reserve' ? 'Potvrdite rezervaciju termina.' : 'Termin će postati slobodan.'}
+                  {modalMode === 'reserve' ? 'Potvrdite rezervaciju termina.' : selectedTerm?.naListiCekanja ? 'Vaš zahtjev na čekanju bit će povučen.' : 'Termin će postati slobodan.'}
                 </p>
               </div>
               <button type="button" onClick={closeModal}
@@ -370,7 +440,7 @@ export default function IndividualTraining() {
                 <span className="text-slate-400 font-semibold uppercase tracking-wide">Objekat</span>
                 <span>{selectedTerm.sportskiObjekat?.naziv || selectedTerm.objekat || 'Sportski objekat'}</span>
               </div>
-              {selectedTerm.tipTermina && (
+              {tipTerminaLabel(selectedTerm.tipTermina) && (
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-semibold uppercase tracking-wide">Tip</span>
                   <span>{tipTerminaLabel(selectedTerm.tipTermina)}</span>
@@ -390,14 +460,14 @@ export default function IndividualTraining() {
                 Odustani
               </button>
               {modalMode === 'reserve' ? (
-                <button type="button" onClick={handleConfirmReservation}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform">
-                  Potvrdi rezervaciju
+                <button type="button" onClick={handleConfirmReservation} disabled={reservationSubmitting}
+                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform disabled:cursor-not-allowed disabled:opacity-60">
+                  {reservationSubmitting ? 'Slanje...' : 'Potvrdi rezervaciju'}
                 </button>
               ) : (
                 <button type="button" onClick={handleConfirmCancellation}
                   className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-700 transition-all shadow-md active:scale-95 transform">
-                  Otkaži rezervaciju
+                  {selectedTerm?.naListiCekanja ? 'Povuci zahtjev' : 'Otkaži rezervaciju'}
                 </button>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { dohvatiStatistikuTima, dohvatiTakmicenjaTima } from '../api/statistikaApi';
 import { formatStatistikaVrijednost } from '../utils/statistikaTipovi';
@@ -124,8 +124,30 @@ function StatistikaTima() {
 
             <div className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-amber-900/60">Takmičenje</p>
-              <p className="text-2xl font-black text-slate-800 mt-2">{podatki.takmicenje?.naziv || '-'}</p>
-              <p className="text-sm text-slate-500 mt-1">Sezona {podatki.takmicenje?.sezona || '-'}</p>
+            <div className="flex items-center gap-3">
+              <p className="text-2xl font-black text-slate-800 leading-none">{podatki.takmicenje?.naziv || '-'}</p>
+              {(() => {
+                const tabelaId = takmicenjeId || podatki?.takmicenje?.takmicenjeId || podatki?.takmicenje?.id || sve_lige?.[0]?.takmicenjeId || sve_lige?.[0]?.id;
+                const shouldShow = Boolean(podatki?.takmicenje) || (Array.isArray(sve_lige) && sve_lige.length > 0);
+                if (!shouldShow) return null;
+                if (!tabelaId) {
+                  return (
+                    <span className="ml-4 inline-flex items-center px-3 py-1 rounded-full bg-orange-200 text-white text-sm font-black opacity-60">
+                      Tabela
+                    </span>
+                  );
+                }
+                return (
+                  <Link
+                    to={`/tabela/${tabelaId}`}
+                      className="inline-flex items-center px-3 py-1 rounded-full bg-orange-500 text-white text-sm font-black hover:bg-orange-600 transition"
+                  >
+                    Tabela
+                  </Link>
+                );
+              })()}
+            </div>
+            <p className="text-sm text-slate-500 mt-1">Sezona {podatki.takmicenje?.sezona || '-'}</p>
             </div>
 
             <div className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm">

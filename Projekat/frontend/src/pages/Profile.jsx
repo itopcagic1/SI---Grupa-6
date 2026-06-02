@@ -34,6 +34,54 @@ const Profile = () => {
     const isPlayer = korisnikData?.trenutnaUloga === 'IGRAC' || korisnikData?.uloga === 'IGRAC';
     const isNavijac = korisnikData?.trenutnaUloga === 'NAVIJAC' || korisnikData?.uloga === 'NAVIJAC';
 
+    // WebSocket za osluškivanje oslobađanja termina u real-time-u
+    useEffect(() => {
+        const socketUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
+        const ws = new WebSocket(socketUrl);
+
+        ws.onopen = () => {
+            console.log('🔗 Povezan na WebSocket za listu čekanja.');
+            const token = localStorage.getItem('token');
+            if (token) {
+                ws.send(JSON.stringify({ type: 'auth', token }));
+            }
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.event === 'termin-oslobodjen' || data.type === 'termin-oslobodjen') {
+                    const oslobodjeniTerminId = data.terminId || data.payload?.terminId;
+                    
+                    // Ažuriramo status termina unutar niza stavki
+                    setWaitlistItems((currentItems) => 
+                        currentItems.map((item) => {
+                            if (item.termin.terminId === oslobodjeniTerminId) {
+                                return {
+                                    ...item,
+                                    termin: { ...item.termin, status: 'SLOBODAN' }
+                                };
+                            }
+                            return item;
+                        })
+                    );
+                    
+                    setMessage({ 
+                        type: 'success', 
+                        text: data.poruka || 'Jedan od vaših termina sa liste čekanja je upravo OSLOBOĐEN! Požurite i rezervišite!' 
+                    });
+                }
+            } catch (err) {
+                console.error("Greška pri obradi WS poruke:", err);
+            }
+        };
+
+        return () => {
+            ws.close();
+        };
+    }, []);
+
     const fetchFavorites = async () => {
         try {
             const data = await getOmiljeniTimovi();
@@ -316,33 +364,58 @@ const Profile = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {waitlistItems.map((item) => (
-                                        <div key={item.stavkaId} className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                <div>
-                                                    <div className="text-sm font-black text-slate-800">
-                                                        {formatDateTime(item.termin.vrijemePocetka)}
+                                    {waitlistItems.map((item) => {
+                                        const isSlobodan = item.termin?.status === 'SLOBODAN';
+                                        
+                                        return (
+                                            <div 
+                                                key={item.stavkaId} 
+                                                className={`rounded-2xl border p-4 transition-all duration-300 ${
+                                                    isSlobodan 
+                                                        ? 'border-green-200 bg-green-50/70 animate-pulse shadow-sm shadow-green-100' 
+                                                        : 'border-amber-100 bg-amber-50/50'
+                                                }`}
+                                            >
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <div className="text-sm font-black text-slate-800">
+                                                                {formatDateTime(item.termin?.vrijemePocetka)}
+                                                            </div>
+                                                            {isSlobodan && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-green-100 text-green-800 uppercase tracking-wider border border-green-200">
+                                                                    🔥 Slobodan 
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-1 text-xs font-semibold text-slate-500">
+                                                            {item.termin?.sportskiObjekat?.naziv || 'Sportski objekat'}
+                                                            {item.termin?.sportskiObjekat?.adresa ? `, ${item.termin.sportskiObjekat.adresa}` : ''}
+                                                        </div>
+                                                        <div className="mt-1 flex items-center gap-3">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                                                                Redni broj: {item.redniBroj}
+                                                            </span>
+                                                            {isSlobodan && (
+                                                                <span className="text-xs font-black text-green-700">
+                                                                    ⚡ Požurite i rezervišite!
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="mt-1 text-xs font-semibold text-slate-500">
-                                                        {item.termin.sportskiObjekat?.naziv || 'Sportski objekat'}
-                                                        {item.termin.sportskiObjekat?.adresa ? `, ${item.termin.sportskiObjekat.adresa}` : ''}
-                                                    </div>
-                                                    <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
-                                                        Redni broj: {item.redniBroj}
-                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleLeaveWaitlist(item.termin?.terminId)}
+                                                        disabled={removingWaitlistId === item.termin?.terminId}
+                                                        className="h-10 w-10 shrink-0 rounded-full border border-red-100 bg-white text-sm font-black text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                                                        aria-label="Ukloni sa liste čekanja"
+                                                    >
+                                                        X
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleLeaveWaitlist(item.termin.terminId)}
-                                                    disabled={removingWaitlistId === item.termin.terminId}
-                                                    className="h-10 w-10 shrink-0 rounded-full border border-red-100 bg-white text-sm font-black text-red-600 transition hover:bg-red-50 disabled:opacity-60"
-                                                    aria-label="Ukloni sa liste čekanja"
-                                                >
-                                                    X
-                                                </button>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

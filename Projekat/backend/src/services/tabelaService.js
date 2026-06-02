@@ -1,92 +1,166 @@
 const prisma = require('../config/db');
 
-const getTabelaZaTakmicenje = async (takmicenjeId, sortBy = 'ukupniBodovi', sezona = null) => {
+function napraviPrazanRed(tim) {
+  return {
+    timId: tim.timId,
+    naziv: tim.naziv,
+    logoUrl: tim.logoUrl,
+    odigrane: 0,
+    pobjede: 0,
+    nerijeseno: 0,
+    porazi: 0,
+    golovi: 0,
+    primljeniGolovi: 0,
+    golRazlika: 0,
+    bodovi: 0
+  };
+}
 
-  // Provjeri da li takmicenje postoji
+function primijeniRezultat(red, datiGolovi, primljeniGolovi) {
+  red.odigrane += 1;
+  red.golovi += datiGolovi;
+  red.primljeniGolovi += primljeniGolovi;
+  red.golRazlika = red.golovi - red.primljeniGolovi;
+
+  if (datiGolovi > primljeniGolovi) {
+    red.pobjede += 1;
+    red.bodovi += 3;
+  } else if (datiGolovi === primljeniGolovi) {
+    red.nerijeseno += 1;
+    red.bodovi += 1;
+  } else {
+    red.porazi += 1;
+  }
+}
+
+const getTabelaZaTakmicenje = async (takmicenjeId, sortBy = 'ukupniBodovi', sezona = null) => {
+  const takmicenjeIdNumber = Number(takmicenjeId);
+
+  // Provjeri da li takmičenje postoji
   const takmicenje = await prisma.takmicenje.findUnique({
-    where: { takmicenjeId: parseInt(takmicenjeId) },
+    where: { takmicenjeId: takmicenjeIdNumber },
     select: { takmicenjeId: true, naziv: true, sezona: true }
   });
 
-  if (!takmicenje) throw new Error('Takmicenje nije pronađeno');
+  if (!takmicenje) {
+    throw new Error('Takmicenje nije pronađeno');
+  }
 
   // Ako je proslijeđena sezona a ne poklapa se, vrati praznu tabelu
   if (sezona && takmicenje.sezona !== sezona) {
     return { takmicenje, tabela: [] };
   }
 
-  // Dohvati sve plasmane za ovo takmicenje, sa podacima o timu
-  const plasmani = await prisma.plasmanNaTabeli.findMany({
-    where: { takmicenjeId: parseInt(takmicenjeId) },
+  // Dohvati sve timove koji učestvuju u takmičenju
+  const ucesca = await prisma.ucesceUTakmicenju.findMany({
+    where: { takmicenjeId: takmicenjeIdNumber },
     include: {
       tim: {
-        select: { timId: true, naziv: true, logoUrl: true }
+        select: {
+          timId: true,
+          naziv: true,
+          logoUrl: true
+        }
       }
     }
   });
 
-  if (plasmani.length === 0) return { takmicenje, tabela: [] };
+  // Ako nema učešća, pokušaj fallback preko plasmana
+  let timovi = ucesca.map((ucesce) => ucesce.tim);
 
-  // Za svaki tim izracunaj golove iz RezultatUtakmice
-  const tabela = await Promise.all(plasmani.map(async (plasman) => {
-    const timId = plasman.timId;
-
-    const rezultati = await prisma.rezultatUtakmice.findMany({
-      where: {
-        utakmica: {
-          takmicenjeId: parseInt(takmicenjeId),
-          OR: [{ domaciTimId: timId }, { gostujuciTimId: timId }]
-        }
-      },
+  if (timovi.length === 0) {
+    const plasmani = await prisma.plasmanNaTabeli.findMany({
+      where: { takmicenjeId: takmicenjeIdNumber },
       include: {
-        utakmica: { select: { domaciTimId: true, gostujuciTimId: true } }
+        tim: {
+          select: {
+            timId: true,
+            naziv: true,
+            logoUrl: true
+          }
+        }
       }
     });
 
-    // Saberi golove za i protiv
-    let golovi = 0;
-    let primljeniGolovi = 0;
+    timovi = plasmani.map((plasman) => plasman.tim);
+  }
 
-    rezultati.forEach(r => {
-      if (r.utakmica.domaciTimId === timId) {
-        golovi += r.rezultatDomacin;
-        primljeniGolovi += r.rezultatGost;
-      } else {
-        golovi += r.rezultatGost;
-        primljeniGolovi += r.rezultatDomacin;
-      }
-    });
+  if (timovi.length === 0) {
+    return { takmicenje, tabela: [] };
+  }
 
-    return {
-      timId: plasman.timId,
-      naziv: plasman.tim.naziv,
-      logoUrl: plasman.tim.logoUrl,
-      odigrane: plasman.brojPobjeda + plasman.brojNerijesenih + plasman.brojPoraza,
-      pobjede: plasman.brojPobjeda,
-      nerijeseno: plasman.brojNerijesenih,
-      porazi: plasman.brojPoraza,
-      golovi,
-      primljeniGolovi,
-      golRazlika: golovi - primljeniGolovi,
-      bodovi: plasman.ukupniBodovi
-    };
-  }));
+  // Napravi početnu tabelu sa nulama za sve timove
+  const tabelaMap = new Map();
 
-  // Sortiraj – bodovi primarno, gol razlika kao tiebreaker
-  const sortirano = tabela.sort((a, b) => {
-    if (sortBy === 'pobjede') return b.pobjede - a.pobjede;
-    if (sortBy === 'golRazlika') return b.golRazlika - a.golRazlika;
-    if (b.bodovi !== a.bodovi) return b.bodovi - a.bodovi;
-    return b.golRazlika - a.golRazlika;
+  timovi.forEach((tim) => {
+    tabelaMap.set(tim.timId, napraviPrazanRed(tim));
   });
 
-  // Dodaj poziciju (1, 2, 3...) na osnovu sortiranja
-  const saPozicijom = sortirano.map((tim, index) => ({
+  // Dohvati sve rezultate utakmica za ovo takmičenje
+  const rezultati = await prisma.rezultatUtakmice.findMany({
+    where: {
+      utakmica: {
+        takmicenjeId: takmicenjeIdNumber
+      }
+    },
+    include: {
+      utakmica: {
+        select: {
+          domaciTimId: true,
+          gostujuciTimId: true
+        }
+      }
+    }
+  });
+
+  // Svaki uneseni rezultat odmah mijenja tabelu
+  rezultati.forEach((rezultat) => {
+    const domaciTimId = rezultat.utakmica.domaciTimId;
+    const gostujuciTimId = rezultat.utakmica.gostujuciTimId;
+
+    const domacin = tabelaMap.get(domaciTimId);
+    const gost = tabelaMap.get(gostujuciTimId);
+
+    if (!domacin || !gost) return;
+
+    primijeniRezultat(
+      domacin,
+      rezultat.rezultatDomacin,
+      rezultat.rezultatGost
+    );
+
+    primijeniRezultat(
+      gost,
+      rezultat.rezultatGost,
+      rezultat.rezultatDomacin
+    );
+  });
+
+  let tabela = Array.from(tabelaMap.values());
+
+  // Sortiranje
+  tabela.sort((a, b) => {
+    if (sortBy === 'golRazlika') {
+      if (b.golRazlika !== a.golRazlika) return b.golRazlika - a.golRazlika;
+      if (b.bodovi !== a.bodovi) return b.bodovi - a.bodovi;
+      return b.golovi - a.golovi;
+    }
+
+    // default: bodovi
+    if (b.bodovi !== a.bodovi) return b.bodovi - a.bodovi;
+    if (b.golRazlika !== a.golRazlika) return b.golRazlika - a.golRazlika;
+    if (b.golovi !== a.golovi) return b.golovi - a.golovi;
+
+    return a.naziv.localeCompare(b.naziv);
+  });
+
+  // Dodaj poziciju
+  tabela = tabela.map((tim, index) => ({
     pozicija: index + 1,
     ...tim
   }));
 
-  return { takmicenje, tabela: saPozicijom };
+  return { takmicenje, tabela };
 };
 
 module.exports = { getTabelaZaTakmicenje };
