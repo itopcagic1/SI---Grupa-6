@@ -308,4 +308,104 @@ async function generateRezultatiPDF(takmicenjeId, datumOd, datumDo) {
   });
 }
 
-module.exports = { generateTabelaPDF, generateRezultatiPDF };
+async function generateRasporedPDF(takmicenjeId, datumOd, datumDo) {
+  const takmicenje = await prisma.takmicenje.findUnique({
+    where: { takmicenjeId: parseInt(takmicenjeId) },
+    select: { naziv: true, sezona: true },
+  });
+
+  if (!takmicenje) throw new Error('Takmicenje nije pronađeno');
+
+  const where = { takmicenjeId: parseInt(takmicenjeId) };
+
+  if (datumOd || datumDo) {
+    where.vrijemePocetka = {};
+    if (datumOd) where.vrijemePocetka.gte = new Date(datumOd);
+    if (datumDo) {
+      const do_ = new Date(datumDo);
+      do_.setHours(23, 59, 59, 999);
+      where.vrijemePocetka.lte = do_;
+    }
+  }
+
+  const utakmice = await prisma.utakmica.findMany({
+    where,
+    include: {
+      domaciTim:    { select: { naziv: true } },
+      gostujuciTim: { select: { naziv: true } },
+      sportskiObjekat: { select: { naziv: true } },
+    },
+    orderBy: { vrijemePocetka: 'asc' },
+  });
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const chunks = [];
+
+    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    crtajZaglavlje(doc, takmicenje.naziv, takmicenje.sezona, 'Raspored utakmica');
+
+    if (datumOd || datumDo) {
+      const od  = datumOd ? formatDatum(new Date(datumOd).setHours(0, 0, 0))      : 'pocetka';
+      const do_ = datumDo ? formatDatum(new Date(datumDo).setHours(23, 59, 59))   : 'danas';
+      doc
+        .fontSize(9).font('Helvetica').fillColor('#64748b')
+        .text(`Period: ${od} - ${do_}`, { align: 'left' });
+      doc.moveDown(0.4);
+    }
+
+    if (utakmice.length === 0) {
+      doc
+        .fontSize(11).font('Helvetica').fillColor('#64748b')
+        .text('Nema utakmica za odabrani period.', { align: 'center' });
+      doc.end();
+      return;
+    }
+
+    const COL = {
+      domaci:    40,
+      gostujuci: 190,
+      datum:     340,
+      lokacija:  450,
+    };
+    const ROW_H = 22;
+    const TABLE_WIDTH = 520;
+
+    let y = doc.y;
+
+    doc.rect(40, y - 3, TABLE_WIDTH, ROW_H).fill('#f59e0b');
+    doc.fontSize(8).font('Helvetica-Bold').fillColor('white');
+    doc.text('Domaci tim',    COL.domaci,    y, { width: 145 });
+    doc.text('Gostujuci tim', COL.gostujuci, y, { width: 145 });
+    doc.text('Datum i vrijeme', COL.datum,   y, { width: 105 });
+    doc.text('Lokacija',      COL.lokacija,  y, { width: 115 });
+    y += ROW_H;
+
+    utakmice.forEach((utakmica, i) => {
+      if (y > 760) { doc.addPage(); y = 50; }
+
+      const bg = i % 2 === 0 ? '#fffbeb' : '#ffffff';
+      doc.rect(40, y - 3, TABLE_WIDTH, ROW_H).fill(bg);
+
+      const lokacija = utakmica.sportskiObjekat?.naziv || utakmica.lokacijaOpis || '-';
+
+      doc.fontSize(9).font('Helvetica').fillColor('#1e293b');
+      doc.text(utakmica.domaciTim.naziv,    COL.domaci,    y, { width: 145 });
+      doc.text(utakmica.gostujuciTim.naziv, COL.gostujuci, y, { width: 145 });
+      doc.fillColor('#64748b');
+      doc.text(formatDatum(utakmica.vrijemePocetka), COL.datum, y, { width: 105 });
+      doc.text(lokacija, COL.lokacija, y, { width: 115 });
+
+      y += ROW_H;
+    });
+
+    doc.moveDown(1);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#e2e8f0').lineWidth(1).stroke();
+    doc.end();
+  });
+}
+
+module.exports = { generateTabelaPDF, generateRezultatiPDF, generateRasporedPDF };

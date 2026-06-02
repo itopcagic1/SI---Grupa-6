@@ -22,7 +22,7 @@ function getUserFromToken() {
 // Vrati true ako korisnik smije exportovati PDF
 export function canExportPDF() {
   const user = getUserFromToken();
-  return user?.uloga === 'ADMINISTRATOR' || user?.uloga === 'ORGANIZATOR';
+  return user?.uloga === 'ADMINISTRATOR' || user?.uloga === 'ORGANIZATOR' || user?.uloga === 'TRENER';
 }
 
 // Interni helper – preuzme blob i triggeruje download u browseru
@@ -64,5 +64,18 @@ export async function downloadRezultatiPDF(takmicenjeId, datumOd, datumDo) {
     `${API_URL}/pdf/rezultati`,
     params,
     'rezultati.pdf',
+  );
+}
+
+// Preuzmi PDF rasporeda; datumOd i datumDo su opcionalni (format: 'YYYY-MM-DD')
+export async function downloadRasporedPDF(takmicenjeId, datumOd, datumDo) {
+  const params = { takmicenjeId };
+  if (datumOd) params.datumOd = datumOd;
+  if (datumDo) params.datumDo = datumDo;
+
+  await downloadBlob(
+    `${API_URL}/pdf/raspored`,
+    params,
+    'raspored.pdf',
   );
 }

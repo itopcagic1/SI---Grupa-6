@@ -1,5 +1,42 @@
 const pdfService = require('../services/pdfService');
 
+// GET /api/pdf/raspored?takmicenjeId=X&datumOd=Y&datumDo=Z
+exports.getRasporedPDF = async (req, res) => {
+  try {
+    const { takmicenjeId, datumOd, datumDo } = req.query;
+
+    if (!takmicenjeId) {
+      return res.status(400).json({
+        greska: 'NEDOSTAJE_PARAMETAR',
+        poruka: 'takmicenjeId je obavezan.',
+      });
+    }
+
+    const pdfBuffer = await pdfService.generateRasporedPDF(
+      takmicenjeId,
+      datumOd || null,
+      datumDo || null,
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=raspored.pdf');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    if (error.message === 'Takmicenje nije pronađeno') {
+      return res.status(404).json({
+        greska: 'NIJE_PRONADJENO',
+        poruka: 'Takmičenje sa zadanim ID-em ne postoji.',
+      });
+    }
+    console.error('Greška pri generisanju PDF rasporeda:', error);
+    res.status(500).json({
+      greska: 'GRESKA_SERVERA',
+      poruka: 'Nije moguće generisati PDF rasporeda.',
+    });
+  }
+};
+
 // GET /api/pdf/tabela?takmicenjeId=X
 exports.getTabelaPDF = async (req, res) => {
   try {

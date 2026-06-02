@@ -96,3 +96,35 @@ Lijeva kolona na profilu služi za prikaz osnovnih korisničkih informacija i tr
 - Ukoliko korisnik ima mnogo omiljenih timova, lijeva kolona se može izdužiti, ali s obzirom na to da se prikazuju samo osnovni podaci (sport i naziv tima), to ne narušava izgled stranice.
 
 **Status odluke:** Prihvaćena i implementirana
+
+---
+
+## Odluka 4
+
+**ID:** DL-S10-06
+
+**Datum:** 02.06.2026.
+
+**Naziv:** Odustajanje od podrške za bosanske afrikate u PDF izvještaju
+
+**Opis:**
+PDFKit-ov ugrađeni Helvetica font ne podržava Unicode znakove (š, č, ć, ž, đ). Trebalo je odlučiti da li dodati Unicode font.
+
+**Razmatrane opcije:**
+- Koristiti sistemski font s računara (npr. Arial iz `C:\Windows\Fonts`).
+- Ostaviti Helvetica bez afrikata.
+
+**Odabrana opcija:**
+Ostavljanje Helvetica fonta bez podrške za afrikate.
+
+**Razlog izbora:**
+Sistemski fontovi nisu prenosivi između različitih operativnih sistema i mašina članova tima, što bi uzrokovalo greške pri pokretanju na Linuxu ili drugom računaru. 
+
+**Posljedice odluke:**
+*Pozitivne:*
+- Nema eksternih zavisnosti ni promjena u strukturi repozitorija.
+- Backend radi identično na svim mašinama članova tima.
+*Negativne:*
+- Bosanski znakovi se ne prikazuju korektno u PDF dokumentima — poznato ograničenje za buduće sprinteve.
+
+**Status odluke:** Prihvaćena (privremeno — ostaviti za buduće poboljšanje)

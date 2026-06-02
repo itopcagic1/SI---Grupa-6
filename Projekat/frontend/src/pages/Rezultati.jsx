@@ -7,7 +7,7 @@ import { fetchTeams } from '../api/teamApi';
 import { dohvatiTopStrijelce } from '../api/statistikaApi';
 import { formatStatistikaVrijednost, getSportKey } from '../utils/statistikaTipovi';
 // UVOZ TVOG PDF API-JA (Prilagodi naziv funkcije ako se zove drugačije u pdfApi.js)
-import { downloadRezultatiPDF } from '../api/pdfApi';
+import { downloadRezultatiPDF, canExportPDF } from '../api/pdfApi';
 
 const initialFilters = {
   sportId: '',
@@ -101,6 +101,7 @@ function Rezultati() {
   const [topStrijelciError, setTopStrijelciError] = useState('');
   const [topStrijelciTip, setTopStrijelciTip] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
 
   const handleOpenDetails = async (utakmica) => {
     setSelectedMatch(utakmica);
@@ -259,24 +260,26 @@ function Rezultati() {
 
   // FUNKCIJA ZA IZVOZ U PDF SA PROSLIJEĐENIM FILTERIMA (UKLJUČUJUĆI DATUM)
   const handleExportPDF = async () => {
-  try {
-    setPdfLoading(true);
-    
-    // Izvlačimo vrijednosti iz našeg stanja filtera
-    const takmicenjeId = filters.takmicenjeId || undefined; 
-    const izabraniDatum = filters.datum || undefined; // format je već 'YYYY-MM-DD' iz HTML inputa
-
-    // Pozivamo tvoju funkciju iz pdfApi.js
-    // Šaljemo izabrani datum i kao datumOd i kao datumDo da dobijemo tačan dan
-    await downloadRezultatiPDF(takmicenjeId, izabraniDatum, izabraniDatum);
-
-  } catch (err) {
-    console.error('Greška prilikom generisanja PDF izvještaja:', err);
-    alert('Nije moguće generisati PDF izvještaj.');
-  } finally {
-    setPdfLoading(false);
-  }
-};
+    setPdfError('');
+    if (!filters.takmicenjeId) {
+      setPdfError('Odaberite ligu iz filtera da biste generisali PDF izvještaj.');
+      setTimeout(() => setPdfError(''), 5000);
+      return;
+    }
+    try {
+      setPdfLoading(true);
+      const takmicenjeId = filters.takmicenjeId;
+      const izabraniDatum = filters.datum || undefined;
+      await downloadRezultatiPDF(takmicenjeId, izabraniDatum, izabraniDatum);
+    } catch (err) {
+      console.error('Greška prilikom generisanja PDF izvještaja:', err);
+      const poruka = err.response?.data?.poruka || 'Nije moguće generisati PDF izvještaj. Pokušajte ponovo.';
+      setPdfError(poruka);
+      setTimeout(() => setPdfError(''), 5000);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const rezultati = useMemo(
     () => utakmice.filter((utakmica) => getResultLabel(utakmica)),
@@ -296,8 +299,8 @@ function Rezultati() {
               Pregledajte rezultate utakmica.
             </p>
           </div>
-          {/* NOVO DUGME ZA PDF */}
-          <button
+          {/* DUGME ZA PDF – vidljivo samo administratorima i organizatorima */}
+          {canExportPDF() && <button
             type="button"
             onClick={handleExportPDF}
             disabled={pdfLoading}
@@ -306,7 +309,7 @@ function Rezultati() {
             {pdfLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                GARDENJE...
+                Izvoz u toku...
               </>
             ) : (
               <>
@@ -316,8 +319,28 @@ function Rezultati() {
                 Izvezi u PDF
               </>
             )}
-          </button>
+          </button>}
         </div>
+
+        {/* PDF greška – modalni prozor */}
+        {pdfError && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-8 flex flex-col items-center gap-5">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <p className="text-slate-700 font-semibold text-center text-base">{pdfError}</p>
+              <button
+                onClick={() => setPdfError('')}
+                className="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95"
+              >
+                U redu
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Filteri */}
         <section className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm mb-8">
