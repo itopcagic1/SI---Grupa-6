@@ -120,6 +120,15 @@ export default function CoachDashboard() {
 
   const groupedTerms = useMemo(() => groupTermsByDay(weekTerms), [weekTerms]);
 
+  const myPendingGroupTermIds = useMemo(() => {
+    return new Set(
+      myTrainings
+        .filter((training) => training.statusTreninga === 'NA_CEKANJU')
+        .map((training) => Number(training.terminId))
+        .filter((terminId) => Number.isInteger(terminId))
+    );
+  }, [myTrainings]);
+
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
@@ -150,7 +159,8 @@ export default function CoachDashboard() {
     setLoadingTrainings(true);
     try {
       const data = await getTrenerGrupniTreninzi();
-      setMyTrainings(data.treninzi || []);
+      const treninzi = Array.isArray(data) ? data : data?.treninzi;
+      setMyTrainings(Array.isArray(treninzi) ? treninzi : []);
     } catch (err) {
       console.error(err);
       showNotification('error', 'Greška pri učitavanju vaših grupnih treninga.');
@@ -207,14 +217,11 @@ export default function CoachDashboard() {
             showNotification('success', naCekanjuModal ? 'Zahtjev je uspješno povučen.' : 'Grupni trening je uspješno otkazan.');
           }
 
-          loadMyTrainings();
-          loadNotifications();
-          if (selectedFacilityId) {
-            setLoadingTerms(true);
-            const data = await getFacilityTerms(selectedFacilityId);
-            setAllTerms(data.termini || []);
-            setLoadingTerms(false);
-          }
+          await Promise.allSettled([
+            loadMyTrainings(),
+            loadNotifications(),
+            refreshTerms(),
+          ]);
         } catch (err) {
           console.error(err);
           showNotification('error', err.response?.data?.poruka || err.response?.data?.message || 'Greška pri otkazivanju.');
@@ -290,8 +297,7 @@ export default function CoachDashboard() {
       showNotification('success', 'Uspješno ste kreirali grupni trening!');
       setModalOpen(false);
       setSelectedTerm(null);
-      loadMyTrainings();
-      refreshTerms();
+      Promise.allSettled([loadMyTrainings(), refreshTerms()]);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.poruka || 'Kreiranje grupnog treninga nije uspjelo.');
@@ -424,11 +430,36 @@ export default function CoachDashboard() {
                         ) : (
                           <div className="space-y-3 animate-fadeIn">
                             {dayTerms.map((termin) => {
+                              const mojGrupniZahtjevNaCekanju =
+                                termin.mojGrupniZahtjevNaCekanju === true ||
+                                termin.mojStatusGrupnogTreninga === 'NA_CEKANJU' ||
+                                myPendingGroupTermIds.has(Number(termin.terminId));
                               const jeSlobodan = termin.status === 'SLOBODAN';
                               const jeBlokiran = termin.status === 'BLOKIRAN';
                               const odobrenaRezervacija = termin.zahtjeviZaRezervaciju?.[0];
                               const rezervisaoKorisnik = odobrenaRezervacija?.korisnik?.punoIme;
                               const rezervisaoTim = odobrenaRezervacija?.tim?.naziv;
+
+                              if (mojGrupniZahtjevNaCekanju) {
+                                return (
+                                  <div
+                                    key={termin.terminId}
+                                    className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50/40 p-3 text-left shadow-sm opacity-95"
+                                  >
+                                    <div className="mb-2">
+                                      <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border border-amber-300">
+                                        Na čekanju
+                                      </span>
+                                    </div>
+                                    <div className="font-bold text-slate-900 text-sm">
+                                      {formatTime(termin.vrijemePocetka)}
+                                    </div>
+                                    <div className="mt-0.5 text-[10px] font-black text-amber-700 uppercase tracking-widest">
+                                      Čeka odobrenje vlasnika
+                                    </div>
+                                  </div>
+                                );
+                              }
 
                               if (jeSlobodan) {
                                 return (

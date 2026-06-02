@@ -58,8 +58,8 @@ function groupTermsByDay(terms) {
 
 function tipTerminaLabel(tip) {
   if (!tip) return null;
-  const map = { JEDNOM: 'Jednokratno', SEDMICNO: 'Sedmično', MJESECNO: 'Mjesečno', INDIVIDUALNI: 'Individualno' };
-  return map[tip] || tip;
+  const map = { INDIVIDUALNI: 'Individualni', GRUPNI: 'Grupni' };
+  return map[tip] || null;
 }
 
 function formatWeekRange(start) {
@@ -373,7 +373,7 @@ export default function IndividualTraining() {
                               <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
                                 {termin.sportskiObjekat?.naziv || termin.objekat || 'Sportski objekat'}
                               </div>
-                              {termin.tipTermina && (
+                              {tipTerminaLabel(termin.tipTermina) && (
                                 <div className="mt-0.5 text-[10px] text-slate-400">
                                   {tipTerminaLabel(termin.tipTermina)}
                                 </div>
@@ -440,7 +440,7 @@ export default function IndividualTraining() {
                 <span className="text-slate-400 font-semibold uppercase tracking-wide">Objekat</span>
                 <span>{selectedTerm.sportskiObjekat?.naziv || selectedTerm.objekat || 'Sportski objekat'}</span>
               </div>
-              {selectedTerm.tipTermina && (
+              {tipTerminaLabel(selectedTerm.tipTermina) && (
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-semibold uppercase tracking-wide">Tip</span>
                   <span>{tipTerminaLabel(selectedTerm.tipTermina)}</span>

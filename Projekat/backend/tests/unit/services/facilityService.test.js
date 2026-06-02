@@ -45,7 +45,7 @@ describe('facilityService termini objekta', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual(expect.objectContaining({
       objekatId: 1,
-      tipTermina: 'JEDNOM',
+      tipTermina: null,
       status: 'SLOBODAN',
     }));
     expect(result[0].vrijemeZavrsetka.toISOString()).toBe('2026-05-20T19:00:00.000Z');
@@ -73,6 +73,7 @@ describe('facilityService termini objekta', () => {
       '2026-05-27T18:00:00.000Z',
       '2026-06-03T18:00:00.000Z',
     ]);
+    expect(result.every((termin) => termin.tipTermina === null)).toBe(true);
     expect(mockPrisma.terminObjekta.create).toHaveBeenCalledTimes(3);
   });
 
@@ -97,6 +98,7 @@ describe('facilityService termini objekta', () => {
       '2026-06-20T18:00:00.000Z',
       '2026-07-20T18:00:00.000Z',
     ]);
+    expect(result.every((termin) => termin.tipTermina === null)).toBe(true);
     expect(mockPrisma.terminObjekta.create).toHaveBeenCalledTimes(3);
   });
 

@@ -81,7 +81,7 @@ function generisiTerminePayload({ objekatId, vrijemePocetka, trajanje, ponavljan
       objekatId,
       vrijemePocetka: pocetak,
       vrijemeZavrsetka: kraj,
-      tipTermina: ponavljanje,
+      tipTermina: null,
       status: 'SLOBODAN'
     });
   }
