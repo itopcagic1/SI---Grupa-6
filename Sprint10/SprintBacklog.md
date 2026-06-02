@@ -4,11 +4,11 @@ Ovaj dokument sadrži pregled planiranih i završenih zadataka za Sprint 10, sa 
 
 # Sprint Backlog — Sprint 10
 
-| ID | Veze sa US | Naziv zadatka | Odgovorna osoba | Status | Napomena / Akceptacijski kriterijumi |
+| ID | Veze sa US | Naziv zadatka | Odgovorna osoba | Status | Napomena |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | US-21 | **Dodavanje omiljenog tima** | Ilma Hindija | Done | Omogućiti navijačima da mogu dodati omiljeni tim |
 | **2** | US-22 | **Notifikacije o omiljenom timu** | Maida Biber | Done | Kreirati poseban ekran 'Notifikacije' dostupan isključivo navijačima i omogućiti automatsko kreiranje pri evidentiranju rezultata ili zakazivanju utakmice omiljenog tima|
-| **3* | US-23 | **Generisanje PDF dokumenta** | Irma Topčagić, Zeir Mašić | Done | Omogućiti izvoz tabela rezultata i rasporeda u PDF, ograničiti opciju samo na administratora, organizatora i trenera  |
+| **3** | US-23 | **Generisanje PDF dokumenta** | Irma Topčagić, Zeir Mašić | Done | Omogućiti izvoz tabela rezultata i rasporeda u PDF, ograničiti opciju samo na administratora, organizatora i trenera  |
 
 ---
 
