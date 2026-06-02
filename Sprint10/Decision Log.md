@@ -101,7 +101,7 @@ Lijeva kolona na profilu služi za prikaz osnovnih korisničkih informacija i tr
 
 ## Odluka 4
 
-**ID:** DL-S10-06
+**ID:** DL-S10-04
 
 **Datum:** 02.06.2026.
 
@@ -128,3 +128,18 @@ Sistemski fontovi nisu prenosivi između različitih operativnih sistema i maši
 - Bosanski znakovi se ne prikazuju korektno u PDF dokumentima — poznato ograničenje za buduće sprinteve.
 
 **Status odluke:** Prihvaćena (privremeno — ostaviti za buduće poboljšanje)
+
+## Odluka 5
+**ID:** DL-S10-05
+**Datum:** 02.06.2026.  
+**Naziv:** Odustajanje od kreiranja i integracije AI asistenta u ovom sprintu  
+**Opis:** Razmatranje uvođenja AI integracije za predikciju rezultata ili pametne notifikacije navijačima na osnovu istorije omiljenih timova.  
+**Razmatrane opcije:**  
+- Implementirati osnovni AI modul (korištenjem LLM API-ja) za generisanje sedmičnih sažetaka i predikcija za navijače.  
+- Potpuno odustati od AI integracije u ovom sprintu i fokusirati se na stabilnost core funkcionalnosti.  
+**Odabrana opcija:** Odustajanje od kreiranja AI integracije u ovom sprintu.  
+**Razlog izbora:** Primarni fokus Sprinta 10 je stabilizacija sistema notifikacija, rješavanje tehničkih zavisnosti i omogućavanje pouzdanog PDF izvještavanja. Uvođenje AI komponenti u ovoj fazi bi donijelo prevelik tehnički rizik, povećalo troškove eksternih API-jeva i potencijalno ugrozilo rokove isporuke glavnih acceptance criteria za navijače.  
+**Posljedice odluke:**  
+- *Pozitivne:* Smanjen obim posla (scope creep), fokus tima je ostao na kritičnim core funkcionalnostima i stabilnosti koda.  
+- *Negativne:* Navijači u ovom sprintu neće imati napredne pametne preporuke niti automatizovane AI analize mečeva.  
+**Status odluke:** Odbijeno / Odustalo se od implementacije
