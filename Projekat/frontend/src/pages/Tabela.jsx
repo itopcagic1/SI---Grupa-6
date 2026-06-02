@@ -67,6 +67,11 @@ function Tabela() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // PDF export state
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+  const mozePDF = canExportPDF();
+
   // State za raspored utakmica unutar otvorene lige
   const [utakmice, setUtakmice] = useState([]);
   const [loadingUtakmice, setLoadingUtakmice] = useState(false);
@@ -139,6 +144,19 @@ function Tabela() {
       isActive = false;
     };
   }, [id, prikaziRaspored]);
+
+  const handleExportPDF = async () => {
+    if (!id) return;
+    setPdfLoading(true);
+    setPdfError('');
+    try {
+      await downloadTabelaPDF(id);
+    } catch (err) {
+      setPdfError(err.response?.data?.poruka || 'Nije moguće generisati PDF. Pokušajte ponovo.');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const renderUtakmica = (utakmica) => {
     const rezultat = getResultLabel(utakmica);
@@ -254,17 +272,47 @@ function Tabela() {
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setPrikaziRaspored(current => !current)}
-              className={`px-5 py-2 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-95 shadow-md ${
-                prikaziRaspored
-                  ? 'bg-slate-800 text-white hover:bg-slate-900'
-                  : 'bg-amber-50 text-slate-700 hover:bg-amber-100'
-              }`}
-            >
-              {prikaziRaspored ? 'Sakrij raspored' : 'Raspored'}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPrikaziRaspored(current => !current)}
+                className={`px-5 py-2 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-95 shadow-md ${
+                  prikaziRaspored
+                    ? 'bg-slate-800 text-white hover:bg-slate-900'
+                    : 'bg-amber-50 text-slate-700 hover:bg-amber-100'
+                }`}
+              >
+                {prikaziRaspored ? 'Sakrij raspored' : 'Raspored'}
+              </button>
+
+              {mozePDF && (
+                <div className="flex flex-col items-end gap-1">
+                  <button
+                    type="button"
+                    onClick={handleExportPDF}
+                    disabled={pdfLoading || loading || !takmicenje}
+                    className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                  >
+                    {pdfLoading ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Izvoz u toku...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Izvezi u PDF
+                      </>
+                    )}
+                  </button>
+                  {pdfError && (
+                    <p className="text-xs font-semibold text-red-600">{pdfError}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
