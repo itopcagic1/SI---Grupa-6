@@ -81,12 +81,14 @@ function normalizujStatus(status) {
   return statusUpper;
 }
 
-function normalizujTipTermina(tipTermina) {
-  if (!tipTermina) return 'Individualni';
-  const tip = tipTermina.toUpperCase();
+function normalizujTipTermina(tipTermina, korisnik) {
+  const tip = String(tipTermina || '').toUpperCase();
   if (tip.includes('GRUP')) return 'Grupni';
   if (tip.includes('INDIVID')) return 'Individualni';
-  return tipTermina;
+  const uloga = String(korisnik?.uloga || korisnik?.trenutnaUloga || '').toUpperCase();
+  if (uloga === 'TRENER') return 'Grupni';
+  if (uloga === 'IGRAC') return 'Individualni';
+  return 'Nepoznato';
 }
 
 function assertVlasnik(korisnik) {
@@ -140,7 +142,7 @@ function mapirajRezervaciju(rezervacija) {
     datumVrijeme: termin?.vrijemePocetka,
     vrijemePocetka: termin?.vrijemePocetka,
     vrijemeZavrsetka: termin?.vrijemeZavrsetka,
-    tipTermina: normalizujTipTermina(termin?.tipTermina),
+    tipTermina: normalizujTipTermina(termin?.tipTermina, korisnik),
     status: normalizujStatus(rezervacija.status),
     datumKreiranja: rezervacija.datumKreiranja,
   };
@@ -168,7 +170,7 @@ function mapirajZahtjev(zahtjev) {
     datumVrijeme: termin?.vrijemePocetka,
     vrijemePocetka: termin?.vrijemePocetka,
     vrijemeZavrsetka: termin?.vrijemeZavrsetka,
-    tipTermina: normalizujTipTermina(termin?.tipTermina),
+    tipTermina: normalizujTipTermina(termin?.tipTermina, korisnik),
     status: normalizujStatus(zahtjev.status),
     datumKreiranja: zahtjev.datumSlanja,
   };
@@ -249,6 +251,7 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
                 korisnikId: true,
                 punoIme: true,
                 email: true,
+                uloga: true,
                 statusPouzdanosti: true,
                 brojPreksrenihRezervacija: true,
               },
@@ -273,6 +276,7 @@ const dohvatiSveRezervacijeService = async (korisnik, query) => {
             korisnikId: true,
             punoIme: true,
             email: true,
+            uloga: true,
             statusPouzdanosti: true,
             brojPreksrenihRezervacija: true,
           },

@@ -71,43 +71,34 @@ const kreirajGrupniTreningService = async (terminIdValue, trenerId, maksimalanBr
       },
     });
 
-    // Ako je trener POUZDAN (nema prekršaja), odmah u pozadini završavamo cijeli proces
+    let kreiraniTrening = null;
+
+    // Ako je trener POUZDAN (nema prekrsaja), zavrsavamo cijeli proces u istoj transakciji.
     if (inicijalniStatus === 'ODOBRENO') {
-      (async () => {
-        try {
-          await prisma.$transaction(async (bgTx) => {
-            // 1. Kreiraj potvrđenu rezervaciju
-            await bgTx.rezervacija.create({
-              data: {
-                zahtjevId: zahtjev.zahtjevId,
-                terminId,
-                status: 'POTVRDJENA',
-                datumPotvrde: new Date(),
-              },
-            });
+      await tx.rezervacija.create({
+        data: {
+          zahtjevId: zahtjev.zahtjevId,
+          terminId,
+          status: 'POTVRDJENA',
+          datumPotvrde: new Date(),
+        },
+      });
 
-            // 2. Postavi termin kao zauzet za grupni trening
-            await bgTx.terminObjekta.update({
-              where: { terminId },
-              data: {
-                status: 'ZAUZET',
-                tipTermina: 'GRUPNI',
-              },
-            });
+      await tx.terminObjekta.update({
+        where: { terminId },
+        data: {
+          status: 'ZAUZET',
+          tipTermina: 'GRUPNI',
+        },
+      });
 
-            // 3. Generiši sam grupni trening u bazi
-            await bgTx.grupniTrening.create({
-              data: {
-                terminId,
-                trenerId,
-                maksimalanBrojIgraca: maxIgraca,
-              },
-            });
-          });
-        } catch (bgError) {
-          console.error("Pozadinska greška pri automatskom kreiranju grupnog treninga:", bgError);
-        }
-      })();
+      kreiraniTrening = await tx.grupniTrening.create({
+        data: {
+          terminId,
+          trenerId,
+          maksimalanBrojIgraca: maxIgraca,
+        },
+      });
     } else {
       // Ako je trener NEPOUZDAN (inicijalniStatus === 'CEKANJE'):
       // NE kreiramo rezervaciju, NE mijenjamo termin u ZAUZET, NE kreiramo grupni trening.
@@ -120,7 +111,8 @@ const kreirajGrupniTreningService = async (terminIdValue, trenerId, maksimalanBr
       poruka: inicijalniStatus === 'CEKANJE' 
         ? 'Zahtjev je poslan na čekanje jer imate 3 ili više prekršaja. Čeka se odobrenje vlasnika objekta.' 
         : 'Grupni trening je uspješno kreiran.',
-      zahtjevId: zahtjev.zahtjevId
+      zahtjevId: zahtjev.zahtjevId,
+      trening: kreiraniTrening,
     };
 
   }, {
@@ -211,15 +203,22 @@ const prijaviSeNaGrupniTreningService = async (idParam, korisnikId) => {
 };
 
 const getTrenerGrupniTreninziService = async (trenerId) => {
-  // 1. Dohvatamo zahtjeve trenera sa tačnim statusima iz Vaše baze podataka
+  const parsedTrenerId = parseInt(trenerId, 10);
+  if (isNaN(parsedTrenerId) || parsedTrenerId <= 0) {
+    return [];
+  }
+
+  if (!prisma.zahtjevZaRezervaciju?.findMany) {
+    return [];
+  }
+
   const zahtjevi = await prisma.zahtjevZaRezervaciju.findMany({
     where: {
-      korisnikId: trenerId,
-      // Tačni statusi iz Vaše baze (slika): POTVRDJENO, CEKANJE, OTKAZANO
-      status: { in: ['CEKANJE', 'NA_CEKANJU', 'POTVRDJENO', 'OTKAZANO'] },
+      korisnikId: parsedTrenerId,
+      status: { in: ['CEKANJE', 'NA_CEKANJU', 'ODOBRENO', 'POTVRDJENO'] },
       terminObjekta: {
         vrijemePocetka: {
-          gt: new Date(), // Samo budući termini
+          gt: new Date(),
         },
       },
     },
@@ -227,21 +226,6 @@ const getTrenerGrupniTreninziService = async (trenerId) => {
       terminObjekta: {
         include: {
           sportskiObjekat: true,
-          grupniTrening: {
-            include: {
-              prijave: {
-                include: {
-                  korisnik: {
-                    select: {
-                      korisnikId: true,
-                      punoIme: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
         },
       },
       tim: {
@@ -258,50 +242,71 @@ const getTrenerGrupniTreninziService = async (trenerId) => {
     },
   });
 
-  // 2. Mapiramo podatke i precizno prepisujemo statuse za frontend (CoachDashboard)
+  if (zahtjevi.length === 0) {
+    return [];
+  }
+
+  const terminIds = zahtjevi.map((z) => z.terminId).filter(Boolean);
+  const treninzi = prisma.grupniTrening?.findMany
+    ? await prisma.grupniTrening.findMany({
+        where: {
+          trenerId: parsedTrenerId,
+          terminId: { in: terminIds },
+        },
+        include: {
+          prijave: {
+            include: {
+              korisnik: {
+                select: {
+                  korisnikId: true,
+                  punoIme: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    : [];
+
+  const treningPoTerminu = new Map(treninzi.map((trening) => [trening.terminId, trening]));
+
   return zahtjevi.map((z) => {
-    const stvarniTrening = z.terminObjekta.grupniTrening && z.terminObjekta.grupniTrening.length > 0
-      ? z.terminObjekta.grupniTrening[0]
-      : null;
+    const stvarniTrening = treningPoTerminu.get(z.terminId) || null;
+    const jePotvrdjen = z.status === 'ODOBRENO' || z.status === 'POTVRDJENO';
+    const statusZaFrontend = jePotvrdjen ? 'POTVRDJEN' : 'NA_CEKANJU';
 
-    // Određivanje statusa treninga na osnovu tačne vrijednosti iz baze (kolona z.status sa slike)
-    let statusZaFrontend = 'NA_CEKANJU';
-    
-    if (z.status === 'POTVRDJENO') {
-      statusZaFrontend = 'POTVRDJEN';
-    } else if (z.status === 'OTKAZANO') {
-      statusZaFrontend = 'OTKAZAN'; // Ili 'OTKAZANO', zavisno šta CoachDashboard.jsx prepoznaje za crveni bedž
-    }
-
-    if (statusZaFrontend === 'POTVRDJEN' && stvarniTrening) {
+    if (jePotvrdjen && stvarniTrening) {
       return {
         treningId: stvarniTrening.treningId,
         terminId: stvarniTrening.terminId,
         trenerId: stvarniTrening.trenerId,
         maksimalanBrojIgraca: stvarniTrening.maksimalanBrojIgraca,
-        statusTreninga: 'POTVRDJEN', 
+        statusTreninga: 'POTVRDJEN',
         terminObjekta: {
           ...z.terminObjekta,
-          zahtjeviZaRezervaciju: [z]
+          grupniTrening: stvarniTrening,
+          zahtjeviZaRezervaciju: [z],
         },
         prijave: stvarniTrening.prijave || [],
-        tim: z.tim
+        tim: z.tim,
       };
     }
 
-    // Za zahtjeve koji su na 'CEKANJE' ili 'OTKAZANO' (gdje nema stvarnog treninga u tabeli grupniTrening)
     return {
-      treningId: `zahtjev-${z.zahtjevId}`, 
+      treningId: `zahtjev-${z.zahtjevId}`,
+      zahtjevId: z.zahtjevId,
       terminId: z.terminId,
       trenerId: z.korisnikId,
-      maksimalanBrojIgraca: 10, 
-      statusTreninga: statusZaFrontend, // Prosljeđuje 'NA_CEKANJU' ili 'OTKAZAN'
+      maksimalanBrojIgraca: stvarniTrening?.maksimalanBrojIgraca || 10,
+      statusTreninga: statusZaFrontend,
       terminObjekta: {
         ...z.terminObjekta,
-        zahtjeviZaRezervaciju: [z]
+        grupniTrening: stvarniTrening,
+        zahtjeviZaRezervaciju: [z],
       },
-      prijave: [], 
-      tim: z.tim
+      prijave: stvarniTrening?.prijave || [],
+      tim: z.tim,
     };
   });
 };

@@ -57,8 +57,8 @@ function formatWeekRange(start) {
   return `${pad(start.getDate())}.${pad(start.getMonth() + 1)}. – ${pad(end.getDate())}.${pad(end.getMonth() + 1)}.${end.getFullYear()}.`;
 }
 function tipTerminaLabel(tip) {
-  const map = { JEDNOM: 'Jednokratno', SEDMICNO: 'Sedmično', MJESECNO: 'Mjesečno', INDIVIDUALNI: 'Individualno' };
-  return map[tip] || tip;
+  const map = { INDIVIDUALNI: 'Individualni', GRUPNI: 'Grupni' };
+  return map[tip] || null;
 }
 function under24h(vrijemePocetka) {
   return new Date(vrijemePocetka) - new Date() < 24 * 60 * 60 * 1000;
@@ -474,7 +474,7 @@ export default function PlayerDashboard() {
                                   <div className="mt-0.5 text-[10px] text-slate-400 truncate font-medium">
                                     {termin.sportskiObjekat?.naziv || 'Sportski objekat'}
                                   </div>
-                                  {termin.tipTermina && <div className="mt-0.5 text-[10px] text-slate-400">{tipTerminaLabel(termin.tipTermina)}</div>}
+                                  {tipTerminaLabel(termin.tipTermina) && <div className="mt-0.5 text-[10px] text-slate-400">{tipTerminaLabel(termin.tipTermina)}</div>}
                                   {isMyReservation && <div className="mt-2 text-[10px] text-blue-500 font-black uppercase tracking-wide">Kliknite za otkazivanje</div>}
                                   {isMyPending && <div className="mt-2 text-[10px] text-amber-600 font-black uppercase tracking-wide">Čeka odobrenje vlasnika</div>}
                                   {isOccupied && (
