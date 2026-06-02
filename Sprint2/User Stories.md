@@ -1141,9 +1141,9 @@ Kao navijač, želim opciju registracije, kako bih pored svih navedenih funkcion
 - Pored svakog tima koji se nalazi u ligi ima opcija "srce" koja se moze selektovati, da bi to postao vas omiljeni tim 
 - Sistem ne smije ograničiti osnovni pregled neregistrovanim korisnicima
 
-### 21.1 USER STORY - Notifikacije za pracenje sadrzaja omiljenog tima
+### 22. USER STORY - Notifikacije za pracenje sadrzaja omiljenog tima
 
-**ID storyja:** US-21
+**ID storyja:** US-22
  
 **Naziv storyja:** Notifikacije za pracenje sadrzaja omiljenog tima
 
@@ -1156,7 +1156,43 @@ Kao navijač koji je selektovao omiljeni tim, zelim opciju  primanja  notifikaci
 - U notifikacijama postoji lista svih sadrzaja vezanih za omiljeni tim
 - Opcionalni dolazak notifikacija i na e-mail korisnika 
 
-## 22. USER STORY – Pregled AI predikcije
+### 23. USER STORY – Generisanje PDF izvještaja
+
+**ID storyja:** US-23
+ 
+**Naziv storyja:** Izvoz podataka u PDF formatu
+
+**Opis:**
+Kao administrator ili organizator liga, želim da izvezem izvještaje o tabelama, rezultatima i statistikama u PDF formatu, kako bih mogao dijeliti zvanične podatke van sistema ili ih arhivirati.
+
+**Poslovna vrijednost:**
+- Olakšava offline arhiviranje sezona i takmičenja
+- Omogućava profesionalno dijeljenje rezultata i tabela sa sponzorima, medijima ili timovima
+- Povećava transparentnost rada organizatora kroz zvanične dokumente
+
+**Prioritet:** Nizak
+
+**Pretpostavke:**
+- Postoje generisani podaci u bazi (rezultati, tabele) koji se mogu izvesti
+
+**Otvorena pitanja:**
+- Da li obični korisnici (navijači/treneri) trebaju imati pravo na izvoz tabele ili samo administratori?
+
+**Veze:** US-13, US-23
+
+**Acceptance Criteria:**
+- Sistem mora omogućiti generisanje PDF dokumenta jednim klikom na opciju "Izvezi u PDF"
+- PDF dokument mora biti pregledan i sadržavati relevantne kolone (pozicija, ime tima, odigrane utakmice, bodovi)
+- Dokument mora sadržavati datum i vrijeme generisanja izvještaja
+- Sistem mora osigurati da se podaci u PDF-u podudaraju sa trenutnim stanjem na tabeli u aplikaciji
+
+
+---
+
+### **SPRINT 11** (PB-39, PB-41)
+
+
+## 24. USER STORY – Pregled AI predikcije
 
 **ID storyja:** US-22
 
@@ -1195,77 +1231,4 @@ Kao registrovani korisnik, želim da imam pristup AI predikciji ishoda narednih 
 - Sistem omogućava osvježavanje predikcija (npr. nakon novih utakmica ili podataka)
 - Pristup je ograničen samo na registrovane korisnike
 - UI prikaz je pregledan i razumljiv svim tipovima korisnika
-
----
-
-### **SPRINT 11** (PB-39, PB-41)
-
-### 23. USER STORY – Administracija sistema
-
-**ID storyja:** US-23
- 
-**Naziv storyja:** Administracija sistema
-
-**Opis:**
-Kao administrator, želim imati potpunu kontrolu nad podacima i stabilnošću sistema, kako bih osigurao ispravan rad platforme, riješio pronađene greške i održavao integritet podataka.
-Poslovna vrijednost.
-
-**Poslovna vrijednost:**
-- Osigurava stabilnost i pouzdanost sistema za sve korisnike
-- Omogućava brzo reagovanje na greške i neispravne podatke
-- Povećava povjerenje korisnika u tačnost i sigurnost platforme
-- Smanjuje rizik od zloupotrebe ili neispravnog korištenja sistema
-
-**Prioritet:** Srednji
-
-**Pretpostavke:**
-- Administrator je prijavljen u sistem
-- Administrator ima najviši nivo pristupa u sistemu
-
-**Otvorena pitanja:**
-- Da li administrator treba imati uvid u logove svih akcija korisnika?
-- Da li postoji mogućnost vraćanja obrisanih podataka (soft delete)?
-
-**Veze:** US-07, US-07.1
-
-**Acceptance Criteria:**
-- Sistem mora omogućiti pregled svih ključnih podataka (korisnici, lige, termini)
-- Sistem mora ograničiti pristup ovim funkcijama samo administratoru
-- Sistem ne smije dozvoliti neautorizovane izmjene podataka
-- Administrator treba imati mogućnost uklanjanja neispravnih ili lažnih podataka
-
-### 24. USER STORY – Generisanje PDF izvještaja
-
-**ID storyja:** US-24
- 
-**Naziv storyja:** Izvoz podataka u PDF formatu
-
-**Opis:**
-Kao administrator ili organizator liga, želim da izvezem izvještaje o tabelama, rezultatima i statistikama u PDF formatu, kako bih mogao dijeliti zvanične podatke van sistema ili ih arhivirati.
-
-**Poslovna vrijednost:**
-- Olakšava offline arhiviranje sezona i takmičenja
-- Omogućava profesionalno dijeljenje rezultata i tabela sa sponzorima, medijima ili timovima
-- Povećava transparentnost rada organizatora kroz zvanične dokumente
-
-**Prioritet:** Nizak
-
-**Pretpostavke:**
-- Postoje generisani podaci u bazi (rezultati, tabele) koji se mogu izvesti
-
-**Otvorena pitanja:**
-- Da li obični korisnici (navijači/treneri) trebaju imati pravo na izvoz tabele ili samo administratori?
-
-**Veze:** US-13, US-23
-
-**Acceptance Criteria:**
-- Sistem mora omogućiti generisanje PDF dokumenta jednim klikom na opciju "Izvezi u PDF"
-- PDF dokument mora biti pregledan i sadržavati relevantne kolone (pozicija, ime tima, odigrane utakmice, bodovi)
-- Dokument mora sadržavati datum i vrijeme generisanja izvještaja
-- Sistem mora osigurati da se podaci u PDF-u podudaraju sa trenutnim stanjem na tabeli u aplikaciji
-
-
-
-
-
 
