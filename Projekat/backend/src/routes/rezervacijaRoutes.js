@@ -9,6 +9,7 @@ const {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
   otkaziIndividualnuRezervaciju,
+  otkaziZahtjevZaIndividualnuRezervaciju,
   getMojeRezervacije,
   kreirajGrupniTrening,
   prijaviSeNaGrupniTrening,
@@ -26,6 +27,7 @@ const {
 router.get('/rezervacije/slobodni/individualni', authenticateToken, requireRole('IGRAC'), getFreeIndividualTerms);
 router.post('/rezervacije/individualne/:id', authenticateToken, requireRole('IGRAC'), reliabilityMiddleware, kreirajIndividualnuRezervaciju);
 router.delete('/rezervacije/individualne/:id', authenticateToken, requireRole('IGRAC'), otkaziIndividualnuRezervaciju);
+router.delete('/rezervacije/zahtjevi/:id', authenticateToken, requireRole('IGRAC'), otkaziZahtjevZaIndividualnuRezervaciju);
 router.get('/rezervacije/moje', authenticateToken, requireRole('IGRAC'), getMojeRezervacije);
 
 // --- Grupne rezervacije (Trener i Igrač) ---

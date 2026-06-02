@@ -4,6 +4,7 @@ import {
   getFreeIndividualTerms,
   reserveIndividualTerm,
   cancelIndividualTerm,
+  cancelPendingReservationRequest,
   joinWaitlist,
   getGrupniTreninzi,
   prijaviSeNaGrupniTrening,
@@ -63,6 +64,11 @@ function under24h(vrijemePocetka) {
   return new Date(vrijemePocetka) - new Date() < 24 * 60 * 60 * 1000;
 }
 
+function isPendingReservationRequest(item) {
+  const normalizedStatus = String(item?.status || '').trim().toUpperCase().replace(/\s+/g, '_');
+  return item?.vrstaZapisa === 'ZAHTJEV' || normalizedStatus === 'NA_CEKANJU';
+}
+
 function StatusBadge({ status }) {
   const map = {
     POTVRDJENA: 'bg-green-50 text-green-700 border-green-200',
@@ -93,6 +99,7 @@ export default function PlayerDashboard() {
   const [joiningWaitlistIds, setJoiningWaitlistIds] = useState([]);
   const [termModal, setTermModal] = useState({ open: false, term: null, mode: 'reserve' });
   const [termError, setTermError] = useState('');
+  const [reservationSubmitting, setReservationSubmitting] = useState(false);
 
   // --- Grupni ---
   const [trainings, setTrainings] = useState([]);
@@ -188,17 +195,41 @@ export default function PlayerDashboard() {
   const closeTermModal = () => { setTermModal({ open: false, term: null, mode: 'reserve' }); setTermError(''); };
 
   const handleConfirmReservation = async () => {
-    if (!termModal.term) return;
+    if (!termModal.term || reservationSubmitting) return;
+    const selectedTerminId = termModal.term.terminId;
+    setReservationSubmitting(true);
     try {
-      const response = await reserveIndividualTerm(termModal.term.terminId);
+      const response = await reserveIndividualTerm(selectedTerminId);
       showNotification('success', response.status === 'POTVRDJENA'
         ? 'Uspješno ste rezervisali termin!'
         : 'Vaš zahtjev je poslat na čekanje i biće ručno pregledan od strane vlasnika.');
+      setAllTerms((current) => current.map((termin) => {
+        if (termin.terminId !== selectedTerminId) return termin;
+        if (response.status === 'POTVRDJENA') {
+          return {
+            ...termin,
+            status: 'ZAUZET',
+            jeMojaRezervacija: true,
+            mojStatusRezervacije: null,
+            mojZahtjevNaCekanju: false,
+          };
+        }
+        return {
+          ...termin,
+          mojStatusRezervacije: 'NA_CEKANJU',
+          mojZahtjevNaCekanju: true,
+          zahtjevId: response.zahtjevId,
+        };
+      }));
       closeTermModal();
-      loadTerms();
-      loadRezervacije();
+      void Promise.allSettled([
+        loadTerms(),
+        loadRezervacije(),
+      ]);
     } catch (err) {
       setTermError(err.response?.data?.poruka || 'Rezervacija nije uspjela.');
+    } finally {
+      setReservationSubmitting(false);
     }
   };
 
@@ -276,7 +307,12 @@ export default function PlayerDashboard() {
     setCancelSubmitting(true);
     try {
       if (item.tip === 'INDIVIDUALNI') {
-        await cancelIndividualTerm(item.terminId);
+        if (isPendingReservationRequest(item)) {
+          if (!item.zahtjevId) throw new Error('ID zahtjeva nije pronađen.');
+          await cancelPendingReservationRequest(item.zahtjevId);
+        } else {
+          await cancelIndividualTerm(item.terminId);
+        }
       } else {
         await odjaviSeSaGrupnogTreninga(item.treningId, cancelReason);
       }
@@ -365,7 +401,7 @@ export default function PlayerDashboard() {
                 <div className="flex items-center gap-4 text-xs text-slate-500">
                   <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-green-200 border border-green-400"></span>Slobodno</span>
                   <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-blue-200 border border-blue-400"></span>Vaša rezervacija</span>
-                  <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>Zauzeto</span>
+                  <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-400"></span>Zauzeto / Na čekanju</span>
                 </div>
 
                 {/* Navigacija sedmica */}
@@ -403,13 +439,17 @@ export default function PlayerDashboard() {
                         ) : (
                           <div className="space-y-3">
                             {dayTerms.map((termin) => {
-                              const isFree = termin.status === 'SLOBODAN';
                               const isMyReservation = termin.jeMojaRezervacija;
+                              const isMyPending = !isMyReservation && (
+                                termin.mojStatusRezervacije === 'NA_CEKANJU' ||
+                                termin.mojZahtjevNaCekanju === true
+                              );
+                              const isFree = termin.status === 'SLOBODAN' && !isMyPending;
                               const isOccupied = termin.status === 'ZAUZET' && !isMyReservation;
                               const isJoining = joiningWaitlistIds.includes(termin.terminId);
                               return (
                                 <button key={termin.terminId} type="button"
-                                  disabled={isOccupied && (termin.naListiCekanja || isJoining)}
+                                  disabled={isMyPending || (isOccupied && (termin.naListiCekanja || isJoining))}
                                   onClick={() => {
                                     if (isFree) openTermModal(termin, 'reserve');
                                     if (isMyReservation) openTermModal(termin, 'cancel');
@@ -418,14 +458,16 @@ export default function PlayerDashboard() {
                                   className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition
                                     ${isFree ? 'border-green-100 bg-white hover:border-green-400 hover:bg-green-50/30 cursor-pointer'
                                     : isMyReservation ? 'border-blue-100 bg-blue-50/30 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+                                    : isMyPending ? 'border-amber-200 bg-amber-50/40 cursor-not-allowed opacity-80'
                                     : 'border-orange-100 bg-orange-50/25 hover:border-orange-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75'}`}
                                 >
                                   <div className="mb-2">
                                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border
                                       ${isFree ? 'bg-green-50 text-green-700 border-green-100'
                                       : isMyReservation ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                      : isMyPending ? 'bg-amber-100 text-amber-700 border-amber-200'
                                       : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
-                                      {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : 'Zauzeto'}
+                                      {isFree ? 'Slobodno' : isMyReservation ? 'Rezervisano' : isMyPending ? 'Na čekanju' : 'Zauzeto'}
                                     </span>
                                   </div>
                                   <div className="font-bold text-slate-900 text-sm">{formatTime(termin.vrijemePocetka)}</div>
@@ -434,6 +476,7 @@ export default function PlayerDashboard() {
                                   </div>
                                   {termin.tipTermina && <div className="mt-0.5 text-[10px] text-slate-400">{tipTerminaLabel(termin.tipTermina)}</div>}
                                   {isMyReservation && <div className="mt-2 text-[10px] text-blue-500 font-black uppercase tracking-wide">Kliknite za otkazivanje</div>}
+                                  {isMyPending && <div className="mt-2 text-[10px] text-amber-600 font-black uppercase tracking-wide">Čeka odobrenje vlasnika</div>}
                                   {isOccupied && (
                                     <div className="mt-2 text-[10px] text-orange-700 font-black uppercase tracking-wide">
                                       {termin.naListiCekanja ? 'Na listi čekanja' : isJoining ? 'Prijava u toku...' : 'Prijavi me na listu čekanja'}
@@ -613,7 +656,7 @@ export default function PlayerDashboard() {
                           </div>
                         </div>
                       )}
-                      {under24h(r.vrijemePocetka) && (
+                      {!isPendingReservationRequest(r) && under24h(r.vrijemePocetka) && (
                         <div className="rounded-2xl bg-red-50 border-2 border-red-100 px-3 py-2 text-[10px] font-black text-red-700 leading-relaxed">
                           ⚠️ Otkazivanje unutar 24h dodjeljuje 1 prekršajni poen!
                         </div>
@@ -621,7 +664,7 @@ export default function PlayerDashboard() {
                     </div>
                     <button type="button" onClick={() => openCancelRez(r)}
                       className="mt-5 w-full rounded-2xl border-2 border-red-100 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-red-600 shadow-sm transition hover:border-red-400 hover:bg-red-50/20">
-                      Otkaži termin
+                      {isPendingReservationRequest(r) ? 'Otkaži zahtjev' : 'Otkaži termin'}
                     </button>
                   </div>
                 ))}
@@ -671,9 +714,9 @@ export default function PlayerDashboard() {
                 Odustani
               </button>
               {termModal.mode === 'reserve' ? (
-                <button type="button" onClick={handleConfirmReservation}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform">
-                  Potvrdi rezervaciju
+                <button type="button" onClick={handleConfirmReservation} disabled={reservationSubmitting}
+                  className="px-6 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-orange-700 transition-all shadow-md active:scale-95 transform disabled:cursor-not-allowed disabled:opacity-60">
+                  {reservationSubmitting ? 'Slanje...' : 'Potvrdi rezervaciju'}
                 </button>
               ) : (
                 <button type="button" onClick={handleConfirmCancellation}

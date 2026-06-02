@@ -311,6 +311,10 @@ const getGrupniTreninziService = async (korisnikId) => {
     return [];
   }
 
+  if (!prisma.grupniTrening?.findMany || !prisma.clanstvoTima?.findMany) {
+    return [];
+  }
+
   const playerClanstva = await prisma.clanstvoTima.findMany({
     where: {
       korisnikId: parseInt(korisnikId, 10),

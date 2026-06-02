@@ -26,11 +26,18 @@ function serviceError(message, status = 400, code = 'NEOVLASTEN') {
 const getAllTermsService = async (korisnikId) => {
   const now = new Date();
 
-  const [mojRezervacije, mojeStavkeListeCekanja] = await Promise.all([
+  const [mojRezervacije, mojiZahtjeviNaCekanju, mojeStavkeListeCekanja] = await Promise.all([
     prisma.rezervacija.findMany({
       where: {
         zahtjev: { korisnikId },
         status: 'POTVRDJENA',
+      },
+      select: { terminId: true },
+    }),
+    prisma.zahtjevZaRezervaciju.findMany({
+      where: {
+        korisnikId,
+        status: 'NA_CEKANJU',
       },
       select: { terminId: true },
     }),
@@ -75,6 +82,7 @@ const getAllTermsService = async (korisnikId) => {
   });
 
   const mojiTerminIds = new Set(mojiTerminIdsArray);
+  const mojiPendingTerminIds = new Set(mojiZahtjeviNaCekanju.map((z) => z.terminId));
   const terminiNaListiCekanja = new Set(
     mojeStavkeListeCekanja.map((stavka) => stavka.zahtjev.terminId)
   );
@@ -82,6 +90,8 @@ const getAllTermsService = async (korisnikId) => {
   return termini.map((termin) => ({
     ...termin,
     jeMojaRezervacija: mojiTerminIds.has(termin.terminId),
+    mojStatusRezervacije: mojiPendingTerminIds.has(termin.terminId) ? 'NA_CEKANJU' : null,
+    mojZahtjevNaCekanju: mojiPendingTerminIds.has(termin.terminId),
     naListiCekanja: terminiNaListiCekanja.has(termin.terminId),
   }));
 };
@@ -224,6 +234,51 @@ const cancelIndividualReservationService = async (terminIdValue, korisnikId) => 
   return { poruka: 'Rezervacija je uspješno otkazana.' };
 };
 
+const cancelPendingIndividualRequestService = async (zahtjevIdValue, korisnikId) => {
+  const zahtjevId = parsePositiveId(zahtjevIdValue, 'zahtjevId');
+
+  const zahtjev = await prisma.zahtjevZaRezervaciju.findFirst({
+    where: {
+      zahtjevId,
+      korisnikId,
+    },
+    include: {
+      terminObjekta: true,
+    },
+  });
+
+  if (!zahtjev) {
+    throw serviceError(
+      'Zahtjev na čekanju nije pronađen ili više nije aktivan.',
+      404,
+      'ZAHTJEV_NIJE_PRONADJEN'
+    );
+  }
+
+  if (!['NA_CEKANJU', 'CEKANJE', 'PENDING'].includes(zahtjev.status)) {
+    throw serviceError(
+      'Zahtjev više nije na čekanju i ne može se otkazati ovim tokom.',
+      409,
+      'ZAHTJEV_NIJE_NA_CEKANJU'
+    );
+  }
+
+  if (new Date(zahtjev.terminObjekta.vrijemePocetka) <= new Date()) {
+    throw serviceError(
+      'Nije moguće otkazati zahtjev za termin koji je već počeo ili prošao.',
+      400,
+      'TERMIN_VEC_PROSAO'
+    );
+  }
+
+  await prisma.zahtjevZaRezervaciju.update({
+    where: { zahtjevId },
+    data: { status: 'OTKAZANO' },
+  });
+
+  return { poruka: 'Zahtjev je uspješno otkazan.' };
+};
+
 // POPRAVLJENA I SIGURNA FUNKCIJA
 const getMojeRezervacijeService = async (korisnikId) => {
   // Rješenje za Timezone: Gledamo od početka današnjeg dana (00:00) kako sustav ne bi sakrio današnje termine
@@ -260,22 +315,24 @@ const getMojeRezervacijeService = async (korisnikId) => {
     }),
 
     // 3. Grupni treninzi na koje se ulogirani igrač prijavio (Potvrđeni)
-    prisma.prijavaGrupnogTreninga.findMany({
-      where: { 
-        korisnikId,
-        grupniTrening: {
-          terminObjekta: { vrijemePocetka: { gte: danas } }
-        }
-      },
-      include: {
-        grupniTrening: {
-          include: {
-            terminObjekta: { include: { sportskiObjekat: true } },
-            trener: { select: { punoIme: true } },
+    prisma.prijavaGrupnogTreninga?.findMany
+      ? prisma.prijavaGrupnogTreninga.findMany({
+        where: {
+          korisnikId,
+          grupniTrening: {
+            terminObjekta: { vrijemePocetka: { gte: danas } }
+          }
+        },
+        include: {
+          grupniTrening: {
+            include: {
+              terminObjekta: { include: { sportskiObjekat: true } },
+              trener: { select: { punoIme: true } },
+            },
           },
         },
-      },
-    }),
+      })
+      : Promise.resolve([]),
 
     // 4. Ako je korisnik TRENER -> povuci grupne treninge koje je pokrenuo, a vlasnik ih još nije odobrio
     isTrener ? prisma.zahtjevZaRezervaciju.findMany({
@@ -295,6 +352,7 @@ const getMojeRezervacijeService = async (korisnikId) => {
     // Mapiranje potvrđenih individualnih rezervacija
     ...potvrdjeneIndividualne.map((r) => ({
       tip: 'INDIVIDUALNI',
+      vrstaZapisa: 'REZERVACIJA',
       status: 'POTVRDJENA',
       datumKreiranja: r.datumPotvrde,
       vrijemePocetka: r.terminObjekta.vrijemePocetka,
@@ -308,6 +366,7 @@ const getMojeRezervacijeService = async (korisnikId) => {
     // Mapiranje individualnih zahtjeva na čekanju
     ...zahtjeviNaCekanju.map((z) => ({
       tip: 'INDIVIDUALNI',
+      vrstaZapisa: 'ZAHTJEV',
       status: 'NA_CEKANJU',
       datumKreiranja: z.datumSlanja,
       vrijemePocetka: z.terminObjekta.vrijemePocetka,
@@ -321,6 +380,7 @@ const getMojeRezervacijeService = async (korisnikId) => {
     // Mapiranje grupnih treninga na kojima je igrač potvrđen
     ...grupnePrijave.map((p) => ({
       tip: 'GRUPNI',
+      vrstaZapisa: 'REZERVACIJA',
       status: 'POTVRDJENA',
       naziv: p.grupniTrening.naziv || 'Grupni trening',
       datumKreiranja: p.datumPrijave,
@@ -336,6 +396,7 @@ const getMojeRezervacijeService = async (korisnikId) => {
     // Mapiranje grupnih treninga koje je kreirao TRENER, a još čekaju odobrenje vlasnika objekta
     ...trenerZahtjeviNaCekanju.map((z) => ({
       tip: 'GRUPNI',
+      vrstaZapisa: 'ZAHTJEV',
       status: 'NA_CEKANJU',
       naziv: 'Kreiranje grupnog treninga (Čeka odobrenje)',
       datumKreiranja: z.datumSlanja,
@@ -353,5 +414,6 @@ module.exports = {
   getAllTermsService,
   createIndividualReservationService,
   cancelIndividualReservationService,
+  cancelPendingIndividualRequestService,
   getMojeRezervacijeService,
 };

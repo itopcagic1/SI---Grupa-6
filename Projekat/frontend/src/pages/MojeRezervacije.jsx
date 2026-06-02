@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { getMojeRezervacije, cancelIndividualTerm, odjaviSeSaGrupnogTreninga } from '../api/reservationApi';
+import { getMojeRezervacije, cancelIndividualTerm, cancelPendingReservationRequest, odjaviSeSaGrupnogTreninga } from '../api/reservationApi';
 
 function pad(v) { return String(v).padStart(2, '0'); }
 function formatDate(d) {
@@ -55,17 +55,20 @@ export default function MojeRezervacije() {
     if (!confirmModal.item) return;
     setSubmitting(true);
     
-    // Podržavamo i terminId i zahtjevId
     const terminId = confirmModal.item.terminId;
 
     try {
-      // Ako je status NA_CEKANJU, otkazivanje zapravo briše/odbija sam zahtjev na backendu
       const isIndividual = confirmModal.item.tip === 'INDIVIDUALNI';
+      const isPendingRequest = confirmModal.item.status === 'NA_CEKANJU' || confirmModal.item.vrstaZapisa === 'ZAHTJEV';
 
-      if (isIndividual) {
+      if (isIndividual && isPendingRequest) {
+        if (!confirmModal.item.zahtjevId) throw new Error("ID zahtjeva nije pronađen.");
+        const response = await cancelPendingReservationRequest(confirmModal.item.zahtjevId);
+        showNotification('success', response?.poruka || 'Uspješno otkazan zahtjev.');
+      } else if (isIndividual) {
         if (!terminId) throw new Error("ID termina nije pronađen.");
         const response = await cancelIndividualTerm(terminId);
-        showNotification('success', response?.poruka || 'Uspješno otkazan zahtjev.');
+        showNotification('success', response?.poruka || 'Uspješno otkazan termin.');
       } else {
         // Za grupne treninge koji su odobreni ili na čekanju
         const idZaSlanje = confirmModal.item.treningId || confirmModal.item.zahtjevId;
