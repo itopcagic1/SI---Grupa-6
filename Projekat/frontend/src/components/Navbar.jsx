@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logoutUser } from '../api/authApi';
+import { getNeprocitaneCount } from '../api/notifikacijaApi'; 
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const Navbar = () => {
     : null;
 
   const isAuthenticated = Boolean(token);
+
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isAdmin =
     korisnik?.trenutnaUloga === 'ADMINISTRATOR' ||
@@ -24,10 +27,30 @@ const Navbar = () => {
     korisnik?.trenutnaUloga === 'IGRAC' ||
     korisnik?.uloga === 'IGRAC';
 
-  // DODANO: Provjera da li je prijavljeni korisnik Vlasnik objekta
   const isOwner =
     korisnik?.trenutnaUloga === 'VLASNIK' ||
     korisnik?.uloga === 'VLASNIK';
+
+  const isNavijac =
+    korisnik?.trenutnaUloga === 'NAVIJAC' ||
+    korisnik?.uloga === 'NAVIJAC';
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      if (!isAuthenticated || !isNavijac) return;
+      try {
+        const data = await getNeprocitaneCount();
+        setUnreadCount(data.count || 0);
+      } catch (err) {
+        console.error('Greška pri dohvatanju broja obavijesti:', err);
+      }
+    };
+
+    fetchCount();
+    // Osvježi stanje svakih 30 sekundi ili pri promjeni rute
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [location.pathname, isAuthenticated, isNavijac]);
 
   const handleLogout = async () => {
     try {
@@ -113,20 +136,26 @@ const Navbar = () => {
             </>
           )}
 
-          {/* IZMJENA: Link se sada prikazuje samo ako je korisnik prijavljen I ako ima ulogu vlasnika (ili admina ako admin treba imati pristup) */}
           <div className="flex items-center gap-3">
-          {isAuthenticated && (isOwner || isAdmin) && (
-            <>
-              <Link to="/objekti" className={navLinkClass('/objekti')}>
-                Sportski Objekti
-              </Link>
+            {isAuthenticated && (isOwner || isAdmin) && (
+              <>
+                <Link to="/objekti" className={navLinkClass('/objekti')}>
+                  Sportski Objekti
+                </Link>
 
-              <Link to="/vlasnik/rezervacije" className={navLinkClass('/vlasnik/rezervacije')}>
-                Monitoring Rezervacija
-              </Link>
-            </>
-          )}
+                <Link to="/vlasnik/rezervacije" className={navLinkClass('/vlasnik/rezervacije')}>
+                  Monitoring Rezervacija
+                </Link>
+              </>
+            )}
           </div>
+
+          {/* DODANO: Link za Notifikacije u glavnom meniju za prijavljene navijače */}
+          {isAuthenticated && isNavijac && (
+            <Link to="/notifikacije" className={navLinkClass('/notifikacije')}>
+              Obavijesti
+            </Link>
+          )}
 
           {isAuthenticated && (
             <Link to="/profile" className={navLinkClass('/profile')}>
@@ -137,8 +166,8 @@ const Navbar = () => {
           {isPlayer && (
             <>
               <Link to="/player" className={navLinkClass('/player')}>
-      Moji treninzi
-    </Link>
+                Moji treninzi
+              </Link>
             </>
           )}
 
@@ -156,9 +185,39 @@ const Navbar = () => {
           )}
         </div>
       </div>
+
       <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
+            {/* DODANO: Ikona zvončića sa crvenim badge-om za broj nepročitanih obavijesti */}
+            {isNavijac && (
+              <Link
+                to="/notifikacije"
+                className="relative p-2 text-slate-500 hover:text-orange-600 transition-colors mr-2"
+                title="Obavijesti"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-white bg-red-600 rounded-full border-2 border-white transform translate-x-1/2 -translate-y-1/2">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-800 font-bold text-sm">
               {korisnik ? (korisnik.punoIme?.charAt(0) || korisnik.email?.charAt(0) || '?').toUpperCase() : '?'}
             </div>

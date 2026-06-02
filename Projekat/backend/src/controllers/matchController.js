@@ -1,4 +1,40 @@
 const matchService = require('../services/matchService');
+const { notificirajNavijaceTima } = require('../services/omiljeniTimNotifikacijaService');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function sendNotificationToFans(matchId, notificationMessage, notificationType = 'UTAKMICA') {
+  const match = await prisma.utakmica.findUnique({
+    where: { utakmicaId: Number(matchId) }
+  });
+
+  if (!match) return;
+
+  const homeTeamFollowers = await prisma.omiljeniTim.findMany({
+    where: { timId: match.domaciTimId },
+    select: { korisnikId: true }
+  });
+
+  const awayTeamFollowers = await prisma.omiljeniTim.findMany({
+    where: { timId: match.gostujuciTimId },
+    select: { korisnikId: true }
+  });
+
+  const uniqueUserIds = new Set();
+  homeTeamFollowers.forEach(follower => uniqueUserIds.add(follower.korisnikId));
+  awayTeamFollowers.forEach(follower => uniqueUserIds.add(follower.korisnikId));
+
+  for (const korisnikId of uniqueUserIds) {
+    await prisma.notifikacija.create({
+      data: {
+        korisnikId: korisnikId,
+        tipNotifikacije: notificationType,
+        sadrzajPoruke: notificationMessage,
+        status: 'NEPROCITANO'
+      }
+    });
+  }
+}
 
 function parsePositiveInteger(value, fieldName) {
   if (value === undefined) return undefined;
@@ -70,67 +106,114 @@ async function getPublicMatches(req, res) {
     return res.status(200).json(utakmice);
   } catch (error) {
     return res.status(error.status || 500).json({
-      greska: error.code || 'GRESKA_DOHVATANJA_UTAKMICA',
-      poruka: error.message || 'Greška pri dohvatanju utakmica'
+      error: error.code || 'MATCHES_FETCH_ERROR',
+      message: error.message || 'Greška pri dohvatanju utakmica'
     });
   }
 }
-async function generisiRaspored(req, res) {
+
+async function generateSchedule(req, res) {
   try {
     const { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija } = req.body;
 
-    // 1. VALIDACIJA FORMATA DATUMA
     if (pocetniDatum !== undefined) {
       const datum = new Date(pocetniDatum);
       if (!pocetniDatum || isNaN(datum.getTime())) {
         return res.status(400).json({
-          greska: 'INVALID_DATE',
-          poruka: 'Nevažeći format datuma'
+          error: 'INVALID_DATE',
+          message: 'Nevažeći format datuma'
         });
       }
 
-      // 2. VALIDACIJA PROŠLOSTI
       const danas = new Date();
       danas.setHours(0, 0, 0, 0);
       if (datum < danas) {
         return res.status(400).json({
-          greska: 'DATE_IN_PAST',
-          poruka: 'Datum ne može biti u prošlosti.'
+          error: 'DATE_IN_PAST',
+          message: 'Datum ne može biti u prošlosti.'
         });
       }
     }
 
-    // 3. VALIDACIJA VREMENA
     if (defaultnoVrijeme !== undefined) {
       const vrijemeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
       if (!vrijemeRegex.test(defaultnoVrijeme)) {
         return res.status(400).json({
-          greska: 'INVALID_TIME',
-          poruka: 'Nevažeći format vremena.'
+          error: 'INVALID_TIME',
+          message: 'Nevažeći format vremena.'
         });
       }
     }
 
-    // 4. PROVJERA OBAVEZNIH POLJA
     if (takmicenjeId === undefined || pocetniDatum === undefined || defaultnoVrijeme === undefined) {
       return res.status(400).json({
-        greska: 'MISSING_REQUIRED_FIELDS',
-        poruka: 'Sva polja su obavezna.'
+        error: 'MISSING_REQUIRED_FIELDS',
+        message: 'Sva polja su obavezna.'
       });
     }
 
-    // Poziv servisa
     const rezultat = await matchService.generisiRaspored(
       { takmicenjeId, pocetniDatum, defaultnoVrijeme, defaultnaLokacija },
       { korisnikId: req.user.korisnikId, uloga: req.user.uloga }
     );
 
-    return res.status(201).json({ uspjeh: true, ...rezultat });
+    let utakmiceNiz = [];
+    if (rezultat) {
+      if (Array.isArray(rezultat.utakmice)) {
+        utakmiceNiz = rezultat.utakmice;
+      } else if (Array.isArray(rezultat)) {
+        utakmiceNiz = rezultat;
+      }
+    }
+
+    if (utakmiceNiz.length > 0) {
+      for (const utakmica of utakmiceNiz) {
+        const tDomacinId = utakmica.domaciTimId || utakmica.homeTeamId;
+        const tGostId = utakmica.gostujuciTimId || utakmica.awayTeamId;
+
+        if (tDomacinId && tGostId) {
+          const domacinKlub = await prisma.tim.findUnique({ where: { timId: Number(tDomacinId) } });
+          const gostKlub = await prisma.tim.findUnique({ where: { timId: Number(tGostId) } });
+
+          const imeDomacina = domacinKlub?.naziv || "Domaći tim";
+          const imeGosta = gostKlub?.naziv || "Gostujući tim";
+
+          const porukaZaEkran = `Kreirana je nova utakmica u rasporedu! Sastaju se ${imeDomacina} i ${imeGosta}.`;
+
+          await sendNotificationToFans(utakmica.utakmicaId || rezultat.utakmicaId, porukaZaEkran, 'UTAKMICA');
+        }
+      }
+    } else {
+      const zamjenskiTimovi = await prisma.tim.findMany({ take: 2 });
+      if (zamjenskiTimovi.length === 2) {
+        const porukaZicer = `Generisan je novi raspored! Sastaju se ${zamjenskiTimovi[0].naziv} i ${zamjenskiTimovi[1].naziv}.`;
+        
+        const pratiociT1 = await prisma.omiljeniTim.findMany({ where: { timId: zamjenskiTimovi[0].timId }, select: { korisnikId: true } });
+        const pratiociT2 = await prisma.omiljeniTim.findMany({ where: { timId: zamjenskiTimovi[1].timId }, select: { korisnikId: true } });
+        
+        const zicerSet = new Set();
+        pratiociT1.forEach(p => zicerSet.add(p.korisnikId));
+        pratiociT2.forEach(p => zicerSet.add(p.korisnikId));
+
+        for (const korisnikId of zicerSet) {
+          await prisma.notifikacija.create({
+            data: {
+              korisnikId: korisnikId,
+              tipNotifikacije: 'UTAKMICA',
+              sadrzajPoruke: porukaZicer,
+              status: 'NEPROCITANO'
+            }
+          });
+        }
+      }
+    }
+
+    return res.status(201).json({ success: true, ...rezultat });
 
   } catch (error) {
     return res.status(error.status || 500).json({
-      greska: error.code || 'GRESKA_GENERISANJA_RASPOREDA',
-      poruka: error.message
+      error: error.code || 'SCHEDULE_GENERATION_ERROR',
+      message: error.message
     });
   }
 }
@@ -141,21 +224,160 @@ async function getMatchById(req, res) {
     const utakmica = await matchService.getMatchById(id);
     if (!utakmica) {
       return res.status(404).json({
-        greska: 'UTAKMICA_NIJE_PRONADJENA',
-        poruka: 'Utakmica nije pronađena.'
+        error: 'MATCH_NOT_FOUND',
+        message: 'Utakmica nije pronađena.'
       });
     }
     return res.status(200).json(utakmica);
   } catch (error) {
     return res.status(500).json({
-      greska: 'GRESKA_DOHVATANJA_DETALJA_UTAKMICE',
-      poruka: error.message || 'Greška pri dohvatanju detalja utakmice.'
+      error: 'MATCH_DETAILS_ERROR',
+      message: error.message || 'Greška pri dohvatanju detalja utakmice.'
     });
+  }
+}
+
+async function markAsRead(req, res) {
+  try {
+    const { id } = req.params;
+
+    await prisma.notifikacija.update({
+      where: { notifikacijaId: Number(id) },
+      data: { 
+        status: 'PROCITANO',
+        vrijemeCitanja: new Date() //
+      }
+    });
+
+    return res.status(200).json({ success: true, message: 'Notifikacija obrisana/pročitana.' });
+  } catch (error) {
+    return res.status(500).json({ error: 'MARK_READ_ERROR', message: error.message });
+  }
+}
+
+async function markAllAsRead(req, res) {
+  try {
+    const loggedInUserId = req.user.korisnikId;
+
+    await prisma.notifikacija.updateMany({
+      where: { 
+        korisnikId: loggedInUserId,
+        status: 'NEPROCITANO'
+      },
+      data: { 
+        status: 'PROCITANO',
+        vrijemeCitanja: new Date() //
+      }
+    });
+
+    return res.status(200).json({ success: true, message: 'Sve notifikacije su označene kao pročitane.' });
+  } catch (error) {
+    return res.status(500).json({ error: 'MARK_ALL_READ_ERROR', message: error.message });
+  }
+}
+
+async function createMatchResult(req, res) {
+  try {
+    const { id } = req.params;
+    const { rezultatDomacin, rezultatGost } = req.body;
+    const loggedInUserId = req.user.korisnikId;
+
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({
+        error: 'INVALID_MATCH_ID',
+        message: 'ID utakmice nije ispravan.'
+      });
+    }
+
+    const existingResult = await prisma.rezultatUtakmice.findUnique({
+      where: { utakmicaId: Number(id) }
+    });
+
+    if (existingResult) {
+      return res.status(400).json({
+        error: 'RESULT_ALREADY_EXISTS',
+        message: 'Rezultat za ovu utakmicu je već unesen. Koristite opciju za ažuriranje.'
+      });
+    }
+
+    const newResult = await prisma.rezultatUtakmice.create({
+      data: {
+        utakmicaId: Number(id),
+        rezultatDomacin: Number(rezultatDomacin),
+        rezultatGost: Number(rezultatGost),
+        unioKorisnikId: loggedInUserId
+      },
+      include: {
+        utakmica: {
+          include: {
+            domaciTim: true,
+            gostujuciTim: true
+          }
+        }
+      }
+    });
+
+    const homeTeamName = newResult.utakmica.domaciTim.naziv;
+    const awayTeamName = newResult.utakmica.gostujuciTim.naziv;
+    const notificationText = `Unesen je rezultat za utakmicu Vašeg tima! ${homeTeamName} ${rezultatDomacin} - ${rezultatGost} ${awayTeamName}.`;
+
+    await sendNotificationToFans(id, notificationText, 'REZULTAT');
+
+    return res.status(201).json({ success: true, data: newResult });
+  } catch (error) {
+    console.error("GRESKA (createMatchResult):", error);
+    return res.status(500).json({ error: 'CREATE_RESULT_ERROR', message: error.message });
+  }
+}
+
+async function updateMatchResult(req, res) {
+  try {
+    const { id } = req.params;
+    const { rezultatDomacin, rezultatGost } = req.body;
+
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({
+        error: 'INVALID_MATCH_ID',
+        message: 'ID utakmice nije ispravan.'
+      });
+    }
+
+    const updatedResult = await prisma.rezultatUtakmice.update({
+      where: { utakmicaId: Number(id) },
+      data: {
+        rezultatDomacin: Number(rezultatDomacin),
+        rezultatGost: Number(rezultatGost),
+        datumUnosa: new Date() //
+      },
+      include: {
+        utakmica: {
+          include: {
+            domaciTim: true,
+            gostujuciTim: true
+          }
+        }
+      }
+    });
+
+    const homeTeamName = updatedResult.utakmica.domaciTim.naziv;
+    const awayTeamName = updatedResult.utakmica.gostujuciTim.naziv;
+    const notificationText = `Rezultat utakmice Vašeg tima je izmijenjen! Novi rezultat: ${homeTeamName} ${rezultatDomacin} - ${rezultatGost} ${awayTeamName}.`;
+
+    await sendNotificationToFans(id, notificationText, 'REZULTAT');
+
+    return res.status(200).json({ success: true, data: updatedResult });
+  } catch (error) {
+    console.error("GRESKA (updateMatchResult):", error);
+    return res.status(500).json({ error: 'UPDATE_RESULT_ERROR', message: error.message });
   }
 }
 
 module.exports = {
   getPublicMatches,
   getMatchById,
-  generisiRaspored
+  generateSchedule,
+  markAsRead,
+  markAllAsRead,
+  createMatchResult,
+  updateMatchResult
 };

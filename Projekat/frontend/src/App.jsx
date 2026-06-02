@@ -22,6 +22,9 @@ import Profile from './pages/Profile';
 import MojePrijave from './pages/MojePrijave';
 import PrijavaEkipe from './pages/PrijavaEkipe';
 
+// DODANO: Import nove stranice za Task 2 (Notifikacije)
+import Notifikacije from './pages/Notifikacije';
+
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import RealtimeNotifications from './components/RealtimeNotifications.jsx';
 
@@ -111,6 +114,16 @@ function App() {
           }
         />
 
+        {/* DODANO: Ruta za pregled in-app notifikacija pod ProtectedRoute */}
+        <Route
+          path="/notifikacije"
+          element={
+            <ProtectedRoute>
+              <Notifikacije />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/objekti" element={<FacilitiesPage />} />
         <Route
           path="/objekti/:id/termini"
@@ -146,13 +159,13 @@ function App() {
         />
         <Route path="/player" element={<ProtectedRoute><PlayerDashboard /></ProtectedRoute>} />
         <Route
-  path="/moje-rezervacije"
-  element={
-    <ProtectedRoute>
-      <MojeRezervacije />
-    </ProtectedRoute>
-  }
-/>
+          path="/moje-rezervacije"
+          element={
+            <ProtectedRoute>
+              <MojeRezervacije />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
