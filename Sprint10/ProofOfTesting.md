@@ -42,3 +42,53 @@
 | MT-S10-04 | Navigirati na stranicu profila (`/profile`) dok je ulogovan `NAVIJAC` sa dodatim omiljenim timovima. | U lijevoj koloni ispod aktivnih angažmana prikazuje se nova sekcija "Moji omiljeni timovi" sa spiskom svih favorizovanih timova i pripadajućim sportom. | PASS |
 | MT-S10-05 | Na stranici profila kliknuti na dugme "Ukloni" pored nekog od omiljenih timova. | Tim se uklanja sa liste, šalje se DELETE zahtjev na backend, a lista se trenutno ažurira na ekranu i prikazuje se success poruka. | PASS |
 | MT-S10-06 | Prijaviti se sa ulogom `ADMINISTRATOR` ili `TRENER`, ili posjetiti stranice kao gost bez prijave. | Ikone srca na stranici Timovi se uopšte ne rendersiraju, niti se na profilu prikazuje sekcija "Moji omiljeni timovi". | PASS |
+
+
+## Modul: Notifikacije (Maida Biber)
+
+### Sumarna statistika pokrivenosti testova
+* **Backend Integracijski Testovi (Kontroler - `notifikacijaController.test.js`):** 4 testna scenarija — **Svi uspješni (100% PASS)**
+* **Backend Unit Testovi (Servis - `notifikacijaService.test.js`):** 3 testna scenarija — **Svi uspješni (100% PASS)**
+* **Frontend Unit/Regresijski Testovi (`Notifikacije.test.jsx`):** 5 testnih scenarija — **Svi uspješni (100% PASS)**
+
+---
+
+### Detaljni Matrični Prikaz Izvršenih Testova
+
+### BACKEND INTEGRACIJSKI TESTOVI — KONTROLER RUTE (`notifikacijaController.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Integration | Uspješno dohvaćanje liste svih notifikacija za prijavljenog korisnika uz status 200 | `GET /api/notifikacije - treba vratiti 200 i JSON objekt sa notifikacijama` | PASS |
+| Integration | Uspješno dohvaćanje broja nepročitanih obavijesti | `GET /api/notifikacije/count - treba vratiti broj nepročitanih` | PASS |
+| Integration | Uspješno označavanje pojedinačne notifikacije kao pročitane | `PUT /api/notifikacije/:id/procitano - treba uspješno označiti notifikaciju` | PASS |
+| Integration | Rukovanje neočekivanim greškama na ruteru i vraćanje statusa 500 | `Treba vratiti status 500 ako servis baci neočekivanu grešku` | PASS |
+
+### BACKEND UNIT TESTOVI — SERVISNI SLOJ (`notifikacijaService.test.js`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| Unit | Dohvaćanje svih notifikacija iz baze sortiranih od najnovije | `getNotifikacijeService - treba vratiti sve notifikacije sortirane od najnovije` | PASS |
+| Unit | Brojanje nepročitanih notifikacija filtriranih po statusu `NEPROCITANO` | `getNeprocitaneCountService - treba vratiti broj nepročitanih notifikacija` | PASS |
+| Unit | Ažuriranje statusa tačno određene notifikaciju korisnika u bazi podataka | `oznaciKaoProcitanoService - treba ažurirati točno određenu notifikaciju` | PASS |
+
+### FRONTEND UNIT / REGRESIJSKI TESTOVI — STRANICA OBAVIJESTI (`Notifikacije.test.jsx`)
+
+| Nivo | AC / Opis | Test koji pokriva | Rezultat |
+| :--- | :--- | :--- | :--- |
+| UI / Regresija | Prikazivanje animiranog loader teksta dok se podaci povlače sa API-ja | `Treba prikazati loader dok se obavijesti učitavaju` | PASS |
+| UI / Regresija | Ispravan render liste, provjera stilova i klasa za pročitane i nepročitane stavke | `Treba ispravno prikazati listu notifikacija nakon učitavanja` | PASS |
+| UI / Regresija | Klik na nepročitanu obavijest okida API poziv i lokalno mijenja stil u pročitano | `Klik na nepročitanu obavijest treba pozvati API i označiti je kao pročitanu` | PASS |
+| UI / Regresija | Klik na dugme za masovno čitanje ažurira sve obavijesti i sklanja akciono dugme | `Klik na "Onači sve kao pročitano" treba ažurirati sve obavijesti` | PASS |
+| UI / Regresija | Prikaz adekvatne prazne (placeholder) poruke kada korisnik nema obavijesti | `Treba prikazati praznu poruku ako nema obavijesti u bazi` | PASS |
+
+---
+
+### Manuelna Verifikacija (Zapisnik Ručnog Testiranja)
+
+| ID testa | Koraci | Očekivano ponašanje | Rezultat |
+| :--- | :--- | :--- | :--- |
+| MT-S10-07 | Prijaviti se na sistem, navigirati na stranicu obavijesti (`/notifikacije` ili klikom na zvonce u Navbaru). | Učitava se stranica sa naslovom "Moje Obavijesti". Ako postoje nove, nepročitane stavke imaju podebljan font i narandžasti kružić (indikator). | PASS |
+| MT-S10-08 | Kliknuti na bilo koju nepročitanu obavijest na listi. | Narandžasti kružić trenutno nestaje, font se mijenja iz `bold` u regularni. U pozadini se šalje PUT zahtjev na `/api/notifikacije/:id/procitano`. | PASS |
+| MT-S10-09 | Kliknuti na dugme "Onači sve kao pročitano" na vrhu stranice. | Sve obavijesti na ekranu gube status nepročitanih, dugme za masovno označavanje nestaje sa ekrana, a bedž na zvoncu u Navbaru se poništava na 0. | PASS |
+| MT-S10-10 | Pokrenuti testni scenario u kojem korisnik nema nikakvih primljenih obavijesti. | Ekran prikazuje prazno stanje (Dashed kontejner) sa porukom "Nemate obavijesti" i prigodnom ikonicom, potvrđujući da aplikacija ne puca pri praznom nizu. | PASS |
