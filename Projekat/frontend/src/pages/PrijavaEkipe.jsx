@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import { fetchTeams } from '../api/teamApi';
 import { fetchLige } from '../api/ligaApi';
 import { createApplication } from '../api/applicationsApi';
 
 function PrijavaEkipe() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [timovi, setTimovi] = useState([]);
   const [lige, setLige] = useState([]);
@@ -19,9 +21,25 @@ function PrijavaEkipe() {
   const korisnikStr = localStorage.getItem('korisnik');
   const korisnik = korisnikStr ? JSON.parse(korisnikStr) : null;
 
+  const handleNazad = () => {
+    const from = location.state?.from;
+
+    if (from) {
+      navigate(from);
+      return;
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/');
+  };
+
   useEffect(() => {
     if (!korisnik || korisnik.trenutnaUloga !== 'TRENER') {
-      navigate('/dashboard');
+      navigate('/');
       return;
     }
 
@@ -62,7 +80,9 @@ function PrijavaEkipe() {
     );
   }, [timovi, korisnik]);
 
-  const odabraniTim = mojiTimovi.find((tim) => String(tim.timId) === String(timId));
+  const odabraniTim = mojiTimovi.find(
+    (tim) => String(tim.timId) === String(timId)
+  );
 
   const dostupneLige = useMemo(() => {
     if (!odabraniTim) return lige;
@@ -92,6 +112,10 @@ function PrijavaEkipe() {
       setPoruka('Tim je uspješno prijavljen na takmičenje.');
       setTimId('');
       setTakmicenjeId('');
+
+      setTimeout(() => {
+        handleNazad();
+      }, 900);
     } catch (error) {
       setGreska(
         error.response?.data?.poruka ||
@@ -104,15 +128,10 @@ function PrijavaEkipe() {
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
+      <Navbar />
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <Link
-            to="/dashboard"
-            className="text-sm font-bold text-orange-700 hover:text-orange-800"
-          >
-            ← Nazad na dashboard
-          </Link>
 
           <h1 className="text-4xl font-black text-slate-800 tracking-tight mt-4">
             Prijava ekipe
@@ -187,6 +206,7 @@ function PrijavaEkipe() {
                       <option value="">
                         {timId ? 'Odaberite ligu/takmičenje' : 'Prvo odaberite tim'}
                       </option>
+
                       {dostupneLige.map((liga) => (
                         <option key={liga.takmicenjeId} value={liga.takmicenjeId}>
                           {liga.naziv} — {liga.sezona || 'Sezona nije definisana'}
