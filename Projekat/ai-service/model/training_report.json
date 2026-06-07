@@ -1,0 +1,314 @@
+{
+  "validation": {
+    "row_count": 135,
+    "column_count": 39,
+    "feature_columns": [
+      "home_team_id",
+      "away_team_id",
+      "competition_id",
+      "season_index",
+      "home_points_before",
+      "away_points_before",
+      "points_diff",
+      "home_position_before",
+      "away_position_before",
+      "position_diff",
+      "home_form_points_last_5",
+      "away_form_points_last_5",
+      "form_diff_last_5",
+      "home_avg_goals_for_last_5",
+      "away_avg_goals_for_last_5",
+      "goals_for_diff_last_5",
+      "home_avg_goals_against_last_5",
+      "away_avg_goals_against_last_5",
+      "goals_against_diff_last_5",
+      "home_avg_assists_last_5",
+      "away_avg_assists_last_5",
+      "assists_diff_last_5",
+      "home_avg_fouls_last_5",
+      "away_avg_fouls_last_5",
+      "fouls_diff_last_5",
+      "home_avg_yellow_cards_last_5",
+      "away_avg_yellow_cards_last_5",
+      "yellow_cards_diff_last_5",
+      "home_avg_red_cards_last_5",
+      "away_avg_red_cards_last_5",
+      "red_cards_diff_last_5",
+      "home_avg_possession_last_5",
+      "away_avg_possession_last_5",
+      "possession_diff_last_5",
+      "h2h_home_wins",
+      "h2h_draws",
+      "h2h_away_wins",
+      "h2h_points_home_perspective"
+    ],
+    "missing_values": {
+      "home_team_id": 0,
+      "away_team_id": 0,
+      "competition_id": 0,
+      "season_index": 0,
+      "home_points_before": 0,
+      "away_points_before": 0,
+      "points_diff": 0,
+      "home_position_before": 0,
+      "away_position_before": 0,
+      "position_diff": 0,
+      "home_form_points_last_5": 0,
+      "away_form_points_last_5": 0,
+      "form_diff_last_5": 0,
+      "home_avg_goals_for_last_5": 0,
+      "away_avg_goals_for_last_5": 0,
+      "goals_for_diff_last_5": 0,
+      "home_avg_goals_against_last_5": 0,
+      "away_avg_goals_against_last_5": 0,
+      "goals_against_diff_last_5": 0,
+      "home_avg_assists_last_5": 0,
+      "away_avg_assists_last_5": 0,
+      "assists_diff_last_5": 0,
+      "home_avg_fouls_last_5": 0,
+      "away_avg_fouls_last_5": 0,
+      "fouls_diff_last_5": 0,
+      "home_avg_yellow_cards_last_5": 0,
+      "away_avg_yellow_cards_last_5": 0,
+      "yellow_cards_diff_last_5": 0,
+      "home_avg_red_cards_last_5": 0,
+      "away_avg_red_cards_last_5": 0,
+      "red_cards_diff_last_5": 0,
+      "home_avg_possession_last_5": 0,
+      "away_avg_possession_last_5": 0,
+      "possession_diff_last_5": 0,
+      "h2h_home_wins": 0,
+      "h2h_draws": 0,
+      "h2h_away_wins": 0,
+      "h2h_points_home_perspective": 0,
+      "target": 0
+    },
+    "duplicated_rows": 0,
+    "target_distribution": {
+      "HOME_WIN": 67,
+      "DRAW": 34,
+      "AWAY_WIN": 34
+    },
+    "always_zero_columns": [],
+    "single_value_columns": [],
+    "has_nan_values": false
+  },
+  "training": {
+    "accuracy": 0.5925925925925926,
+    "classification_report": {
+      "AWAY_WIN": {
+        "precision": 0.5,
+        "recall": 0.14285714285714285,
+        "f1-score": 0.2222222222222222,
+        "support": 7.0
+      },
+      "DRAW": {
+        "precision": 0.6,
+        "recall": 0.42857142857142855,
+        "f1-score": 0.5,
+        "support": 7.0
+      },
+      "HOME_WIN": {
+        "precision": 0.6,
+        "recall": 0.9230769230769231,
+        "f1-score": 0.7272727272727273,
+        "support": 13.0
+      },
+      "accuracy": 0.5925925925925926,
+      "macro avg": {
+        "precision": 0.5666666666666668,
+        "recall": 0.4981684981684982,
+        "f1-score": 0.48316498316498313,
+        "support": 27.0
+      },
+      "weighted avg": {
+        "precision": 0.5740740740740741,
+        "recall": 0.5925925925925926,
+        "f1-score": 0.5374111485222597,
+        "support": 27.0
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "AWAY_WIN",
+        "DRAW",
+        "HOME_WIN"
+      ],
+      "matrix": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          1,
+          0,
+          12
+        ]
+      ]
+    },
+    "feature_importances": [
+      {
+        "feature": "away_avg_fouls_last_5",
+        "importance": 0.07019305630476963
+      },
+      {
+        "feature": "home_team_id",
+        "importance": 0.04643064797534389
+      },
+      {
+        "feature": "home_avg_possession_last_5",
+        "importance": 0.044132239721934766
+      },
+      {
+        "feature": "fouls_diff_last_5",
+        "importance": 0.041142511306846395
+      },
+      {
+        "feature": "away_team_id",
+        "importance": 0.038244071828425305
+      },
+      {
+        "feature": "possession_diff_last_5",
+        "importance": 0.03805647408098025
+      },
+      {
+        "feature": "form_diff_last_5",
+        "importance": 0.036828194673820605
+      },
+      {
+        "feature": "away_avg_yellow_cards_last_5",
+        "importance": 0.03588253426852735
+      },
+      {
+        "feature": "home_avg_yellow_cards_last_5",
+        "importance": 0.035067744140617946
+      },
+      {
+        "feature": "away_avg_possession_last_5",
+        "importance": 0.03386057977926332
+      },
+      {
+        "feature": "home_avg_fouls_last_5",
+        "importance": 0.03133857065071685
+      },
+      {
+        "feature": "points_diff",
+        "importance": 0.031237869989073696
+      },
+      {
+        "feature": "home_position_before",
+        "importance": 0.031100728030473285
+      },
+      {
+        "feature": "position_diff",
+        "importance": 0.030694570207445575
+      },
+      {
+        "feature": "goals_against_diff_last_5",
+        "importance": 0.03065337092877184
+      },
+      {
+        "feature": "away_form_points_last_5",
+        "importance": 0.02880168762166318
+      },
+      {
+        "feature": "home_avg_goals_against_last_5",
+        "importance": 0.028349936591877477
+      },
+      {
+        "feature": "away_position_before",
+        "importance": 0.02769697226227692
+      },
+      {
+        "feature": "away_avg_goals_against_last_5",
+        "importance": 0.02705631864989068
+      },
+      {
+        "feature": "yellow_cards_diff_last_5",
+        "importance": 0.02586854887341545
+      },
+      {
+        "feature": "away_avg_assists_last_5",
+        "importance": 0.02567553095010867
+      },
+      {
+        "feature": "assists_diff_last_5",
+        "importance": 0.02535083931575838
+      },
+      {
+        "feature": "away_points_before",
+        "importance": 0.025292525355898
+      },
+      {
+        "feature": "goals_for_diff_last_5",
+        "importance": 0.024429481975382653
+      },
+      {
+        "feature": "home_avg_assists_last_5",
+        "importance": 0.023525321085359537
+      },
+      {
+        "feature": "home_avg_goals_for_last_5",
+        "importance": 0.022180395949329638
+      },
+      {
+        "feature": "home_points_before",
+        "importance": 0.02210211435508309
+      },
+      {
+        "feature": "home_form_points_last_5",
+        "importance": 0.021479179123880754
+      },
+      {
+        "feature": "away_avg_goals_for_last_5",
+        "importance": 0.021237285897312618
+      },
+      {
+        "feature": "h2h_points_home_perspective",
+        "importance": 0.015251928144320057
+      },
+      {
+        "feature": "red_cards_diff_last_5",
+        "importance": 0.013213227454799255
+      },
+      {
+        "feature": "h2h_home_wins",
+        "importance": 0.008877682038782857
+      },
+      {
+        "feature": "h2h_away_wins",
+        "importance": 0.008736918618471777
+      },
+      {
+        "feature": "home_avg_red_cards_last_5",
+        "importance": 0.007008953191014967
+      },
+      {
+        "feature": "competition_id",
+        "importance": 0.006314165227942627
+      },
+      {
+        "feature": "season_index",
+        "importance": 0.0059158950531540124
+      },
+      {
+        "feature": "away_avg_red_cards_last_5",
+        "importance": 0.005856034158418044
+      },
+      {
+        "feature": "h2h_draws",
+        "importance": 0.0049158942188487036
+      }
+    ],
+    "train_rows": 108,
+    "test_rows": 27,
+    "model_path": "C:\\Users\\DT User\\Desktop\\Fax\\SI\\SI---Grupa-6\\Projekat\\ai-service\\model\\model.pkl",
+    "feature_columns_path": "C:\\Users\\DT User\\Desktop\\Fax\\SI\\SI---Grupa-6\\Projekat\\ai-service\\model\\feature_columns.pkl"
+  }
+}
