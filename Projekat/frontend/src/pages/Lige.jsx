@@ -332,8 +332,7 @@ function Lige() {
                             <div key={liga.takmicenjeId} className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
                                 <div className="flex-1">
                                     <h3 
-                                        onClick={() => navigate(`/raspored?takmicenjeId=${liga.takmicenjeId}`)}
-                                        className="text-xl font-bold text-slate-800 mb-3 group-hover:text-orange-600 transition-colors cursor-pointer"
+                                        className="text-xl font-bold text-slate-800 mb-3 group-hover:text-orange-600 transition-colors"
                                     >
                                         {liga.naziv}
                                     </h3>
@@ -393,7 +392,7 @@ function Lige() {
                                         to={`/tabela/${liga.takmicenjeId}`}
                                         className="w-full py-2.5 bg-green-50 text-green-700 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-green-100 transition-colors text-center"
                                     >
-                                        TABELA
+                                        PRIKAZI LIGU
                                     </Link>
                                 </div>
                             </div>
