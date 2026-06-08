@@ -4,7 +4,7 @@ Sistem omogućava organizaciju timova, rasporeda, termina, rezultata, tabela i k
 
 ## Produkcijska aplikacija
 
-[https://sportmanager-frontend-production.up.railway.app/)
+https://sportmanager-frontend-production.up.railway.app/
 
 ## Tim
 
