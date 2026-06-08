@@ -3,20 +3,20 @@
 databases:
   - name: sportmanager-db
     databaseName: sportmanager
-    plan: free
+    plan: starter
 
 services:
   # ── Redis (za Bull queues) ────────────────────────────────────────────────────
   - type: redis
     name: sportmanager-redis
-    plan: free
+    plan: starter
     ipAllowList: []
 
   # ── Backend ───────────────────────────────────────────────────────────────────
   - type: web
     name: sportmanager-backend
     runtime: node
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy
     startCommand: node src/app.js
@@ -43,7 +43,7 @@ services:
   - type: web
     name: sportmanager-frontend
     runtime: static
-    plan: free
+    plan: starter
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
@@ -59,7 +59,7 @@ services:
   - type: web
     name: sportmanager-ai
     runtime: python
-    plan: free
+    plan: starter
     rootDir: ai-service
     buildCommand: pip install -r requirements.txt
     startCommand: python -m uvicorn src.app:app --host 0.0.0.0 --port $PORT
