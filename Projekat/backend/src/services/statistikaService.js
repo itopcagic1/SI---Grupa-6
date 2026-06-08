@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { validateStatistikaKonzistentnost } = require('./statistikaConsistencyService');
+const { classifyStatistikaTip } = require('../utils/statistikaMeta');
 
 function parsePositiveInt(value, fieldName) {
   const parsed = Number(value);
@@ -430,24 +431,46 @@ async function dohvatiAgregiranuStatistikuTima(timId, takmicenjeId, sezona) {
   statistike.forEach(stat => {
     stat.vrijednosti.forEach(vrij => {
       const tipId = vrij.tipStatistike.tipStatistikeId;
+      const kategorijaStatistike = classifyStatistikaTip(vrij.tipStatistike.nazivStatistike);
+      
       if (!agregirano[tipId]) {
         agregirano[tipId] = {
           tipStatistikeId: tipId,
           nazivStatistike: vrij.tipStatistike.nazivStatistike,
-          ukupno: 0
+          ukupno: 0,
+          brojUtakmica: 0,
+          jePosjed: kategorijaStatistike === 'possession'
         };
       }
+      
       agregirano[tipId].ukupno += vrij.vrijednost;
+      agregirano[tipId].brojUtakmica += 1;
     });
   });
 
   const brojUtakmica = statistike.length;
 
+  // Konvertuj ukupno u prosjek za posjed lopte
+  const finalnaSatistika = Object.values(agregirano).map(stat => {
+    if (stat.jePosjed && stat.brojUtakmica > 0) {
+      return {
+        tipStatistikeId: stat.tipStatistikeId,
+        nazivStatistike: stat.nazivStatistike,
+        ukupno: Math.min(Math.round(stat.ukupno / stat.brojUtakmica * 100) / 100, 100)
+      };
+    }
+    return {
+      tipStatistikeId: stat.tipStatistikeId,
+      nazivStatistike: stat.nazivStatistike,
+      ukupno: stat.ukupno
+    };
+  });
+
   return {
     tim: statistike[0]?.tim || null,
     takmicenje: statistike[0]?.utakmica?.takmicenje || null,
     brojUtakmica,
-    statistike: Object.values(agregirano)
+    statistike: finalnaSatistika
   };
 }
 
