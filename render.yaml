@@ -3,7 +3,6 @@
 databases:
   - name: sportmanager-db
     databaseName: sportmanager
-    user: postgres
     plan: free
 
 services:
