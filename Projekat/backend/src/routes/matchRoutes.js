@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const matchController = require('../controllers/matchController');
+const aiPredictionController = require('../controllers/aiPredictionController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 
@@ -30,6 +31,18 @@ const resultController = require('../controllers/resultController');
 const statistikaController = require('../controllers/statistikaController');
 
 router.get('/:id/details', matchController.getMatchById);
+
+router.get(
+  '/:id/prediction',
+  authenticateToken,
+  aiPredictionController.getLatestMatchPrediction
+);
+
+router.post(
+  '/:id/predict',
+  authenticateToken,
+  aiPredictionController.generateMatchPrediction
+);
 
 // Unos rezultata preko matchController-a (sa slanjem notifikacija)
 router.post(

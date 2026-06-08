@@ -50,3 +50,20 @@ export const fetchMatchDetails = async (id) => {
   const response = await api.get(`/matches/${id}/details`);
   return response.data;
 };
+
+export const generateMatchPrediction = async (matchId) => {
+  const response = await api.post(
+    `/matches/${matchId}/predict`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data;
+};
+
+export const fetchMatchPrediction = async (matchId) => {
+  const response = await api.get(
+    `/matches/${matchId}/prediction`,
+    getAuthHeaders()
+  );
+  return response.data;
+};
