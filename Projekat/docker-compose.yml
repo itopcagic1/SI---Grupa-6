@@ -53,8 +53,8 @@ services:
   # ── Frontend (Vite build → Nginx) ─────────────────────────────────────────────
   frontend:
     build:
-      context:    .                        # Projekat/ root (treba nginx/nginx.conf)
-      dockerfile: frontend/Dockerfile
+      context: ./frontend                       # Projekat/ root (treba nginx/nginx.conf)
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     depends_on:

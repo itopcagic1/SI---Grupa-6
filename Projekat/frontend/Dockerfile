@@ -1,12 +1,9 @@
 # ---- build stage ----
-# Build context mora biti Projekat/ (korijen), ne frontend/
-# jer trebamo i nginx/nginx.conf
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm ci
-COPY frontend/ .
-# VITE_API_URL se postavlja na /api jer nginx proxira na backend
+COPY . .
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
@@ -14,6 +11,6 @@ RUN npm run build
 # ---- serve stage ----
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
