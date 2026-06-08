@@ -55,7 +55,7 @@ services:
     build:
       context: ./frontend                       # Projekat/ root (treba nginx/nginx.conf)
       dockerfile: Dockerfile
-      environment:
+    environment:
       - PORT=80
     ports:
       - "80:80"
