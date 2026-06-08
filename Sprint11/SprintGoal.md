@@ -1,0 +1,3 @@
+# Sprint Goal — Završni Sprint
+
+Cilj završnog sprinta je isporučiti potpuno stabilan i evaluacijski spreman sistem kroz uvođenje AI servisa za predikciju rezultata utakmica, automatizovan CI/CD pipeline putem GitHub Actions i Render platforme, te Docker okruženje koje omogućava pokretanje cijelog sistema jednom komandom — uz kompletnu završnu dokumentaciju koja uključuje deployment proceduru, korisnički priručnik, tehničku dokumentaciju, proširenu test evidenciju i jasno evidentirana ograničenja, tako da sistem može biti pokrenut, deployan, korišten i evaluiran bez dodatnih neformalnih objašnjenja tima.
