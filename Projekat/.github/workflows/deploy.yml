@@ -1,0 +1,125 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Backend testovi (Jest)
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Projekat/backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER:     postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB:       sportmanager_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Projekat/backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sportmanager_test
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sportmanager_test
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV:     test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sportmanager_test
+          JWT_SECRET:   ci-test-secret-32chars-minimum!!
+          REDIS_URL:    redis://localhost:6379
+          FRONTEND_URL: http://localhost
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Frontend testovi (Vitest)
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Projekat/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Projekat/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Deploy na Render (samo na push na main, nakon što prođu oba testa)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Render
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Render deploy — Backend
+        run: |
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}" \
+            -H "Content-Type: application/json"
+
+      - name: Trigger Render deploy — Frontend
+        run: |
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}" \
+            -H "Content-Type: application/json"
+
+      - name: Trigger Render deploy — AI Service
+        run: |
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_AI }}" \
+            -H "Content-Type: application/json"

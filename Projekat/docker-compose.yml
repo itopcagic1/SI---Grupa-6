@@ -1,0 +1,76 @@
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       sportmanager
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout:  5s
+      retries:  5
+
+  # ── Redis (Bull queues) ───────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout:  5s
+      retries:  5
+
+  # ── Backend (Node.js / Express) ───────────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    env_file: ./backend/.env
+    environment:
+      NODE_ENV:     production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/sportmanager?schema=public
+      REDIS_URL:    redis://redis:6379
+      FRONTEND_URL: http://localhost
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Pokreće migracije pa tek onda aplikaciju
+    command: >
+      sh -c "npx prisma migrate deploy && node src/app.js"
+
+  # ── Frontend (Vite build → Nginx) ─────────────────────────────────────────────
+  frontend:
+    build:
+      context:    .                        # Projekat/ root (treba nginx/nginx.conf)
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  # ── AI Service (Python / FastAPI) ─────────────────────────────────────────────
+  ai-service:
+    build:
+      context:    ./ai-service
+      dockerfile: Dockerfile
+    env_file: ./ai-service/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
