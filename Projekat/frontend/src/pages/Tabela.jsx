@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import { fetchTabela } from '../api/tabelaApi';
 import { downloadTabelaPDF, canExportPDF } from '../api/pdfApi';
 import { fetchPublicMatches } from '../api/matchApi';
+import { generateLeagueAIPrediction } from '../api/ligaApi';
 
 // Boja reda prema poziciji
 function getRedBoja(pozicija) {
@@ -58,6 +59,11 @@ function getResultLabel(utakmica) {
   return `${rezultat.rezultatDomacin} : ${rezultat.rezultatGost}`;
 }
 
+function formatPercent(value) {
+  if (value === null || value === undefined) return '-';
+  return `${Math.round(Number(value) * 100)}%`;
+}
+
 function Tabela() {
   const { id } = useParams();
 
@@ -77,6 +83,11 @@ function Tabela() {
   const [loadingUtakmice, setLoadingUtakmice] = useState(false);
   const [errorUtakmice, setErrorUtakmice] = useState('');
   const [prikaziRaspored, setPrikaziRaspored] = useState(false);
+
+  const [prikaziAI, setPrikaziAI] = useState(false);
+  const [aiPrediction, setAiPrediction] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   // Učitaj tabelu kada se promijeni id ili sortiranje
   useEffect(() => {
@@ -158,76 +169,149 @@ function Tabela() {
     }
   };
 
-  const renderUtakmica = (utakmica) => {
-    const rezultat = getResultLabel(utakmica);
+  const handleAIPrediction = async () => {
+    try {
+      setAiLoading(true);
+      setAiError('');
+      setPrikaziAI(true);
+      setPrikaziRaspored(true);
 
-    return (
-      <article
-        key={utakmica.utakmicaId}
-        className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm hover:shadow-lg transition-all"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div className="flex gap-2 items-center flex-wrap">
-            <span className="text-xs font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">
-              {utakmica.takmicenje?.naziv || takmicenje?.naziv || 'Takmičenje nije definisano'}
-            </span>
-
-            <span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
-              {utakmica.status || 'Status nije definisan'}
-            </span>
-
-            <span
-              className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${
-                rezultat ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-              }`}
-            >
-              {rezultat ? 'Uneseno' : 'Čeka unos'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="flex-1 text-right">
-            <div className="text-lg font-black text-slate-800">
-              {utakmica.domaciTim?.naziv || 'Domaći tim'}
-            </div>
-          </div>
-
-          <div className="px-4 py-2 rounded-2xl bg-amber-50 border border-amber-100 text-center min-w-20">
-            <div className="text-xl font-black text-orange-600">
-              {rezultat || 'VS'}
-            </div>
-          </div>
-
-          <div className="flex-1 text-left">
-            <div className="text-lg font-black text-slate-800">
-              {utakmica.gostujuciTim?.naziv || 'Gostujući tim'}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium text-slate-500">
-          <div className="bg-slate-50 rounded-2xl px-4 py-3">
-            <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
-              Datum i vrijeme
-            </span>
-            <span className="text-slate-800">
-              {formatDateTime(utakmica.vrijemePocetka)}
-            </span>
-          </div>
-
-          <div className="bg-slate-50 rounded-2xl px-4 py-3">
-            <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
-              Lokacija
-            </span>
-            <span className="text-slate-800">
-              {getLocationLabel(utakmica)}
-            </span>
-          </div>
-        </div>
-      </article>
-    );
+      const data = await generateLeagueAIPrediction(id);
+      setAiPrediction(data.prediction);
+    }  catch (err) {
+      setAiError(
+        err.response?.data?.message ||
+        'Nije moguće generisati AI predikciju.'
+      );
+    } finally {
+      setAiLoading(false);
+    }
   };
+
+  const renderUtakmica = (utakmica) => {
+  const rezultat = getResultLabel(utakmica);
+
+  const aiMatch = aiPrediction?.predictions?.find(
+    p => p.utakmicaId === utakmica.utakmicaId
+  );
+
+  return (
+    <article
+      key={utakmica.utakmicaId}
+      className="bg-white rounded-[32px] border border-amber-100 p-6 shadow-sm hover:shadow-lg transition-all"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="flex gap-2 items-center flex-wrap">
+          <span className="text-xs font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">
+            {utakmica.takmicenje?.naziv || takmicenje?.naziv || 'Takmičenje nije definisano'}
+          </span>
+
+          <span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
+            {utakmica.status || 'Status nije definisan'}
+          </span>
+
+          <span
+            className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${
+              rezultat ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {rezultat ? 'Uneseno' : 'Čeka unos'}
+          </span>
+
+          {aiMatch && (
+            <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg bg-purple-50 text-purple-700">
+              AI GENERISANO
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex-1 text-right">
+          <div className="text-lg font-black text-slate-800">
+            {utakmica.domaciTim?.naziv || 'Domaći tim'}
+          </div>
+        </div>
+
+        <div className="px-4 py-2 rounded-2xl bg-amber-50 border border-amber-100 text-center min-w-20">
+          <div className="text-xl font-black text-orange-600">
+            {rezultat || 'VS'}
+          </div>
+        </div>
+
+        <div className="flex-1 text-left">
+          <div className="text-lg font-black text-slate-800">
+            {utakmica.gostujuciTim?.naziv || 'Gostujući tim'}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium text-slate-500">
+        <div className="bg-slate-50 rounded-2xl px-4 py-3">
+          <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
+            Datum i vrijeme
+          </span>
+          <span className="text-slate-800">
+            {formatDateTime(utakmica.vrijemePocetka)}
+          </span>
+        </div>
+
+        <div className="bg-slate-50 rounded-2xl px-4 py-3">
+          <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
+            Lokacija
+          </span>
+          <span className="text-slate-800">
+            {getLocationLabel(utakmica)}
+          </span>
+        </div>
+      </div>
+
+      {aiMatch && (
+        <div className="mt-4 bg-purple-50 border border-purple-100 rounded-2xl p-4">
+          <div className="text-sm font-black text-purple-700 uppercase tracking-widest mb-3">
+            AI Predikcija
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-white rounded-xl p-3">
+              <div className="text-xs text-slate-500 mb-1">Domaćin</div>
+              <div className="font-black text-lg">
+                {formatPercent(aiMatch.homeWinProbability)}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3">
+              <div className="text-xs text-slate-500 mb-1">Neriješeno</div>
+              <div className="font-black text-lg">
+                {formatPercent(aiMatch.drawProbability)}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3">
+              <div className="text-xs text-slate-500 mb-1">Gost</div>
+              <div className="font-black text-lg">
+                {formatPercent(aiMatch.awayWinProbability)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 text-sm">
+            <span className="font-bold text-slate-700">
+              Predviđeni ishod:
+            </span>{' '}
+            <span className="font-black text-purple-700">
+              {{
+                HOME_WIN: 'HOME WIN',
+                AWAY_WIN: 'AWAY WIN',
+                DRAW: 'DRAW'
+              }[aiMatch.prediction] || aiMatch.prediction}
+            </span>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+};
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans">
@@ -284,6 +368,25 @@ function Tabela() {
               >
                 {prikaziRaspored ? 'Sakrij raspored' : 'Raspored'}
               </button>
+
+              <button
+                type="button"
+                onClick={handleAIPrediction}
+                disabled={aiLoading || loading}
+                className={`px-5 py-2 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-95 shadow-md ${
+                  prikaziAI
+                    ? 'bg-purple-700 text-white hover:bg-purple-800'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                } disabled:opacity-50`}
+              >
+                {aiLoading ? 'AI obrađuje...' : 'AI predikcija'}
+              </button>
+
+              {aiError && (
+                <p className="text-xs font-semibold text-red-600">
+                  {aiError}
+                </p>
+              )}
 
               {mozePDF && (
                 <div className="flex flex-col items-end gap-1">
@@ -448,6 +551,61 @@ function Tabela() {
               </table>
             </div>
           </div>
+        )}
+
+        {prikaziAI && aiPrediction?.finalTable?.length > 0 && (
+          <section className="mt-10 bg-white rounded-[32px] border border-purple-100 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-purple-100 bg-purple-50">
+              <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                AI PREDIKCIJA FINALNOG PORETKA
+              </h2>
+              <p className="text-slate-500 mt-2">
+                AI generisano · {aiPrediction.explanation}
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-purple-50 text-left">
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-purple-900/60">#</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-purple-900/60">Tim</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-purple-900/60 text-center">Trenutni bodovi</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-purple-900/60 text-center">AI bodovi</th>
+                    <th className="px-5 py-4 font-black text-xs uppercase tracking-widest text-purple-900/60 text-center">Ukupno</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {aiPrediction.finalTable.map((tim) => (
+                    <tr key={tim.timId} className="border-t border-purple-50 hover:bg-purple-50/50">
+                      <td className="px-5 py-4 font-black text-purple-700">
+                        {tim.predictedPosition}
+                      </td>
+
+                      <td className="px-5 py-4 font-bold text-slate-800">
+                        {tim.naziv}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        {tim.currentPoints}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        {Number(tim.predictedPoints).toFixed(2)}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        <span className="inline-flex min-w-12 justify-center rounded-2xl bg-purple-50 px-3 py-1 font-black text-purple-700">
+                          {Number(tim.predictedTotalPoints).toFixed(2)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
 
         {/* Raspored utakmica samo za otvorenu ligu */}

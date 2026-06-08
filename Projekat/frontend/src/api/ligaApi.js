@@ -67,3 +67,12 @@ export const fetchLigaDetalji = async (id) => {
   const response = await api.get(`/lige/${id}`);
   return response.data;
 };
+
+export const generateLeagueAIPrediction = async (ligaId) => {
+  const response = await api.post(
+    `/lige/${ligaId}/ai-prediction`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data;
+};
