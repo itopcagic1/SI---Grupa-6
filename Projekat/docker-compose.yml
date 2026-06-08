@@ -55,6 +55,8 @@ services:
     build:
       context: ./frontend                       # Projekat/ root (treba nginx/nginx.conf)
       dockerfile: Dockerfile
+      environment:
+      - PORT=80
     ports:
       - "80:80"
     depends_on:
