@@ -136,11 +136,32 @@ Frontend sluša na `http://localhost:5173`.
 
 ## 8. Pokretanje baze
 
-### Lokalno (Docker)
-Baza se automatski pokreće kao dio `docker compose up`. Dostupna je na `localhost:5432`.
+### Lokalno s Dockerom (preporučeno)
+Baza se automatski pokreće kao dio `docker compose up` — ne trebaš ništa raditi ručno. PostgreSQL je dostupan na `localhost:5432`.
 
-### Produkcija
-Koristi se Railway PostgreSQL servis. Connection string se automatski injektuje kao `DATABASE_URL` env varijabla.
+### Lokalno bez Dockera
+
+**Opcija 1 — Lokalna PostgreSQL instalacija:**
+Instaliraj PostgreSQL 16, kreiraj bazu i postavi connection string u `backend/.env`:
+
+```bash
+psql -U postgres
+CREATE DATABASE sportmanager;
+```
+
+```env
+DATABASE_URL=postgresql://postgres:<tvoja-lozinka>@localhost:5432/sportmanager?schema=public
+```
+
+**Opcija 2 — Cloud baza (Neon) — koristi tim:**
+Tim koristi Neon projekt `sportski-sistem`. Connection string se dobija na [neon.tech](https://neon.tech) → projekt → Dashboard → Connection string, te se postavlja u `backend/.env`:
+
+```env
+DATABASE_URL=postgresql://neondb_owner:<password>@<host>.neon.tech/neondb?sslmode=require
+```
+
+### Produkcija (Railway)
+Railway automatski kreira PostgreSQL servis. Connection string se injektuje kao `DATABASE_URL` env varijabla u backend i AI servis.
 
 ---
 
