@@ -38,7 +38,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://sportmanager-frontend.onrender.com'
+    'https://sportmanager-frontend.onrender.com',
+    process.env.FRONTEND_URL
   ],
   credentials: true,
 }));

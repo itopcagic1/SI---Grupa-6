@@ -4,11 +4,11 @@
 
 **SportManager** je web platforma za upravljanje sportskim ligama, rezervacijama terena, timovima i rezultatima. Sistem se sastoji od pet servisa:
 
-- **Frontend** — React (Vite) SPA, serviran preko Nginx-a
-- **Backend** — Node.js / Express REST API sa WebSocket podrškom (Socket.IO)
-- **AI Service** — Python / FastAPI servis za predikciju rezultata utakmica
-- **PostgreSQL** — relacijska baza podataka (Prisma ORM)
-- **Redis** — message broker za Bull/BullMQ queue (rezervacije, notifikacije)
+- **Frontend** — React aplikacija buildana Vite-om, servirana preko Nginx-a. Korisnici pristupaju aplikaciji kroz browser i komuniciraju s backendom putem REST API-ja.
+- **Backend** — Node.js/Express REST API koji obrađuje poslovnu logiku, autentifikaciju korisnika i real-time komunikaciju putem WebSocketa (Socket.IO).
+- **AI Service** — Python/FastAPI servis koji na osnovu historijskih podataka o utakmicama koristi ML model za predikciju rezultata.
+- **PostgreSQL** — glavna relacijska baza podataka u kojoj se čuvaju svi podaci aplikacije. Prisma ORM se koristi za upravljanje shemom i migracijama.
+- **Redis** — brza in-memory baza koja služi kao red čekanja (queue). Kada korisnik napravi rezervaciju ili se treba poslati notifikacija, zadatak se privremeno pohrani u Redis, a worker ga obradi u pozadini bez da korisnik čeka na odgovor.
 
 ---
 
@@ -66,8 +66,6 @@ VITE_API_URL=http://localhost:3000/api
 DATABASE_URL=postgresql://postgres:postgres@db:5432/sportmanager?schema=public
 ```
 
-> **Napomena:** Za produkciju, `DATABASE_URL` u AI servisu treba biti javni connection string baze.
-
 ---
 
 ## 5. Lokalno pokretanje — cijeli sistem 
@@ -105,7 +103,7 @@ docker compose down -v
 ## 6. Lokalno pokretanje — backend (bez Dockera)
 
 ### Preduvjeti
-- PostgreSQL i Redis pokrenuti lokalno
+- PostgreSQL i Redis pokrenuti lokalno ili cloud baza (Neon)
 - `backend/.env` popunjen
 
 ```bash
@@ -207,7 +205,7 @@ Automatski na svaki `push` na `main` granu.
 #### Preduvjeti
 - GitHub repo s pristupom na `main` granu
 - Railway account s kreiranim servisima
-- GitHub Secrets postavljeni (vidi dolje)
+- GitHub Secrets postavljeni 
 
 #### GitHub Secrets
 
@@ -223,7 +221,7 @@ Automatski na svaki `push` na `main` granu.
 
 1. **Backend Tests** — pokreće Jest testove s PostgreSQL i Redis servisima
 2. **Frontend Tests** — pokreće Vitest testove
-3. **Deploy to Render** — triggera Railway deploy hookove (samo na `push` na `main`, nakon testova)
+3. **Deploy to Railway** — triggera Railway deploy hookove (samo na `push` na `main`, nakon testova)
 
 ### Railway konfiguracija servisa
 
@@ -279,7 +277,6 @@ Sljedeći koraci se moraju izvršiti jednom ručno pri inicijalnom setupu:
 
 - **Railway Trial** — besplatni tier ima ograničenje od $5 kredita (30 dana). Nakon isteka servisi se gase.
 - **Sleep mode** — Railway gasi neaktivne servise, pa prvi request može biti sporiji (cold start).
-- **CI testovi** — 40 od 502 testova trenutno pada zbog poznatih bugova u test suite-u koji nisu vezani za infrastrukturu. Deploy se izvršava i kad testovi padnu.
 - **WebSocket na produkciji** — Socket.IO radi direktno na backend URL-u, ne kroz nginx proxy (frontend se direktno spaja na backend).
 
 ---
