@@ -122,7 +122,7 @@ Ostali su i određeni tehnički i operativni aspekti koji nisu definisani u prod
 
 **Docker + GitHub Actions** — Za završni sprint uvedena je potpuna Dockerizacija kroz `docker-compose.yml` koji podiže sve servise lokalno jednom komandom, te CI/CD pipeline koji blokira deploy ako padnu testovi.
 
-**Render Blueprint (`render.yaml`)** — Cijela cloud infrastruktura opisana je u jednom konfiguracionom fajlu, što deployovanje čini ponovljivim i dokumentovanim.
+**Railway Blueprint (`railway.toml`)** — Cijela cloud infrastruktura opisana je u jednom konfiguracionom fajlu, što deployovanje čini ponovljivim i dokumentovanim.
 
 ---
 
@@ -132,7 +132,7 @@ Ostali su i određeni tehnički i operativni aspekti koji nisu definisani u prod
 
 **Koordinacija većeg tima** postaje problem kad frontend i backend tima rade nezavisno na funkcionalnostima koje moraju biti usklađene. Rano pisanje API dokumentacije (Sprint 5) smanjilo je broj situacija gdje jedna strana čeka drugu ili pretpostavlja drugačiji format podataka.
 
-**Produkcijsko okruženje s pet servisa** — frontend, backend, AI servis, PostgreSQL (Neon), Redis — zahtijevalo je pažljivo upravljanje environment varijablama i međusobnim URL-ovima. Render Blueprint je uveden upravo kako bi se ta složenost stavila pod kontrolu i dokumentovala na jednom mjestu.
+**Produkcijsko okruženje s pet servisa** — frontend, backend, AI servis, PostgreSQL (Neon), Redis — zahtijevalo je pažljivo upravljanje environment varijablama i međusobnim URL-ovima. Railway Blueprint je uveden upravo kako bi se ta složenost stavila pod kontrolu i dokumentovala na jednom mjestu.
 
 **Vremenski rokovi u rezervacijama** u kombinaciji s asinhronim procesiranjem zahtijevali su posebnu pažnju oko vremenskih zona i tačnosti pokretanja BullMQ zadataka. Greška od nekoliko sekundi ovdje nije toliko bitna, ali greška od sata može uzrokovati da se rezervacija odbije ranije ili kasniije nego što treba.
 
@@ -160,4 +160,3 @@ Projekat je rezultovao funkcionalnim sistemom koji pokriva cijeli životni ciklu
 Ono što izdvaja ovaj projekat od jednostavnog CRUD sistema je logika rezervacija s pouzdanošću korisnika, real-time notifikacije i AI predikcija kao zasebni mikroservis. Svaka tehnička odluka donesena tokom razvoja bila je direktno vezana za konkretne zahtjeve sistema, a ne za tehnološke preferencije tima.
 
 ---
-
