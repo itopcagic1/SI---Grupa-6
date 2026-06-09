@@ -2,7 +2,6 @@ FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
 
 WORKDIR /app
 
@@ -14,4 +13,4 @@ COPY model/ ./model/
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -m uvicorn src.app:app --host 0.0.0.0 --port $PORT"]
+CMD ["python", "-c", "import os, uvicorn; uvicorn.run('src.app:app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))"]
