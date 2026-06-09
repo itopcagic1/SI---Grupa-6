@@ -213,8 +213,6 @@ npm test
 
 ### CD skripta
 
-Skripta se nalazi u `.github/workflows/deploy.yml` u korijenu repozitorija.
-
 #### Lokacija
 ```
 .github/workflows/deploy.yml
@@ -225,53 +223,46 @@ Automatski na svaki `push` na `main` granu.
 
 #### Preduvjeti
 - GitHub repo s pristupom na `main` granu
-- Railway account s kreiranim servisima
-- GitHub Secrets postavljeni 
-
-#### GitHub Secrets
-
-| Secret                        | Opis                              |
-|-------------------------------|-----------------------------------|
-| `RENDER_DEPLOY_HOOK_BACKEND`  | Railway deploy hook za backend    |
-| `RENDER_DEPLOY_HOOK_FRONTEND` | Railway deploy hook za frontend   |
-| `RENDER_DEPLOY_HOOK_AI`       | Railway deploy hook za AI servis  |
-
-> Hookovi se nalaze u Railway dashboardu: servis → Settings → Deploy Hook.
+- Railway account s kreiranim servisima i GitHub integracijom
 
 #### Šta pipeline radi
 
 1. **Backend Tests** — pokreće Jest testove s PostgreSQL i Redis servisima
 2. **Frontend Tests** — pokreće Vitest testove
-3. **Deploy to Railway** — triggera Railway deploy hookove (samo na `push` na `main`, nakon testova)
+3. **Verify Deployment** — provjerava da li su Railway servisi dostupni nakon deploymenta
+
+> Railway automatski deployuje na svaki push na `main` granu kroz direktnu GitHub integraciju — nije potrebna dodatna konfiguracija deploy hookova.
 
 ### Railway konfiguracija servisa
 
-| Servis               | Root Directory        | Build Command                                              | Start Command                                      |
-|----------------------|-----------------------|------------------------------------------------------------|----------------------------------------------------|
-| sportmanager-backend | `Projekat/backend`    | `npm ci && npx prisma generate && npx prisma migrate deploy` | `node src/app.js`                                  |
-| sportmanager-frontend| `Projekat/frontend`   | `npm ci && npm run build` (Dockerfile)                     | nginx (Dockerfile)                                 |
-| sportmanager-ai      | `Projekat/ai-service` | `pip install -r requirements.txt` (Dockerfile)             | `uvicorn src.app:app --host 0.0.0.0 --port $PORT` |
+Svi servisi koriste Dockerfile za build i start.
+
+| Servis                | Root Directory        | Start Command (Dockerfile CMD)                              |
+|-----------------------|-----------------------|-------------------------------------------------------------|
+| sportmanager-backend  | `Projekat/backend`    | `npx prisma migrate deploy && node src/app.js`              |
+| sportmanager-frontend | `Projekat/frontend`   | nginx                                                       |
+| sportmanager-ai       | `Projekat/ai-service` | `uvicorn src.app:app --host 0.0.0.0 --port $PORT`          |
 
 ### Railway env varijable (produkcija)
 
-Backend:
-```
+**Backend:**
+```env
 NODE_ENV=production
-DATABASE_URL=<railway-postgres-connection-string>
-REDIS_URL=${{sportmanager-redis.DATABASE_URL}}
+DATABASE_URL=<neon-ili-railway-postgres-connection-string>
+REDIS_URL=${{sportmanager-redis.REDIS_URL}}
 JWT_SECRET=<produkcijski-secret>
 SENDGRID_API_KEY=<sendgrid-key>
 FRONTEND_URL=https://sportmanager-frontend-production.up.railway.app
 ```
 
-Frontend:
-```
+**Frontend:**
+```env
 VITE_API_URL=https://sportmanager-backend-production.up.railway.app/api
 ```
 
-AI Service:
-```
-DATABASE_URL=<railway-postgres-connection-string>
+**AI Service:**
+```env
+DATABASE_URL=<neon-ili-railway-postgres-connection-string>
 ```
 
 ### Ručni koraci (opravdani)
@@ -279,18 +270,17 @@ DATABASE_URL=<railway-postgres-connection-string>
 Sljedeći koraci se moraju izvršiti jednom ručno pri inicijalnom setupu:
 1. Kreiranje Railway projekta i servisa
 2. Postavljanje env varijabli u Railway dashboardu
-3. Dodavanje GitHub Secrets za deploy hookove
 
 ---
 
 ## 12. Linkovi na deployment
 
-| Servis    | URL                                                                 |
-|-----------|---------------------------------------------------------------------|
-| Frontend  | https://sportmanager-frontend-production.up.railway.app             |
-| Backend   | https://sportmanager-backend-production.up.railway.app              |
-| AI Service| https://sportmanager-ai-production.up.railway.app                   |
-| API Docs  | https://sportmanager-ai-production.up.railway.app/docs              |
+| Servis      | URL                                                             |
+|-------------|-----------------------------------------------------------------|
+| Frontend    | https://sportmanager-frontend-production.up.railway.app         |
+| Backend     | https://sportmanager-backend-production.up.railway.app          |
+| AI Service  | https://sportmanager-ai-production.up.railway.app/health        |
+| AI API Docs | https://sportmanager-ai-production.up.railway.app/docs          |
 
 ---
 
@@ -298,10 +288,23 @@ Sljedeći koraci se moraju izvršiti jednom ručno pri inicijalnom setupu:
 
 - **Railway Trial** — besplatni tier ima ograničenje od $5 kredita (30 dana). Nakon isteka servisi se gase.
 - **Sleep mode** — Railway gasi neaktivne servise, pa prvi request može biti sporiji (cold start).
-- **WebSocket na produkciji** — Socket.IO radi direktno na backend URL-u, ne kroz nginx proxy (frontend se direktno spaja na backend).
 
 ---
 
 ## 14. Najčešći problemi i rješenja
 
+### Frontend ne može komunicirati s backendom
+**Uzrok:** `VITE_API_URL` env varijabla nije postavljena ili pokazuje na pogrešan URL.  
+**Rješenje:** Provjeriti `.env` u `frontend/` folderu — lokalno treba biti `http://localhost:3000/api`, a na produkciji Railway backend URL.
 
+### Railway servis ne odgovara
+**Uzrok:** Besplatni tier gasi neaktivne servise (sleep mode).  
+**Rješenje:** Sačekati 30-60 sekundi pri prvom requestu — servis se automatski budi.
+
+### Prijava ne radi na produkciji
+**Uzrok:** CORS nije konfigurisan za produkcijski frontend URL.  
+**Rješenje:** Provjeriti da `FRONTEND_URL` u Railway backend varijablama sadrži tačan URL frontenda.
+
+### Aplikacija se ne može pokrenuti lokalno
+**Uzrok:** Docker Desktop nije pokrenut ili `.env` fajlovi nisu kreirani.  
+**Rješenje:** Pokrenuti Docker Desktop, kreirati `.env` fajlove prema `.env.example` predlošcima, pa pokrenuti `docker compose up --build`.

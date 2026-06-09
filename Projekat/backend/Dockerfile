@@ -16,4 +16,4 @@ COPY --from=deps /app/prisma ./prisma
 COPY src ./src
 COPY package*.json ./
 EXPOSE 3000
-CMD ["node", "src/app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/app.js"]
