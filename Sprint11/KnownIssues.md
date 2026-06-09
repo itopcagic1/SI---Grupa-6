@@ -55,16 +55,7 @@ Sistem u potpunosti ovisi o ovlaštenim licima (organizatori, treneri, vlasnici 
 - Sistem nema implementovanu zaštitu od brute-force napada na endpoint za prijavu izvan standardnog `express-rate-limit` paketa, koji je konfigurisan globalno, a ne specifično po osjetljivim rutama.
 - Ne postoji mehanizam za detekciju i blokiranje neobičnih obrazaca ponašanja (npr. previše zahtjeva za rezervaciju u kratkom periodu od jednog korisnika).
 
----
 
-## 4. Nedovršene funkcionalnosti
-
-- **PDF izvoz** (PB-39): Paket `pdfkit` je dodan kao zavisnost, ali funkcionalnost izvoza tabela i rasporeda u PDF format nije implementovana.
-- **Statistike igrača i timova**: Modeli `StatistikaIgracaNaUtakmici`, `StatistikaTimaNaUtakmici`, `TipStatistike` i prateće vrijednosti postoje u shemi baze podataka, ali UI za unos i prikaz statistika nije implementovan.
-- **Lista čekanja za rezervacije** (`StavkaListeCekanja`): Model postoji u bazi, ali logika automatskog preuzimanja termina sa liste čekanja nije potvrđeno implementovana.
-- **Grupni treninzi**: Model `GrupniTrening` i `PrijavaGrupnogTreninga` su definirani u shemi, ali ova funkcionalnost nije eksplicitno navedena kao završena u backlogu.
-- **Responzivni UI** (PB-38): Sistem je razvijan web-first pristupom. Optimizacija za mobilne uređaje je planirana ali nije potvrđeno završena.
-- **Verifikacija uloga korisnika**: Polja `trazenaUloga`, `statusUloge`, `datumZahtjeva` i `documents` na modelu `Korisnik` sugerišu da postoji tok zahtjeva za promjenu uloge, ali kompletnost ovog toka nije potvrđena.
 
 ---
 
