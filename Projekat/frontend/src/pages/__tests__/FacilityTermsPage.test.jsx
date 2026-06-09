@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import FacilityTermsPage from '../FacilityTermsPage';
 import * as facilityTermsApi from '../../api/facilityTermsApi';
@@ -101,12 +101,18 @@ function setCreateForm({ datum = '2026-05-21', vrijeme = '12:00', trajanje = '60
 
 describe('FacilityTermsPage', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-05-20T12:00:00'));
     vi.clearAllMocks();
     facilityTermsApi.getObjectDetails.mockResolvedValue({ objekatId: 5, naziv: 'Sportska dvorana Konjic' });
     facilityTermsApi.getObjectTerms.mockResolvedValue({ termini: baseTerms });
     facilityTermsApi.createObjectTerms.mockResolvedValue({ poruka: 'Termini su uspješno kreirani.' });
     facilityTermsApi.updateTerm.mockResolvedValue({ poruka: 'Termin je uspješno izmijenjen.' });
     facilityTermsApi.blockTerm.mockResolvedValue({ poruka: 'Termin je uspješno blokiran.' });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('prikazuje naslov, naziv objekta, sedmicni prikaz i datume u dd.mm.yyyy. formatu', async () => {

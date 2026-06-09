@@ -17,6 +17,28 @@ jest.mock('../../../src/services/rezervacijaService', () => ({
   cancelIndividualReservationService: jest.fn(),
 }));
 
+const mockPrisma = {
+  grupniTrening: {
+    findUnique: jest.fn().mockImplementation((args) => {
+      const id = args.where.treningId;
+      return Promise.resolve({
+        treningId: id,
+        terminObjekta: { vrijemePocetka: new Date(Date.now() + 48 * 3600000) },
+      });
+    }),
+  },
+  prijavaGrupnogTreninga: {
+    findFirst: jest.fn().mockResolvedValue({ prijavaId: 1 }),
+  },
+  korisnik: {
+    findUnique: jest.fn().mockResolvedValue({ statusPouzdanosti: 'AKTIVAN', brojPreksrenihRezervacija: 0 }),
+  },
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
+
 const {
   kreirajGrupniTrening,
   prijaviSeNaGrupniTrening,
@@ -112,7 +134,7 @@ describe('Grupne Rezervacije Controller', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          poruka: 'Uspješno ste se prijavili na grupni trening.',
+          poruka: 'Uspješno ste se prijavili.',
           prijava: expect.any(Object),
         })
       );
@@ -178,9 +200,11 @@ describe('Grupne Rezervacije Controller', () => {
 
       await otkaziGrupniTrening(req, res);
 
-      expect(mockGrupneService.otkaziGrupniTreningService).toHaveBeenCalledWith('100', 5);
+      expect(mockGrupneService.otkaziGrupniTreningService).toHaveBeenCalledWith(100, 5);
       expect(res.json).toHaveBeenCalledWith({
-        poruka: 'Grupni trening je uspješno otkazan.'
+        poruka: 'Grupni trening je uspješno otkazan.',
+        brojPrekrsaja: 0,
+        maxDozvoljeno: 3
       });
     });
   });
@@ -203,9 +227,11 @@ describe('Grupne Rezervacije Controller', () => {
 
       await odjaviSeSaGrupnogTreninga(req, res);
 
-      expect(mockGrupneService.odjaviSeSaGrupnogTreningaService).toHaveBeenCalledWith('100', 9, 'Povreda');
+      expect(mockGrupneService.odjaviSeSaGrupnogTreningaService).toHaveBeenCalledWith(100, 9, 'Povreda');
       expect(res.json).toHaveBeenCalledWith({
-        poruka: 'Uspješno ste se odjavili'
+        poruka: 'Uspješno ste se odjavili',
+        brojPrekrsaja: 0,
+        maxDozvoljeno: 3
       });
     });
   });

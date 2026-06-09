@@ -21,7 +21,7 @@ app.put('/api/notifikacije/:id/procitano', notifikacijaController.oznaciKaoProci
 app.put('/api/notifikacije/procitano-sve', notifikacijaController.oznaciSveKaoProcitano);
 
 // Mockujemo servis (putanja mora biti identična kao u require iznad)
-jest.mock('../../../src/services/notifikacijaService');
+jest.mock('../../src/services/notifikacijaService');
 
 describe('Notifikacija Controller - API Integration Testovi', () => {
   beforeEach(() => {

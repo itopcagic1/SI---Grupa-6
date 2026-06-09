@@ -5,7 +5,11 @@ jest.mock('@prisma/client', () => {
   const mPrismaClient = {
     utakmica: {
       findUnique: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([])
+    },
+    ucesceUTakmicenju: {
+      findMany: jest.fn().mockResolvedValue([])
     },
     rezultatUtakmice: {
       create: jest.fn(),
@@ -15,7 +19,9 @@ jest.mock('@prisma/client', () => {
     plasmanNaTabeli: {
       findUnique: jest.fn(),
       update: jest.fn(),
-      create: jest.fn()
+      create: jest.fn(),
+      deleteMany: jest.fn(),
+      createMany: jest.fn()
     },
     $transaction: jest.fn((callback) => callback(mPrismaClient))
   };
@@ -73,6 +79,7 @@ describe('Result Controller', () => {
     });
 
     it('uspjesno kreira rezultat i azurira plasman u istoj transakciji', async () => {
+      prisma.ucesceUTakmicenju.findMany.mockResolvedValue([{ timId: 20 }, { timId: 30 }]);
       prisma.utakmica.findUnique.mockResolvedValue({
         utakmicaId: 1,
         takmicenjeId: 10,
@@ -94,7 +101,8 @@ describe('Result Controller', () => {
         where: { utakmicaId: 1 },
         data: { status: 'Zavrseno' }
       });
-      expect(prisma.plasmanNaTabeli.create).toHaveBeenCalledTimes(2);
+      expect(prisma.plasmanNaTabeli.deleteMany).toHaveBeenCalled();
+      expect(prisma.plasmanNaTabeli.createMany).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ poruka: 'Rezultat uspjesno unesen.' }));
     });
@@ -115,6 +123,7 @@ describe('Result Controller', () => {
     });
 
     it('uspjesno azurira rezultat i tabelu atomski', async () => {
+      prisma.ucesceUTakmicenju.findMany.mockResolvedValue([{ timId: 20 }, { timId: 30 }]);
       prisma.utakmica.findUnique.mockResolvedValue({
         utakmicaId: 1,
         takmicenjeId: 10,
@@ -137,11 +146,13 @@ describe('Result Controller', () => {
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.rezultatUtakmice.update).toHaveBeenCalled();
-      expect(prisma.plasmanNaTabeli.update).toHaveBeenCalledTimes(4);
+      expect(prisma.plasmanNaTabeli.deleteMany).toHaveBeenCalledTimes(2);
+      expect(prisma.plasmanNaTabeli.createMany).toHaveBeenCalledTimes(2);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ poruka: 'Rezultat uspjesno korigovan.' }));
     });
 
     it('odbija promjenu rezultata koja invalidira postojecu statistiku golova', async () => {
+      prisma.ucesceUTakmicenju.findMany.mockResolvedValue([{ timId: 20 }, { timId: 30 }]);
       req.body = { rezultatDomacin: 1, rezultatGost: 0 };
       prisma.utakmica.findUnique
         .mockResolvedValueOnce({

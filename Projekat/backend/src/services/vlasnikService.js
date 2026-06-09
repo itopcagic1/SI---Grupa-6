@@ -394,7 +394,13 @@ async function odobriZahtjev(tx, zahtjev, vlasnikId) {
     data: { status: ZAUZET },
   });
 
-  
+  await tx.notifikacija.create({
+    data: napraviNotifikaciju({
+      korisnikId: zahtjev.korisnikId,
+      tipNotifikacije: 'ZAHTJEV_REZERVACIJE_ODOBREN',
+      sadrzajPoruke: `Vaš zahtjev za rezervaciju termina je odobren.`,
+    }),
+  });
 
   return {
     message: 'Zahtjev je odobren.',

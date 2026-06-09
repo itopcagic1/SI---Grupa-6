@@ -107,6 +107,7 @@ async function getPublicMatches(req, res) {
   } catch (error) {
     return res.status(error.status || 500).json({
       error: error.code || 'MATCHES_FETCH_ERROR',
+      greska: error.code || 'MATCHES_FETCH_ERROR',
       message: error.message || 'Greška pri dohvatanju utakmica'
     });
   }
@@ -121,6 +122,7 @@ async function generateSchedule(req, res) {
       if (!pocetniDatum || isNaN(datum.getTime())) {
         return res.status(400).json({
           error: 'INVALID_DATE',
+          greska: 'INVALID_DATE',
           message: 'Nevažeći format datuma'
         });
       }
@@ -130,6 +132,7 @@ async function generateSchedule(req, res) {
       if (datum < danas) {
         return res.status(400).json({
           error: 'DATE_IN_PAST',
+          greska: 'DATE_IN_PAST',
           message: 'Datum ne može biti u prošlosti.'
         });
       }
@@ -140,6 +143,7 @@ async function generateSchedule(req, res) {
       if (!vrijemeRegex.test(defaultnoVrijeme)) {
         return res.status(400).json({
           error: 'INVALID_TIME',
+          greska: 'INVALID_TIME',
           message: 'Nevažeći format vremena.'
         });
       }
@@ -148,6 +152,7 @@ async function generateSchedule(req, res) {
     if (takmicenjeId === undefined || pocetniDatum === undefined || defaultnoVrijeme === undefined) {
       return res.status(400).json({
         error: 'MISSING_REQUIRED_FIELDS',
+        greska: 'MISSING_REQUIRED_FIELDS',
         message: 'Sva polja su obavezna.'
       });
     }
@@ -208,11 +213,12 @@ async function generateSchedule(req, res) {
       }
     }
 
-    return res.status(201).json({ success: true, ...rezultat });
+    return res.status(201).json({ success: true, uspjeh: true, ...rezultat });
 
   } catch (error) {
     return res.status(error.status || 500).json({
       error: error.code || 'SCHEDULE_GENERATION_ERROR',
+      greska: error.code || 'SCHEDULE_GENERATION_ERROR',
       message: error.message
     });
   }
@@ -225,6 +231,7 @@ async function getMatchById(req, res) {
     if (!utakmica) {
       return res.status(404).json({
         error: 'MATCH_NOT_FOUND',
+        greska: 'MATCH_NOT_FOUND',
         message: 'Utakmica nije pronađena.'
       });
     }
@@ -232,6 +239,7 @@ async function getMatchById(req, res) {
   } catch (error) {
     return res.status(500).json({
       error: 'MATCH_DETAILS_ERROR',
+      greska: 'MATCH_DETAILS_ERROR',
       message: error.message || 'Greška pri dohvatanju detalja utakmice.'
     });
   }

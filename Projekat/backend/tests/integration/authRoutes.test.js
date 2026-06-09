@@ -1,4 +1,60 @@
 const request = require('supertest');
+
+const users = [];
+
+const mockPrisma = {
+  korisnik: {
+    deleteMany: jest.fn().mockImplementation((args) => {
+      const email = args.where.email;
+      const index = users.findIndex(u => u.email === email);
+      if (index !== -1) {
+        users.splice(index, 1);
+      }
+      return Promise.resolve({ count: 1 });
+    }),
+    create: jest.fn().mockImplementation((args) => {
+      const newUser = {
+        korisnikId: 1,
+        email: args.data.email,
+        lozinkaHash: args.data.lozinkaHash,
+        punoIme: args.data.punoIme,
+        uloga: args.data.uloga || 'NAVIJAC',
+        trazenaUloga: args.data.trazenaUloga,
+        statusUloge: args.data.statusUloge || 'ODOBREN',
+        refreshToken: null,
+      };
+      users.push(newUser);
+      return Promise.resolve(newUser);
+    }),
+    findUnique: jest.fn().mockImplementation((args) => {
+      if (args.where.email) {
+        const email = args.where.email;
+        const user = users.find(u => u.email === email);
+        return Promise.resolve(user || null);
+      }
+      if (args.where.korisnikId) {
+        const id = args.where.korisnikId;
+        const user = users.find(u => u.korisnikId === id);
+        return Promise.resolve(user || null);
+      }
+      return Promise.resolve(null);
+    }),
+    update: jest.fn().mockImplementation((args) => {
+      const email = args.where.email;
+      const user = users.find(u => u.email === email);
+      if (user) {
+        Object.assign(user, args.data);
+      }
+      return Promise.resolve(user || {});
+    }),
+  },
+  $disconnect: jest.fn().mockResolvedValue(true),
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
+
 const app = require('../../src/app');
 
 describe('INTEGRACIJSKI TEST: Auth Rute (Maida)', () => {

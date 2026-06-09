@@ -4,6 +4,7 @@ const request = require('supertest');
 jest.mock('../../../src/controllers/vlasnikController', () => ({
   dohvatiSveRezervacije: jest.fn((req, res) => res.json({ route: 'dohvatiSveRezervacije' })),
   obradiZahtjevVerifikacije: jest.fn((req, res) => res.json({ route: 'obradiZahtjevVerifikacije' })),
+  otkaziRezervacijuVlasnik: jest.fn((req, res) => res.json({ route: 'otkaziRezervacijuVlasnik' })),
 }));
 
 jest.mock('../../../src/middleware/authMiddleware', () => ({
@@ -20,12 +21,14 @@ jest.mock('../../../src/middleware/roleMiddleware', () => ({
 const vlasnikController = require('../../../src/controllers/vlasnikController');
 const { authenticateToken } = require('../../../src/middleware/authMiddleware');
 const { requireRole } = require('../../../src/middleware/roleMiddleware');
-const vlasnikRoutes = require('../../../src/routes/vlasnikRoutes');
 
 function createApp() {
+  // Clear require cache for the routes file so it is evaluated fresh
+  delete require.cache[require.resolve('../../../src/routes/vlasnikRoutes')];
+  const freshVlasnikRoutes = require('../../../src/routes/vlasnikRoutes');
   const app = express();
   app.use(express.json());
-  app.use('/api/vlasnik', vlasnikRoutes);
+  app.use('/api/vlasnik', freshVlasnikRoutes);
   return app;
 }
 
