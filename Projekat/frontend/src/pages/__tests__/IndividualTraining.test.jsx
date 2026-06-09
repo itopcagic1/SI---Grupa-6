@@ -12,6 +12,8 @@ vi.mock('../../api/reservationApi', () => ({
   getFreeIndividualTerms: vi.fn(),
   reserveIndividualTerm: vi.fn(),
   cancelIndividualTerm: vi.fn(),
+  getMojeRezervacije: vi.fn(),
+  joinWaitlist: vi.fn(),
 }));
 
 function getTerminInCurrentWeek() {
@@ -49,6 +51,10 @@ describe('IndividualTraining page', () => {
       ],
     });
 
+    reservationApi.getMojeRezervacije.mockResolvedValue({
+      rezervacije: [],
+    });
+
     reservationApi.reserveIndividualTerm.mockResolvedValue({
       status: 'POTVRDJENA',
       poruka: 'Termin je uspješno rezervisan.',
@@ -64,7 +70,7 @@ describe('IndividualTraining page', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText(/Rezervacija termina/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Individualni/i)).toBeInTheDocument();
     expect(await screen.findByText(/Sportska dvorana/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Slobodno/i }));
@@ -151,6 +157,7 @@ describe('IndividualTraining page', () => {
           vrijemePocetka,
           vrijemeZavrsetka,
           status: 'ZAUZET',
+          jeMojaRezervacija: true,
           sportskiObjekat: { naziv: 'Zatvoreni bazen' },
         },
       ],
@@ -165,7 +172,7 @@ describe('IndividualTraining page', () => {
     );
 
     await screen.findByText(/Zatvoreni bazen/i);
-    fireEvent.click(screen.getByRole('button', { name: /Rezervisano/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Vaš Termin/i }));
 
     expect(screen.getByRole('heading', { name: /Otkazivanje rezervacije/i })).toBeInTheDocument();
   });

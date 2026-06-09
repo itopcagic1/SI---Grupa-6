@@ -9,6 +9,50 @@ jest.mock('../../src/services/rezervacijaService', () => ({
   getMojeRezervacijeService: jest.fn(),
 }));
 
+const mockPrisma = {
+  korisnik: {
+    findUnique: jest.fn().mockImplementation((args) => {
+      const id = args.where.korisnikId;
+      if (id === 12) {
+        return Promise.resolve({ statusPouzdanosti: 'NEPOUZDAN', brojPreksrenihRezervacija: 3 });
+      }
+      return Promise.resolve({ statusPouzdanosti: 'AKTIVAN', brojPreksrenihRezervacija: 0 });
+    }),
+    update: jest.fn().mockResolvedValue({}),
+  },
+  terminObjekta: {
+    findUnique: jest.fn().mockResolvedValue({
+      terminId: 10,
+      vrijemePocetka: new Date(Date.now() + 48 * 3600000),
+      vrijemeZavrsetka: new Date(Date.now() + 49 * 3600000),
+      status: 'SLOBODAN',
+    }),
+    update: jest.fn().mockResolvedValue({}),
+  },
+  grupniTrening: {
+    findUnique: jest.fn().mockImplementation((args) => {
+      const id = args.where.treningId;
+      if (id === 5) {
+        return Promise.resolve({
+          treningId: 5,
+          terminObjekta: { vrijemePocetka: new Date(Date.now() + 48 * 3600000) },
+        });
+      }
+      return Promise.resolve(null);
+    }),
+  },
+  prijavaGrupnogTreninga: {
+    findFirst: jest.fn().mockResolvedValue({ prijavaId: 1 }),
+  },
+  $transaction: jest.fn().mockResolvedValue([]),
+};
+
+jest.mock('@prisma/client', () => {
+  return {
+    PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
+  };
+});
+
 jest.mock('../../src/services/grupneRezervacijeService', () => ({
   kreirajGrupniTreningService: jest.fn(),
   prijaviSeNaGrupniTreningService: jest.fn(),
@@ -127,7 +171,7 @@ describe('POST /api/rezervacije/individualne/:id', () => {
 
     const res = await request(app).post('/api/rezervacije/individualne/10');
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
     expect(res.body.status).toBe('NA_CEKANJU');
   });
 
@@ -170,7 +214,7 @@ describe('DELETE /api/rezervacije/individualne/:id', () => {
     const res = await request(app).delete('/api/rezervacije/individualne/10');
 
     expect(res.status).toBe(200);
-    expect(res.body.poruka).toBe('Rezervacija je uspješno otkazana.');
+    expect(res.body.poruka).toBe('Uspješno otkazano na vrijeme. Termin je ponovo slobodan.');
   });
 
   it('vraća 404 kada rezervacija ne postoji', async () => {
@@ -260,7 +304,7 @@ describe('POST /api/rezervacije/grupne/:id/prijave', () => {
     const res = await request(app).post('/api/rezervacije/grupne/5/prijave');
 
     expect(res.status).toBe(200);
-    expect(res.body.poruka).toBe('Uspješno ste se prijavili na grupni trening.');
+    expect(res.body.poruka).toBe('Uspješno ste se prijavili.');
   });
 
   it('vraća grešku kada je trening popunjen', async () => {
@@ -323,6 +367,12 @@ describe('DELETE /api/rezervacije/grupne/:id/prijave', () => {
   });
 
   it('vraća grešku kada korisnik nije prijavljen', async () => {
+    mockPrisma.grupniTrening.findUnique.mockResolvedValueOnce({
+      treningId: 5,
+      terminObjekta: { vrijemePocetka: new Date(Date.now() + 2 * 3600000) },
+    });
+    mockPrisma.prijavaGrupnogTreninga.findFirst.mockResolvedValueOnce(null);
+
     const error = new Error('Niste prijavljeni na ovaj trening.');
     error.status = 404;
     error.code = 'PRIJAVA_NIJE_PRONADJENA';

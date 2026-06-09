@@ -29,14 +29,17 @@ jest.mock('../../../src/utils/timeoutCalculator', () => ({
   calculateTimeoutMilliseconds: jest.fn(() => 60 * 60 * 1000),
 }));
 
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => ({
-    rezervacija: { count: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    terminObjekta: { findUnique: jest.fn() },
-    korisnik: { update: jest.fn(), findUnique: jest.fn() },
-    grupniTrening: { findUnique: jest.fn() },
-  })),
-}));
+jest.mock('@prisma/client', () => {
+  const mockFindUnique = jest.fn().mockResolvedValue({ statusPouzdanosti: 'NEPOUZDAN' });
+  return {
+    PrismaClient: jest.fn(() => ({
+      rezervacija: { count: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      terminObjekta: { findUnique: jest.fn() },
+      korisnik: { update: jest.fn(), findUnique: mockFindUnique },
+      grupniTrening: { findUnique: jest.fn() },
+    })),
+  };
+});
 
 const { calculateTimeoutMilliseconds } = require('../../../src/utils/timeoutCalculator');
 const { kreirajIndividualnuRezervaciju } = require('../../../src/controllers/rezervacijaController');
@@ -56,8 +59,8 @@ describe('Developer 3 - BullMQ delayed job za pending rezervacije', () => {
   test('dodaje delayed job od 60 minuta kada se kreira NA_CEKANJU zahtjev', async () => {
     mockReservationService.createIndividualReservationService.mockResolvedValue({
       tip: 'NA_CEKANJU',
-      reservationId: 77,
-      termStartTime: '2026-05-25T20:00:00.000Z',
+      zahtjev: { zahtjevId: 77 },
+      termin: { vrijemePocetka: '2026-05-25T20:00:00.000Z' },
     });
 
     const req = {
@@ -66,19 +69,22 @@ describe('Developer 3 - BullMQ delayed job za pending rezervacije', () => {
     };
     const res = mockRes();
 
+    mockReservationQueue.add.mockResolvedValue({ id: 'mock-job' });
+
     await kreirajIndividualnuRezervaciju(req, res);
 
     expect(mockReservationService.createIndividualReservationService).toHaveBeenCalledWith(
-      '33',
-      req.user,
+      33,
+      { id: 12, korisnikId: 12, statusPouzdanosti: 'NEPOUZDAN' },
       false
     );
     expect(calculateTimeoutMilliseconds).toHaveBeenCalledWith('2026-05-25T20:00:00.000Z');
     expect(mockReservationQueue.add).toHaveBeenCalledWith(
       'check-reservation-timeout',
-      { reservationId: 77, termId: '33' },
+      { reservationId: 77, termId: 33 },
       { delay: 60 * 60 * 1000 }
     );
+    expect(res.status).toHaveBeenCalledWith(202);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'NA_CEKANJU',

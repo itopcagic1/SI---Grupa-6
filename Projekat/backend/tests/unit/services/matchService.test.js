@@ -31,6 +31,7 @@ const mockPrisma = {
   },
   plasmanNaTabeli: {
     deleteMany: jest.fn(),
+    createMany: jest.fn(),
   },
   $transaction: jest.fn(async (fn) => fn(mockPrisma)),
 };

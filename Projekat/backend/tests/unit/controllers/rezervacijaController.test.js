@@ -6,6 +6,35 @@ const mockService = {
 
 jest.mock('../../../src/services/rezervacijaService', () => mockService);
 
+const mockPrisma = {
+  korisnik: {
+    findUnique: jest.fn().mockImplementation((args) => {
+      const id = args.where.korisnikId;
+      if (id === 12) {
+        return Promise.resolve({ statusPouzdanosti: 'NEPOUZDAN', brojPreksrenihRezervacija: 3 });
+      }
+      return Promise.resolve({ statusPouzdanosti: 'POUZDAN', brojPreksrenihRezervacija: 0 });
+    }),
+    update: jest.fn().mockResolvedValue({}),
+  },
+  terminObjekta: {
+    findUnique: jest.fn().mockResolvedValue({
+      terminId: 10,
+      vrijemePocetka: new Date(Date.now() + 48 * 3600000),
+      vrijemeZavrsetka: new Date(Date.now() + 49 * 3600000),
+      status: 'SLOBODAN',
+    }),
+    update: jest.fn().mockResolvedValue({}),
+  },
+  grupniTrening: {
+    findUnique: jest.fn().mockResolvedValue(null),
+  },
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
+
 const {
   getFreeIndividualTerms,
   kreirajIndividualnuRezervaciju,
@@ -68,8 +97,8 @@ describe('Rezervacija Controller', () => {
     await kreirajIndividualnuRezervaciju(req, res);
 
     expect(mockService.createIndividualReservationService).toHaveBeenCalledWith(
-      '22',
-      req.user,
+      22,
+      { id: 11, korisnikId: 11, statusPouzdanosti: 'POUZDAN' },
       true 
     );
     expect(res.json).toHaveBeenCalledWith({
@@ -93,13 +122,15 @@ describe('Rezervacija Controller', () => {
     await kreirajIndividualnuRezervaciju(req, res);
 
     expect(mockService.createIndividualReservationService).toHaveBeenCalledWith(
-      '33',
-      req.user,
+      33,
+      { id: 12, korisnikId: 12, statusPouzdanosti: 'NEPOUZDAN' },
       false 
     );
     expect(res.json).toHaveBeenCalledWith({
-      poruka: 'Vaš zahtjev je poslan na čekanje i biće obrađen od strane administratora.',
+      poruka: 'Vaš zahtjev je poslan na listu čekanja zbog pravila pouzdanosti računa (3 ili više kaznena profila). Vlasnik objekta mora ručno odobriti termin.',
       status: 'NA_CEKANJU',
+      zahtjevId: undefined,
+      terminId: 33,
     });
   });
 
@@ -147,7 +178,11 @@ describe('Rezervacija Controller', () => {
 
     await otkaziIndividualnuRezervaciju(req, res);
 
-    expect(mockService.cancelIndividualReservationService).toHaveBeenCalledWith('55', 7);
-    expect(res.json).toHaveBeenCalledWith({ poruka: 'Rezervacija je uspješno otkazana.' });
+    expect(mockService.cancelIndividualReservationService).toHaveBeenCalledWith(55, 7);
+    expect(res.json).toHaveBeenCalledWith({
+      poruka: 'Uspješno otkazano na vrijeme. Termin je ponovo slobodan.',
+      brojPrekrsaja: 0,
+      maxDozvoljeno: 3,
+    });
   });
 });

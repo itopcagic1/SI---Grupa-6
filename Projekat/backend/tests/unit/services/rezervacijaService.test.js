@@ -12,6 +12,7 @@ const mockPrisma = {
   },
   zahtjevZaRezervaciju: {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
@@ -40,6 +41,7 @@ describe('Rezervacija Service', () => {
 
 
     mockPrisma.rezervacija.findMany.mockResolvedValue([]);
+    mockPrisma.zahtjevZaRezervaciju.findMany.mockResolvedValue([]);
 
     mockPrisma.terminObjekta.findMany.mockResolvedValue([
       {
@@ -78,6 +80,7 @@ describe('Rezervacija Service', () => {
 
 
     mockPrisma.rezervacija.findMany.mockResolvedValue([{ terminId: 10 }]);
+    mockPrisma.zahtjevZaRezervaciju.findMany.mockResolvedValue([]);
 
     mockPrisma.terminObjekta.findMany.mockResolvedValue([
       {

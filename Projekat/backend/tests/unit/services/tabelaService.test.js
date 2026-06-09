@@ -2,6 +2,9 @@ const mockPrisma = {
   takmicenje: {
     findUnique: jest.fn(),
   },
+  ucesceUTakmicenju: {
+    findMany: jest.fn().mockResolvedValue([]),
+  },
   plasmanNaTabeli: {
     findMany: jest.fn(),
   },

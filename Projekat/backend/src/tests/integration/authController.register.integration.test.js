@@ -1,4 +1,5 @@
 require('dotenv').config({ path: '.env.test' });
+require('dotenv').config();
 
 jest.mock('../../middleware/authMiddleware', () => {
   const original = jest.requireActual('../../middleware/authMiddleware');
@@ -11,8 +12,64 @@ jest.mock('../../middleware/authMiddleware', () => {
 const request = require('supertest');
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const { PrismaClient } = require('@prisma/client');
 
+const users = [];
+
+const mockPrisma = {
+  korisnik: {
+    deleteMany: jest.fn().mockImplementation((args) => {
+      const email = args.where.email;
+      const index = users.findIndex(u => u.email === email);
+      if (index !== -1) {
+        users.splice(index, 1);
+      }
+      return Promise.resolve({ count: 1 });
+    }),
+    create: jest.fn().mockImplementation((args) => {
+      const newUser = {
+        korisnikId: 1,
+        email: args.data.email,
+        lozinkaHash: args.data.lozinkaHash,
+        punoIme: args.data.punoIme,
+        uloga: args.data.uloga || 'NAVIJAC',
+        trazenaUloga: args.data.trazenaUloga,
+        statusUloge: args.data.statusUloge,
+        datumZahtjeva: new Date(),
+        refreshToken: null,
+      };
+      users.push(newUser);
+      return Promise.resolve(newUser);
+    }),
+    findUnique: jest.fn().mockImplementation((args) => {
+      if (args.where.email) {
+        const email = args.where.email;
+        const user = users.find(u => u.email === email);
+        return Promise.resolve(user || null);
+      }
+      if (args.where.korisnikId) {
+        const id = args.where.korisnikId;
+        const user = users.find(u => u.korisnikId === id);
+        return Promise.resolve(user || null);
+      }
+      return Promise.resolve(null);
+    }),
+    update: jest.fn().mockImplementation((args) => {
+      const email = args.where.email;
+      const user = users.find(u => u.email === email);
+      if (user) {
+        Object.assign(user, args.data);
+      }
+      return Promise.resolve(user || {});
+    }),
+  },
+  $disconnect: jest.fn().mockResolvedValue(true),
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
+
+const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('../../routes/authRoutes');
 
 const prisma = new PrismaClient();

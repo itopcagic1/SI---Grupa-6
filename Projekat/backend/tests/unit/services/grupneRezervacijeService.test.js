@@ -40,6 +40,7 @@ const {
 describe('Grupne Rezervacije Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPrisma.$transaction.mockImplementation(async (fn) => fn(mockPrisma));
   });
 
   describe('kreirajGrupniTreningService', () => {
@@ -57,6 +58,7 @@ describe('Grupne Rezervacije Service', () => {
       mockPrisma.$transaction.mockImplementation(async (callback) => {
         const tx = {
           zahtjevZaRezervaciju: {
+            findFirst: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue({ zahtjevId: 1 }),
           },
           rezervacija: {
@@ -74,10 +76,10 @@ describe('Grupne Rezervacije Service', () => {
 
       const rezultat = await kreirajGrupniTreningService('10', 5, '15');
 
-      expect(mockPrisma.terminObjekta.findUnique).toHaveBeenCalledWith({ where: { terminId: 10 }, include: { sportskiObjekat: true } });
+      expect(mockPrisma.terminObjekta.findUnique).toHaveBeenCalledWith({ where: { terminId: 10 } });
       expect(mockPrisma.$transaction).toHaveBeenCalled();
-      expect(rezultat.maksimalanBrojIgraca).toBe(15);
-      expect(rezultat.treningId).toBe(100);
+      expect(rezultat.trening.maksimalanBrojIgraca).toBe(15);
+      expect(rezultat.trening.treningId).toBe(100);
     });
 
     test('baca grešku kada je maksimalan broj igrača manji od 2 ili veći od 30', async () => {
@@ -219,6 +221,7 @@ describe('Grupne Rezervacije Service', () => {
             deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
           },
           grupniTrening: {
+            findUnique: mockPrisma.grupniTrening.findUnique,
             delete: jest.fn().mockResolvedValue({}),
           },
           rezervacija: {

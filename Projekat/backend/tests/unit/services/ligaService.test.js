@@ -22,6 +22,10 @@ const mockPrisma = {
   plasmanNaTabeli: {
     deleteMany: jest.fn(),
   },
+  utakmica: {
+    findMany: jest.fn().mockResolvedValue([]),
+  },
+  $transaction: jest.fn((callback) => callback(mockPrisma)),
 };
 
 jest.mock('@prisma/client', () => ({

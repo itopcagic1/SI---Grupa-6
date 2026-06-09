@@ -27,6 +27,10 @@ jest.mock('../../src/controllers/rezervacijaController', () => ({
   odjaviSeSaGrupnogTreninga: jest.fn((req, res) => res.status(200).json({ poruka: 'Odjava uspješna' })),
   getTrenerNotifikacije: jest.fn((req, res) => res.status(200).json([])),
   getMojeRezervacije: jest.fn((req, res) => res.status(200).json({ rezervacije: [] })),
+  otkaziZahtjevZaIndividualnuRezervaciju: jest.fn((req, res) => res.status(200).json({ poruka: 'Zahtjev otkazan' })),
+  ownerApprovePendingReservation: jest.fn((req, res) => res.status(200).json({ poruka: 'Zahtjev odobren' })),
+  ownerRejectPendingReservation: jest.fn((req, res) => res.status(200).json({ poruka: 'Zahtjev odbijen' })),
+  getOwnerPendingRequests: jest.fn((req, res) => res.status(200).json({ zahtjevi: [] })),
 }));
 
 const rezervacijaRoutes = require('../../src/routes/rezervacijaRoutes');
