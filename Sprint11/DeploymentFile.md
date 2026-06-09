@@ -233,6 +233,12 @@ Automatski na svaki `push` na `main` granu.
 
 > Railway automatski deployuje na svaki push na `main` granu kroz direktnu GitHub integraciju — nije potrebna dodatna konfiguracija deploy hookova.
 
+### Provjera rezultata deploymenta
+
+- **GitHub Actions** — tab `Actions` u repozitoriju pokazuje status pipeline-a
+- **Railway dashboard** — status svakog servisa vidljiv na [railway.app](https://railway.app)
+- **Live aplikacija** — `https://sportmanager-frontend-production.up.railway.app`
+
 ### Railway konfiguracija servisa
 
 Svi servisi koriste Dockerfile za build i start.
